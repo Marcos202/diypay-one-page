@@ -1,0 +1,232 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 281 100% 41%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 281 100% 41%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 281 100% 41%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 0 0% 0%; /* ALTERADO PARA PRETO - CORRIGE AS BORDAS AMARELAS */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  /* FORÇA RING PRETO NO TEMA ESCURO - SOLUÇÃO DEFINITIVA */
+  .dark *:focus-visible {
+    outline: 2px solid black !important;
+    outline-offset: 2px;
+    box-shadow: none !important;
+  }
+  
+  /* Remove qualquer ring amarelo/verde que possa estar aparecendo */
+  .dark *:focus {
+    box-shadow: 0 0 0 2px black !important;
+  }
+  
+  /* Específico para botões, links e elementos interativos */
+  .dark button:focus,
+  .dark button:focus-visible,
+  .dark a:focus,
+  .dark a:focus-visible,
+  .dark [role="button"]:focus,
+  .dark [role="button"]:focus-visible,
+  .dark li:focus,
+  .dark li:focus-visible {
+    outline: 2px solid black !important;
+    outline-offset: 2px;
+    box-shadow: none !important;
+    border-color: black !important;
+  }
+  
+  /* Remove qualquer estilo de ring do Tailwind CSS */
+  .dark .ring-offset-background:focus-visible,
+  .dark .ring-ring:focus-visible,
+  .dark [class*="ring-"]:focus-visible {
+    box-shadow: 0 0 0 2px black !important;
+    outline: 2px solid black !important;
+  }
+}
+
+/* DIYPay custom styles */
+.gradient-bg {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+}
+
+.glass-effect {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Quill editor custom styles */
+.quill-editor-container .ql-editor {
+  min-height: 150px; /* Define a altura mínima da ÁREA DE DIGITAÇÃO */
+  font-size: 1rem;
+}
+
+/* ==========================================================================
+   Estilização Customizada do Player de Vídeo (Plyr.io)
+   ========================================================================== */
+
+/* Define as cores principais do player usando as variáveis de tema do shadcn/ui */
+:root {
+  --plyr-color-main: hsl(var(--primary));
+  --plyr-video-control-background-hover: hsl(var(--primary) / 0.9);
+  --plyr-video-progress-buffered-background: hsl(var(--primary) / 0.5);
+  --plyr-tooltip-background: hsl(var(--primary));
+  --plyr-tooltip-color: hsl(var(--primary-foreground));
+}
+
+/* Aplica a cor primária aos ícones e controles quando ativos ou em hover */
+.plyr--video .plyr__control.plyr__tab-focus,
+.plyr--video .plyr__control:hover,
+.plyr--video .plyr__control[aria-expanded="true"] {
+  background: hsl(var(--primary));
+}
+
+/* Melhora a aparência da barra de controles com um gradiente sutil */
+.plyr--video .plyr__controls {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+/* Garante que o vídeo em si respeite as bordas arredondadas do container */
+.plyr__video-wrapper {
+  border-radius: inherit;
+}
+
+/* ==========================================================================
+   Dark Theme Override para Course Player - Tema Imersivo
+   ========================================================================== */
+.dark-theme-override {
+  /* Force dark theme regardless of global theme */
+  color-scheme: dark;
+  --override-bg-main: 17 17 17; /* #111111 */
+  --override-bg-sidebar: 24 24 24; /* #181818 */
+  --override-text-primary: 255 255 255; /* white */
+  --override-text-secondary: 209 213 219; /* gray-300 */
+  --override-text-muted: 156 163 175; /* gray-400 */
+  --override-border: 0 0% 0%; /* ALTERADO PARA PRETO - ERA 55 65 81 */
+  --override-accent: 31 41 55; /* gray-800 */
+  --override-success: 34 197 94; /* green-500 */
+}
+
+.dark-theme-override * {
+  border-color: hsl(var(--override-border));
+}
+
+.dark-theme-override .override-bg-main {
+  background-color: hsl(var(--override-bg-main)) !important;
+  color: hsl(var(--override-text-primary)) !important;
+}
+
+.dark-theme-override .override-bg-sidebar {
+  background-color: hsl(var(--override-bg-sidebar)) !important;
+  color: hsl(var(--override-text-primary)) !important;
+}
+
+.dark-theme-override .override-text-primary {
+  color: hsl(var(--override-text-primary)) !important;
+}
+
+.dark-theme-override .override-text-secondary {
+  color: hsl(var(--override-text-secondary)) !important;
+}
+
+.dark-theme-override .override-text-muted {
+  color: hsl(var(--override-text-muted)) !important;
+}
+
+.dark-theme-override .override-border {
+  border-color: hsl(var(--override-border)) !important;
+}
+
+.dark-theme-override .override-accent {
+  background-color: hsl(var(--override-accent)) !important;
+}
+
+.dark-theme-override .override-success {
+  color: hsl(var(--override-success)) !important;
+}
