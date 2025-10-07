@@ -65,9 +65,9 @@ Deno.serve(async (req) => {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileError || profile?.role !== 'admin') {
+    if (profileError || !profile || profile.role !== 'admin') {
       throw new Error('Access denied: Admin role required');
     }
 
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
 
     // Calculate metrics for each producer
     const enrichedProducers = await Promise.all(
-      (producers || []).map(async (producer) => {
+      (producers || []).map(async (producer: any) => {
         // Get producer's products
         const { data: products, error: productsError } = await supabase
           .from('products')
@@ -96,17 +96,23 @@ Deno.serve(async (req) => {
         if (productsError) {
           console.error(`Error fetching products for producer ${producer.id}:`, productsError);
           return {
-            ...producer,
+            id: producer.id,
+            full_name: producer.full_name,
+            email: producer.email,
+            created_at: producer.created_at,
             total_revenue: 0,
             total_sales_count: 0
           };
         }
 
-        const productIds = products?.map(p => p.id) || [];
+        const productIds = (products || []).map((p: any) => p.id);
 
         if (productIds.length === 0) {
           return {
-            ...producer,
+            id: producer.id,
+            full_name: producer.full_name,
+            email: producer.email,
+            created_at: producer.created_at,
             total_revenue: 0,
             total_sales_count: 0
           };
@@ -128,11 +134,14 @@ Deno.serve(async (req) => {
           };
         }
 
-        const totalRevenue = sales?.reduce((sum, sale) => sum + sale.amount_total_cents, 0) || 0;
+        const totalRevenue = (sales || []).reduce((sum: number, sale: any) => sum + (sale.amount_total_cents || 0), 0);
         const totalSalesCount = sales?.length || 0;
 
         return {
-          ...producer,
+          id: producer.id,
+          full_name: producer.full_name,
+          email: producer.email,
+          created_at: producer.created_at,
           total_revenue: totalRevenue,
           total_sales_count: totalSalesCount
         };

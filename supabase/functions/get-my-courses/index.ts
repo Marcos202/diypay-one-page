@@ -39,24 +39,28 @@ Deno.serve(async (req) => {
     
     // Para cada curso, busca o space_id correspondente
     const coursesWithSpaces = await Promise.all(
-      data.map(async (enrollment) => {
+      (data || []).map(async (enrollment: any) => {
         if (!enrollment.product) {
           return null;
         }
+
+        const product = Array.isArray(enrollment.product) ? enrollment.product[0] : enrollment.product;
+        if (!product?.id) return null;
 
         // Busca o space_id para este produto
         const { data: spaceProduct } = await serviceClient
           .from('space_products')
           .select('space_id')
-          .eq('product_id', enrollment.product.id)
-          .single();
+          .eq('product_id', product.id)
+          .maybeSingle();
 
-        const producerName = enrollment.product.producer 
-          ? (enrollment.product.producer as { full_name: string }).full_name 
-          : 'Produtor não encontrado';
+        const producer = Array.isArray(product.producer) ? product.producer[0] : product.producer;
+        const producerName = producer?.full_name || 'Produtor não encontrado';
 
         return {
-          ...enrollment.product,
+          id: product.id,
+          name: product.name,
+          cover_image_url: product.cover_image_url,
           producer_name: producerName,
           space_id: spaceProduct?.space_id || null,
         };

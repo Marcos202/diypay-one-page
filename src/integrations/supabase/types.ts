@@ -987,6 +987,7 @@ export type Database = {
           max_attempts: number
           next_attempt_at: string
           payload: Json
+          processing_started_at: string | null
           status: string
           transaction_event_id: string
           updated_at: string
@@ -1002,6 +1003,7 @@ export type Database = {
           max_attempts?: number
           next_attempt_at?: string
           payload: Json
+          processing_started_at?: string | null
           status?: string
           transaction_event_id: string
           updated_at?: string
@@ -1017,6 +1019,7 @@ export type Database = {
           max_attempts?: number
           next_attempt_at?: string
           payload?: Json
+          processing_started_at?: string | null
           status?: string
           transaction_event_id?: string
           updated_at?: string
@@ -1178,6 +1181,7 @@ export type Database = {
           max_attempts: number
           next_attempt_at: string
           payload: Json
+          processing_started_at: string | null
           status: string
           transaction_event_id: string
           updated_at: string

@@ -145,7 +145,24 @@ Deno.serve(async (req) => {
     }
 
     // Get total count for KPIs (without pagination)
-    const { count: totalSales, error: countError } = await salesQuery.select('*', { count: 'exact', head: true })
+    const countQuery = supabase
+      .from('sales')
+      .select('*', { count: 'exact', head: true })
+      .in('product_id', productIds);
+    
+    // Apply same filters for count
+    if (search_term) countQuery.ilike('buyer_email', `%${search_term}%`);
+    if (product_id && product_id !== 'all') countQuery.eq('product_id', product_id);
+    if (payment_method && payment_method !== 'all') countQuery.eq('payment_method_used', payment_method);
+    if (status && status !== 'all') countQuery.eq('status', status);
+    if (date_range?.from) countQuery.gte('created_at', date_range.from);
+    if (date_range?.to) {
+      const toDate = new Date(date_range.to);
+      toDate.setHours(23, 59, 59, 999);
+      countQuery.lte('created_at', toDate.toISOString());
+    }
+    
+    const { count: totalSales, error: countError } = await countQuery
     
     if (countError) {
       console.error('Error counting sales:', countError)

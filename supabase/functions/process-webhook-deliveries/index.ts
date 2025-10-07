@@ -46,14 +46,17 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get pending webhook delivery jobs that are ready for delivery
-    // The database function handles locking to prevent race conditions
+    // FASE 2: Buscar jobs com locking adequado para prevenir duplicação
+    const processingStarted = new Date().toISOString();
+    const staleThreshold = new Date(Date.now() - 300000).toISOString(); // 5 min
+
     const { data: jobs, error: jobsError } = await supabaseClient
       .from('webhook_delivery_jobs')
       .select('*')
       .eq('status', 'pending')
       .lte('next_attempt_at', new Date().toISOString())
       .lt('attempts', 3)
+      .or(`processing_started_at.is.null,processing_started_at.lt.${staleThreshold}`)
       .order('created_at', { ascending: true })
       .limit(50);
 
@@ -80,6 +83,18 @@ Deno.serve(async (req) => {
     // Process each webhook delivery job
     for (const job of jobs) {
       try {
+        // FASE 2: LOCK ATÔMICO - Tentar adquirir lock antes de processar
+        const { error: lockError } = await supabaseClient
+          .from('webhook_delivery_jobs')
+          .update({ processing_started_at: processingStarted })
+          .eq('id', job.id)
+          .is('processing_started_at', null);
+
+        if (lockError) {
+          console.warn(`Could not acquire lock for job ${job.id}, skipping...`);
+          continue;
+        }
+
         // Fetch webhook endpoint details separately
         const { data: endpoint, error: endpointError } = await supabaseClient
           .from('webhook_endpoints')
@@ -89,6 +104,19 @@ Deno.serve(async (req) => {
 
         if (endpointError || !endpoint) {
           console.error(`Failed to fetch webhook endpoint for job ${job.id}:`, endpointError);
+          
+          // Liberar lock
+          await supabaseClient
+            .from('webhook_delivery_jobs')
+            .update({
+              status: 'failed',
+              attempts: job.attempts + 1,
+              last_error: 'Endpoint not found',
+              last_attempt_at: new Date().toISOString(),
+              processing_started_at: null
+            })
+            .eq('id', job.id);
+          
           continue;
         }
 
@@ -123,13 +151,14 @@ Deno.serve(async (req) => {
         console.log(`Webhook delivery attempt for job ${job.id}: status ${response.status}, success: ${isSuccess}`);
 
         if (isSuccess) {
-          // Mark as successful
+          // Mark as successful (FASE 2: Liberar lock)
           const { error: updateError } = await supabaseClient
             .from('webhook_delivery_jobs')
             .update({
               status: 'delivered',
               attempts: job.attempts + 1,
               last_attempt_at: new Date().toISOString(),
+              processing_started_at: null,
               updated_at: new Date().toISOString()
             })
             .eq('id', job.id);
@@ -169,7 +198,7 @@ Deno.serve(async (req) => {
             nextAttemptAt = new Date(Date.now() + backoffSeconds * 1000).toISOString();
           }
 
-          // Update job with failure info
+          // Update job with failure info (FASE 2: Liberar lock)
           const { error: updateError } = await supabaseClient
             .from('webhook_delivery_jobs')
             .update({
@@ -178,6 +207,7 @@ Deno.serve(async (req) => {
               last_attempt_at: new Date().toISOString(),
               last_error: `HTTP ${response.status}: ${responseText.substring(0, 500)}`,
               next_attempt_at: nextAttemptAt,
+              processing_started_at: null,
               updated_at: new Date().toISOString()
             })
             .eq('id', job.id);
@@ -231,6 +261,7 @@ Deno.serve(async (req) => {
             last_attempt_at: new Date().toISOString(),
             last_error: `Error: ${error.message}`.substring(0, 500),
             next_attempt_at: nextAttemptAt,
+            processing_started_at: null,
             updated_at: new Date().toISOString()
           })
           .eq('id', job.id);

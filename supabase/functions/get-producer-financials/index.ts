@@ -114,16 +114,19 @@ Deno.serve(async (req) => {
     });
 
     // Get last 50 transactions for financial statement
-    const transactionsSales = sales?.slice(0, 50).map(sale => ({
-      id: sale.id,
-      created_at: sale.created_at,
-      status: sale.status,
-      product_name: sale.products.name,
-      amount_total_cents: sale.amount_total_cents,
-      platform_fee_cents: sale.platform_fee_cents,
-      producer_share_cents: sale.producer_share_cents,
-      buyer_email: sale.buyer_email
-    })) || [];
+    const transactionsSales = sales?.slice(0, 50).map((sale: any) => {
+      const productData = Array.isArray(sale.products) ? sale.products[0] : sale.products;
+      return {
+        id: sale.id,
+        created_at: sale.created_at,
+        status: sale.status,
+        product_name: productData?.name || 'Produto desconhecido',
+        amount_total_cents: sale.amount_total_cents,
+        platform_fee_cents: sale.platform_fee_cents,
+        producer_share_cents: sale.producer_share_cents,
+        buyer_email: sale.buyer_email
+      };
+    }) || [];
 
     // Get effective settings for this producer
     const { data: producerSettings } = await supabase

@@ -48,17 +48,24 @@ Deno.serve(async (req) => {
     if (externalProductsError) throw externalProductsError;
 
     // ETAPA 3: Formatação dos espaços
-    const formattedSpaces = spacesData.map(space => {
+    const formattedSpaces = (spacesData || []).map((space: any) => {
       const firstProductWithImage = space.space_products?.find(
-        sp => sp.products?.cover_image_url
+        (sp: any) => {
+          const products = Array.isArray(sp.products) ? sp.products[0] : sp.products;
+          return products?.cover_image_url;
+        }
       );
+      
+      const productsData = firstProductWithImage 
+        ? (Array.isArray(firstProductWithImage.products) ? firstProductWithImage.products[0] : firstProductWithImage.products)
+        : null;
       
       return {
         id: space.id,
         name: space.name,
         slug: space.slug,
         created_at: space.created_at,
-        cover_image_url: firstProductWithImage?.products?.cover_image_url || null,
+        cover_image_url: productsData?.cover_image_url || null,
         type: 'members_area'
       };
     });

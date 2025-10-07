@@ -55,9 +55,11 @@ Deno.serve(async (req) => {
 
     // ETAPA 2: FORMATAÇÃO DA RESPOSTA COM A REGRA DE NEGÓCIO
     // Adicionamos um novo campo booleano 'is_principal_in_a_space'.
-    const formattedProducts = products.map(product => ({
+    const formattedProducts = (products || []).map((product: any) => ({
       ...product,
-      is_principal_in_a_space: product.space_products.some(sp => sp.product_type === 'principal')
+      is_principal_in_a_space: Array.isArray(product.space_products) 
+        ? product.space_products.some((sp: any) => sp.product_type === 'principal')
+        : false
     }));
 
     const hasMore = (totalProducts || 0) > offset + limit
