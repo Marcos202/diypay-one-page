@@ -1166,6 +1166,24 @@ export type Database = {
         Args: { p_producer_id: string }
         Returns: Json
       }
+      get_pending_webhook_jobs_locked: {
+        Args: { max_jobs?: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          event_type: string
+          id: string
+          last_attempt_at: string | null
+          last_error: string | null
+          max_attempts: number
+          next_attempt_at: string
+          payload: Json
+          status: string
+          transaction_event_id: string
+          updated_at: string
+          webhook_endpoint_id: string
+        }[]
+      }
       get_producer_financial_report: {
         Args: {
           p_end_date: string

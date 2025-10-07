@@ -79,6 +79,23 @@ const PaymentConfirmation = () => {
     fetchSaleDetails();
   }, [saleId]);
 
+  // FASE 2: Polling para atualização automática de status (a cada 5 segundos)
+  useEffect(() => {
+    if (!saleId || sale?.status === 'paid') return;
+    
+    console.log('[DEBUG] Iniciando polling para venda:', saleId);
+    
+    const pollingInterval = setInterval(() => {
+      console.log('[DEBUG] Verificando status da venda via polling...');
+      fetchSaleDetails();
+    }, 5000); // 5 segundos
+    
+    return () => {
+      console.log('[DEBUG] Parando polling');
+      clearInterval(pollingInterval);
+    };
+  }, [saleId, sale?.status]);
+
   // Realtime para atualizações de status
   useEffect(() => {
     if (!saleId) return;
