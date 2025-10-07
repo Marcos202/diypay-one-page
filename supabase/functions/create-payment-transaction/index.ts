@@ -359,47 +359,88 @@ Deno.serve(async (req) => {
       throw new Error(`Gateway "${activeGateway.gateway_identifier}" não é suportado.`);
     }
 
-    // --- IMPLEMENTAR CUSTOMER UPSERT LOGIC ---
+    // ============================================
+    // CUSTOMER UPSERT LOGIC (CORRIGIDO - AUTH.USERS PRIMEIRO)
+    // ============================================
     let resolvedBuyerProfileId = buyer_profile_id;
     
     if (!resolvedBuyerProfileId && buyer_email) {
-      console.log(`[CUSTOMER_UPSERT] Buscando/criando perfil para email: ${buyer_email}`);
+      console.log(`[DIAGNOSTIC][${executionId}] 👤 INICIANDO UPSERT DO CLIENTE para: ${buyer_email}`);
       
-      // Primeiro, tentar encontrar um perfil existente
-      const { data: existingProfile, error: profileSearchError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', buyer_email)
-        .single();
+      // PASSO 1: Verificar se o usuário já existe em auth.users
+      const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers();
       
-      if (existingProfile) {
-        resolvedBuyerProfileId = existingProfile.id;
-        console.log(`[CUSTOMER_FOUND] Perfil existente encontrado: ${resolvedBuyerProfileId}`);
-      } else if (profileSearchError && profileSearchError.code === 'PGRST116') {
-        // Perfil não encontrado, criar novo
-        console.log(`[CUSTOMER_CREATE] Criando novo perfil para: ${buyer_email}`);
-        
-        const { data: newProfile, error: createProfileError } = await supabase
-          .from('profiles')
-          .insert({
-            email: buyer_email,
-            full_name: buyer_name || 'Cliente',
-            phone: buyer_phone || null,
-            cpf_cnpj: buyer_cpf_cnpj || null,
-            role: 'user'
-          })
-          .select('id')
-          .single();
-        
-        if (createProfileError) {
-          console.error('[CUSTOMER_CREATE_ERROR] Falha ao criar perfil:', createProfileError);
-          // Não falhar a transação por conta disso, apenas logar
-        } else {
-          resolvedBuyerProfileId = newProfile.id;
-          console.log(`[CUSTOMER_CREATED] Novo perfil criado: ${resolvedBuyerProfileId}`);
+      if (listError) {
+        console.error(`[ERROR][${executionId}] Erro ao listar usuários:`, listError);
+        throw new Error('Falha ao verificar usuário existente.');
+      }
+
+      const existingUser = existingUsers.users.find(u => u.email === buyer_email);
+
+      if (existingUser) {
+        // Usuário já existe, usar o ID dele
+        console.log(`[DIAGNOSTIC][${executionId}] 👤 Usuário existente encontrado: ${existingUser.id}`);
+        resolvedBuyerProfileId = existingUser.id;
+
+        // Atualizar perfil com dados adicionais se fornecidos
+        if (buyer_phone || buyer_cpf_cnpj) {
+          const updateData: any = {};
+          if (buyer_phone) updateData.phone = buyer_phone;
+          if (buyer_cpf_cnpj) updateData.cpf_cnpj = buyer_cpf_cnpj;
+          if (buyer_name) updateData.full_name = buyer_name;
+
+          await supabase
+            .from('profiles')
+            .update(updateData)
+            .eq('id', existingUser.id);
+          
+          console.log(`[DIAGNOSTIC][${executionId}] ✅ Perfil atualizado com dados adicionais`);
         }
       } else {
-        console.error('[CUSTOMER_SEARCH_ERROR] Erro inesperado ao buscar perfil:', profileSearchError);
+        // PASSO 2: Criar novo usuário em auth.users
+        console.log(`[DIAGNOSTIC][${executionId}] 👤 Criando novo usuário em auth.users`);
+        
+        const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
+          email: buyer_email,
+          email_confirm: true, // Auto-confirmar email para clientes de checkout
+          user_metadata: {
+            full_name: buyer_name || buyer_email,
+            phone: buyer_phone || null,
+            cpf_cnpj: buyer_cpf_cnpj || null,
+            role: 'user' // Define role como 'user' para clientes de checkout
+          }
+        });
+
+        if (createUserError || !newUser.user) {
+          console.error(`[ERROR][${executionId}] Erro ao criar usuário:`, createUserError);
+          throw new Error('Falha ao criar usuário no sistema de autenticação.');
+        }
+
+        console.log(`[DIAGNOSTIC][${executionId}] ✅ Novo usuário criado: ${newUser.user.id}`);
+        resolvedBuyerProfileId = newUser.user.id;
+
+        // PASSO 3: Aguardar o trigger criar o perfil, então atualizar campos adicionais
+        // O trigger handle_new_user() cria o perfil automaticamente
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Atualizar campos adicionais do perfil se fornecidos
+        if (buyer_phone || buyer_cpf_cnpj) {
+          const updateData: any = {};
+          if (buyer_phone) updateData.phone = buyer_phone;
+          if (buyer_cpf_cnpj) updateData.cpf_cnpj = buyer_cpf_cnpj;
+
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update(updateData)
+            .eq('id', newUser.user.id);
+
+          if (updateError) {
+            console.error(`[ERROR][${executionId}] Erro ao atualizar perfil:`, updateError);
+            // Não falhar a transação por isso, apenas logar
+          } else {
+            console.log(`[DIAGNOSTIC][${executionId}] ✅ Perfil atualizado com phone/cpf_cnpj`);
+          }
+        }
       }
     }
 
