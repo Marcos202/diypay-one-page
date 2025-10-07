@@ -89,19 +89,23 @@ Deno.serve(async (req) => {
     }
 
     // Format the data for frontend consumption
-    const formattedData = withdrawalRequests?.map(request => ({
-      id: request.id,
-      amount_cents: request.amount_cents,
-      status: request.status,
-      requested_at: request.requested_at,
-      processed_at: request.processed_at,
-      admin_notes: request.admin_notes,
-      producer: {
-        id: request.profiles?.id,
-        email: request.profiles?.email,
-        full_name: request.profiles?.full_name
-      }
-    })) || [];
+    const formattedData = withdrawalRequests?.map(request => {
+      const profile = Array.isArray(request.profiles) ? request.profiles[0] : request.profiles;
+      
+      return {
+        id: request.id,
+        amount_cents: request.amount_cents,
+        status: request.status,
+        requested_at: request.requested_at,
+        processed_at: request.processed_at,
+        admin_notes: request.admin_notes,
+        producer: {
+          id: profile?.id || null,
+          email: profile?.email || null,
+          full_name: profile?.full_name || null
+        }
+      };
+    }) || [];
 
     console.log(`Fetched ${formattedData.length} withdrawal requests`);
 

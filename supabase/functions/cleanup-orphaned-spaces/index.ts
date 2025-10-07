@@ -52,39 +52,42 @@ Deno.serve(async (req) => {
           
           // Deletar lesson_progress das aulas dos modules deste space
           // Buscar lesson_ids primeiro
-          const { data: lessonIds } = await serviceClient
-            .from('lessons')
+          // Buscar IDs dos módulos primeiro
+          const { data: moduleData } = await serviceClient
+            .from('modules')
             .select('id')
-            .in('module_id', 
-              (await serviceClient.from('modules').select('id').eq('product_id', space.product_id)).data?.map(m => m.id) || []
-            );
+            .eq('product_id', space.product_id);
+          
+          const moduleIds = moduleData?.map(m => m.id) || [];
 
-          if (lessonIds && lessonIds.length > 0) {
-            const { error: progressError } = await serviceClient
-              .from('lesson_progress')
+          if (moduleIds.length > 0) {
+            // Buscar IDs das lessons
+            const { data: lessonIds } = await serviceClient
+              .from('lessons')
+              .select('id')
+              .in('module_id', moduleIds);
+
+            if (lessonIds && lessonIds.length > 0) {
+              // Deletar lesson_progress
+              const { error: progressError } = await serviceClient
+                .from('lesson_progress')
+                .delete()
+                .in('lesson_id', lessonIds.map(l => l.id));
+
+              if (progressError) {
+                console.error('Erro ao deletar lesson_progress:', progressError);
+              }
+            }
+
+            // Deletar lessons
+            const { error: lessonsError } = await serviceClient
+              .from('lessons')
               .delete()
-              .in('lesson_id', lessonIds.map(l => l.id));
+              .in('module_id', moduleIds);
 
-            if (progressError) console.error('Erro ao deletar lesson_progress:', progressError);
-          }
-
-          if (progressError) {
-            console.error('Erro ao deletar lesson_progress:', progressError);
-          }
-
-          // Deletar lessons
-          const { error: lessonsError } = await serviceClient
-            .from('lessons')
-            .delete()
-            .in('module_id',
-              serviceClient
-                .from('modules')
-                .select('id')
-                .eq('product_id', space.product_id)
-            );
-
-          if (lessonsError) {
-            console.error('Erro ao deletar lessons:', lessonsError);
+            if (lessonsError) {
+              console.error('Erro ao deletar lessons:', lessonsError);
+            }
           }
 
           // Deletar modules

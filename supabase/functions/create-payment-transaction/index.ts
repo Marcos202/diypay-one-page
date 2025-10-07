@@ -465,9 +465,9 @@ Deno.serve(async (req) => {
           // Evento criado com sucesso - o trigger automático cuidará do enfileiramento
           console.log(`[ARCHITECTURAL_SUCCESS] Evento registrado. O trigger automático processará o enfileiramento de webhooks.`);
         }
-      } catch (eventException) {
+      } catch (eventException: any) {
         console.error(`[EVENT_LOG_EXCEPTION] Exceção ao registrar evento:`, eventException);
-        console.error(`[EVENT_LOG_EXCEPTION] Stack trace:`, eventException.stack);
+        console.error(`[EVENT_LOG_EXCEPTION] Stack trace:`, eventException?.stack);
       }
     } else {
       console.log(`[EVENT_REGISTRY_DEBUG] Nenhum evento a registrar para método de pagamento: ${payment_method_selected}`);

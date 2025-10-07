@@ -19,7 +19,11 @@ Deno.serve(async (req) => {
       .select('spaces!inner(producer_id)')
       .eq('id', containerId)
       .single();
-    if (!ownerCheck || ownerCheck.spaces.producer_id !== user.id) throw new Error('Permissão negada.');
+    
+    const spaceData = ownerCheck?.spaces as any;
+    if (!ownerCheck || !spaceData || spaceData.producer_id !== user.id) {
+      throw new Error('Permissão negada.');
+    }
     
     // Deleta o container. A constraint ON DELETE CASCADE cuidará dos produtos dentro dele.
     const { error } = await serviceClient

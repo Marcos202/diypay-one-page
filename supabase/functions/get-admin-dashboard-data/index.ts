@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     )
 
     const { data: { user }, error: userError } = await authClient.auth.getUser()
-    if (userError) throw userError
+    if (userError || !user) throw userError || new Error('User not authenticated')
 
     const { data: profile, error: profileError } = await authClient
       .from('profiles')
