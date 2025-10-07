@@ -75,7 +75,7 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in get-platform-fees:', error);
     return new Response(
       JSON.stringify({ 

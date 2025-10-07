@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
       },
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in get-producers-list function:', error);
     
     return new Response(

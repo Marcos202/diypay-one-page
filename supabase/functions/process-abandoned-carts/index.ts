@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
       status: 200
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('[ABANDONED_CARTS_CRITICAL_ERROR] Erro crítico no processamento:', error.message);
     return new Response(JSON.stringify({ 
       success: false,

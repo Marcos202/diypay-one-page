@@ -155,7 +155,7 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unexpected error in update-user-profile:', error);
     return new Response(
       JSON.stringify({ error: 'Erro interno do servidor' }),

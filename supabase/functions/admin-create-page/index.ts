@@ -47,7 +47,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 201,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in admin-create-page:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -486,7 +486,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('[TRANSACTION_ERROR] Erro no processo de criação da transação:', error.message);
     return new Response(
       JSON.stringify({ success: false, message: error.message }),

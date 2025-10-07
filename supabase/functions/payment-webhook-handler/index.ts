@@ -252,7 +252,7 @@ Deno.serve(async (req) => {
     
     return createJsonResponse({ success: true, message: 'Webhook processado com sucesso.' }, 200);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('[CRITICAL_ERROR] Erro no webhook handler:', error.message);
     return createJsonResponse({ success: false, message: error.message }, 400);
   }

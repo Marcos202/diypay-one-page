@@ -65,24 +65,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const user = session?.user ?? null;
   const isGoogleUser = user?.app_metadata?.provider === 'google';
 
-  // Função otimizada para buscar perfil
+  // Função otimizada para buscar perfil com role de user_roles
   const fetchUserProfile = useCallback(async (userId: string): Promise<Profile | null> => {
     try {
       console.log('🔍 Fetching profile for user:', userId);
       
-      const { data, error } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
       
-      if (error) {
-        console.error('❌ Error fetching profile:', error);
+      if (profileError || !profileData) {
+        console.error('❌ Error fetching profile:', profileError);
         return null;
       }
+
+      // Buscar role de user_roles
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
       
-      console.log('✅ Profile fetched successfully:', data);
-      return data as Profile;
+      const profile = {
+        ...profileData,
+        role: roleData?.role || 'user'
+      } as Profile;
+      
+      console.log('✅ Profile fetched successfully:', profile);
+      return profile;
     } catch (error) {
       console.error('❌ Exception fetching profile:', error);
       return null;

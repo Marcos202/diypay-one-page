@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
       console.log('[DEBUG] Body bruto da requisição:', requestText);
       payload = JSON.parse(requestText);
       console.log('[DEBUG] Payload parseado:', payload);
-    } catch (parseError) {
+    } catch (parseError: any) {
       const errorMsg = 'Erro ao fazer parse do JSON da requisição';
       console.error('[ERRO]', errorMsg, parseError);
       return new Response(
@@ -169,11 +169,11 @@ Deno.serve(async (req) => {
       try {
         iuguData = JSON.parse(responseText);
         console.log('[DEBUG] Dados parseados da resposta da Iugu:', iuguData);
-      } catch (iuguParseError) {
+      } catch (iuguParseError: any) {
         console.error('[ERRO] Erro ao fazer parse da resposta da Iugu:', iuguParseError);
         throw new Error('Resposta inválida da API da Iugu: ' + responseText);
       }
-    } catch (fetchError) {
+    } catch (fetchError: any) {
       console.error('[ERRO] Erro na requisição para a Iugu:', fetchError);
       return new Response(
         JSON.stringify({ 
@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('[ERRO] Erro geral na create-iugu-payment-token:', error.message);
     console.error('[ERRO] Stack trace:', error.stack);
     console.error('[ERRO] Erro completo:', error);

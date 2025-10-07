@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       }
     )
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unexpected error:', error)
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),

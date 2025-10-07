@@ -177,7 +177,7 @@ serve(async (req) => {
       }
     )
 
-  } catch (error) {
+  } catch (error: any) {
     console.log('[ERROR] Erro interno:', error)
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),

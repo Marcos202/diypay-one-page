@@ -206,7 +206,7 @@ Deno.serve(async (req) => {
           console.log(`Webhook job ${job.id} failed with status ${response.status}. ${shouldRetry ? 'Will retry' : 'Max attempts reached'}`);
         }
 
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error processing webhook job ${job.id}:`, error);
         
         // Update job with error
@@ -270,12 +270,12 @@ Deno.serve(async (req) => {
       status: 200,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in webhook delivery processor:', error);
     return new Response(
       JSON.stringify({ 
         error: 'Failed to process webhook deliveries',
-        details: error.message 
+        details: error.message
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -347,7 +347,7 @@ Deno.serve(async (req) => {
         }
       );
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('[ERRO] *** ERRO NA CRIAÇÃO/BUSCA DO CLIENTE IUGU ***:', error);
       return new Response(
         JSON.stringify({ 
@@ -364,7 +364,7 @@ Deno.serve(async (req) => {
       );
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('[ERRO] *** ERRO GERAL NA get-or-create-iugu-customer ***:', error);
     return new Response(
       JSON.stringify({

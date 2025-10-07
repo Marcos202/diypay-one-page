@@ -15,7 +15,7 @@ const getPathFromUrl = (url: string): string | null => {
       return pathParts[1];
     }
     return null;
-  } catch (error) {
+  } catch (error: any) {
     console.error('URL inválida para extração de caminho:', url, error);
     return null;
   }
@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
       status: 200,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Erro na exclusão do produto:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,

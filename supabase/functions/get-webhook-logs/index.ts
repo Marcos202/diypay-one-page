@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       status: 200,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in get-webhook-logs function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),

@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
       }
     )
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in get-producer-sales-data function:', error)
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),

@@ -51,20 +51,22 @@ Deno.serve(async (req) => {
           console.log(`📁 Space órfão encontrado: ${space.name} (produto ${space.product_id} não existe)`);
           
           // Deletar lesson_progress das aulas dos modules deste space
-          const { error: progressError } = await serviceClient
-            .from('lesson_progress')
-            .delete()
-            .in('lesson_id', 
-              serviceClient
-                .from('lessons')
-                .select('id')
-                .in('module_id',
-                  serviceClient
-                    .from('modules')
-                    .select('id')
-                    .eq('product_id', space.product_id)
-                )
+          // Buscar lesson_ids primeiro
+          const { data: lessonIds } = await serviceClient
+            .from('lessons')
+            .select('id')
+            .in('module_id', 
+              (await serviceClient.from('modules').select('id').eq('product_id', space.product_id)).data?.map(m => m.id) || []
             );
+
+          if (lessonIds && lessonIds.length > 0) {
+            const { error: progressError } = await serviceClient
+              .from('lesson_progress')
+              .delete()
+              .in('lesson_id', lessonIds.map(l => l.id));
+
+            if (progressError) console.error('Erro ao deletar lesson_progress:', progressError);
+          }
 
           if (progressError) {
             console.error('Erro ao deletar lesson_progress:', progressError);
@@ -182,7 +184,7 @@ Deno.serve(async (req) => {
       status: 200,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Erro na limpeza:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,

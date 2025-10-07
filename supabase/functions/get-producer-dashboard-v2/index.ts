@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
     let requestBody;
     try {
       requestBody = await req.json();
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Invalid JSON in request body:', error);
       return new Response(
         JSON.stringify({ error: 'Invalid request body' }),
@@ -346,7 +346,7 @@ Deno.serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Unexpected error in get-producer-dashboard-v2:', error);
     return new Response(
       JSON.stringify({ 

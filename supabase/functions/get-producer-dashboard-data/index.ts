@@ -193,7 +193,7 @@ Deno.serve(async (req) => {
       }
     )
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in get-producer-dashboard-data:', error)
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),

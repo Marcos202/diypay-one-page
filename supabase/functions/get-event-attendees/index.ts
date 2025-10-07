@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro geral:', error);
     return new Response(
       JSON.stringify({ 

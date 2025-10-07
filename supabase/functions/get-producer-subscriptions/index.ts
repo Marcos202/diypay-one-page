@@ -154,7 +154,7 @@ serve(async (req) => {
             } else {
               console.log('[WARNING] Erro ao buscar dados da assinatura na Iugu:', iuguResponse.status)
             }
-          } catch (error) {
+          } catch (error: any) {
             console.log('[WARNING] Erro ao conectar com a API da Iugu:', error.message)
           }
         }
@@ -188,7 +188,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.log('[ERROR] Erro interno:', error)
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),

@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 201,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('ERRO DETALHADO EM CREATE-LESSON:', error) // Log para depuração
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
