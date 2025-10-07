@@ -74,6 +74,10 @@ function calculateReleaseDate(settings: any, paymentMethod: string, paidAtDate: 
 }
 
 Deno.serve(async (req) => {
+  // INSTRUMENTAÇÃO DIAGNÓSTICA: Gerar ID único de execução
+  const executionId = crypto.randomUUID();
+  console.log(`[DIAGNOSTIC][${executionId}] 🚀 INICIANDO EXECUÇÃO DO WEBHOOK HANDLER`);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -85,6 +89,10 @@ Deno.serve(async (req) => {
     );
     
     const payload = await req.json();
+    
+    // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar payload recebido
+    console.log(`[DIAGNOSTIC][${executionId}] 📥 PAYLOAD RECEBIDO DO GATEWAY`, JSON.stringify(payload, null, 2));
+    
     console.log('[WEBHOOK_HANDLER] Received payload:', JSON.stringify(payload, null, 2));
     
     let event: string | null = null;
@@ -132,6 +140,16 @@ Deno.serve(async (req) => {
       console.warn(`[WEBHOOK_HANDLER] Venda não encontrada para transação ${gatewayTransactionId}.`);
       return createJsonResponse({ success: true, message: 'Venda não encontrada, webhook ignorado.' }, 200);
     }
+    
+    // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar venda encontrada
+    console.log(`[DIAGNOSTIC][${executionId}] 🔍 VENDA ENCONTRADA NO BANCO`, {
+      sale_id: sale.id,
+      status: sale.status,
+      gateway_transaction_id: sale.gateway_transaction_id,
+      product_id: sale.product_id,
+      payment_method_used: sale.payment_method_used,
+      buyer_email: sale.buyer_email
+    });
     
     console.log(`[WEBHOOK_HANDLER] Found sale: ${sale.id} with status: ${sale.status}`);
     
@@ -191,6 +209,9 @@ Deno.serve(async (req) => {
         gateway_status: payment.status
       };
       
+      // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar antes de atualizar para paid
+      console.log(`[DIAGNOSTIC][${executionId}] 💰 ANTES DE ATUALIZAR A VENDA PARA 'paid'`, updatePayload);
+      
       console.log(`[WEBHOOK_HANDLER] Updating sale with:`, updatePayload);
       
       const { error: updateError } = await supabaseAdmin
@@ -201,6 +222,15 @@ Deno.serve(async (req) => {
       if (updateError) {
         throw new Error(`Falha ao atualizar a venda ${sale.id}: ${updateError.message}`);
       }
+      
+      // INSTRUMENTAÇÃO DIAGNÓSTICA: Confirmar atualização para paid
+      console.log(`[DIAGNOSTIC][${executionId}] ✅ DEPOIS DE ATUALIZAR A VENDA PARA 'paid'`, {
+        sale_id: sale.id,
+        new_status: 'paid',
+        platform_fee_cents: platformFeeCents,
+        producer_share_cents: producerShareCents,
+        release_date: releaseDate
+      });
       
       // Atualizar saldo do produtor
       if (producerShareCents > 0) {
@@ -303,6 +333,9 @@ Deno.serve(async (req) => {
       }
     };
     
+    // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar antes de inserir evento compra.aprovada
+    console.log(`[DIAGNOSTIC][${executionId}] 📝 ANTES DE INSERIR O EVENTO 'compra.aprovada'`, eventData);
+    
     const { error: eventError } = await supabaseAdmin
       .from('transaction_events')
       .insert(eventData);
@@ -312,11 +345,25 @@ Deno.serve(async (req) => {
       throw new Error(`Falha ao registrar o evento de transação: ${eventError.message}`);
     }
     
+    // INSTRUMENTAÇÃO DIAGNÓSTICA: Confirmar inserção do evento
+    console.log(`[DIAGNOSTIC][${executionId}] ✅ DEPOIS DE INSERIR O EVENTO 'compra.aprovada'`, {
+      event_type: event,
+      sale_id: sale.id,
+      success: true
+    });
+    
     console.log(`[WEBHOOK_HANDLER] ✅ Event ${event} registered successfully for sale ${sale.id}`);
     
     return createJsonResponse({ success: true, message: 'Webhook processado com sucesso.' }, 200);
     
   } catch (error: any) {
+    // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar erro crítico
+    console.error(`[DIAGNOSTIC][${executionId}] ❌ ERRO CRÍTICO NO WEBHOOK HANDLER`, {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    
     console.error('[WEBHOOK_HANDLER] CRITICAL ERROR:', error.message);
     return createJsonResponse({ success: false, message: error.message }, 400);
   }

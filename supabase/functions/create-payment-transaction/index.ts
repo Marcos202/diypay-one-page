@@ -6,6 +6,10 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
+  // INSTRUMENTAÇÃO DIAGNÓSTICA: Gerar ID único de execução
+  const executionId = crypto.randomUUID();
+  console.log(`[DIAGNOSTIC][${executionId}] 🚀 INICIANDO EXECUÇÃO`);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -36,6 +40,20 @@ Deno.serve(async (req) => {
       original_product_price_cents,
       producer_assumes_installments,
     } = await req.json();
+
+    // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar dados recebidos
+    console.log(`[DIAGNOSTIC][${executionId}] 📥 DADOS RECEBIDOS DO CHECKOUT`, {
+      product_id,
+      buyer_email,
+      payment_method_selected,
+      installments,
+      amount_total_cents,
+      donation_amount_cents,
+      quantity,
+      has_credit_card_data: !!credit_card_data,
+      has_credit_card_token: !!credit_card_token,
+      has_card_token: !!card_token
+    });
 
     // --- Validação dos Dados de Entrada ---
     if (!product_id) {
@@ -385,6 +403,13 @@ Deno.serve(async (req) => {
       }
     }
 
+    // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar ID do cliente resolvido
+    console.log(`[DIAGNOSTIC][${executionId}] 👤 DEPOIS DA LÓGICA DE UPSERT DO CLIENTE`, {
+      resolvedBuyerProfileId,
+      buyer_email,
+      was_created: !buyer_profile_id && !!resolvedBuyerProfileId
+    });
+
     // --- Inserir a Venda no Nosso Banco de Dados ---
     const saleData = {
       product_id,
@@ -406,6 +431,9 @@ Deno.serve(async (req) => {
       event_attendees: attendees,
       original_product_price_cents: original_product_price_cents || (donation_amount_cents ? donation_amount_cents : product.price_cents * (quantity || 1)),
     };
+
+    // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar saleData antes de inserir
+    console.log(`[DIAGNOSTIC][${executionId}] 💾 ANTES DE INSERIR NA TABELA 'sales'`, saleData);
     
     const { data: newSale, error: insertError } = await supabase
       .from('sales')
@@ -417,6 +445,16 @@ Deno.serve(async (req) => {
       console.error('[DB_INSERT_ERROR] Falha ao salvar a venda:', insertError);
       throw new Error('Falha ao registrar a venda no banco de dados.');
     }
+
+    // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar venda criada
+    console.log(`[DIAGNOSTIC][${executionId}] ✅ DEPOIS DE INSERIR NA TABELA 'sales'`, {
+      sale_id: newSale.id,
+      status: newSale.status,
+      gateway_transaction_id: newSale.gateway_transaction_id,
+      gateway_identifier: newSale.gateway_identifier,
+      payment_method_used: newSale.payment_method_used,
+      amount_total_cents: newSale.amount_total_cents
+    });
 
     // --- Registrar Evento de Transação ---
     let eventTypeToLog: string | null = null;
@@ -445,6 +483,9 @@ Deno.serve(async (req) => {
 
         console.log(`[EVENT_REGISTRY_DEBUG] Dados do evento a inserir:`, JSON.stringify(eventData, null, 2));
 
+        // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar antes de inserir evento
+        console.log(`[DIAGNOSTIC][${executionId}] 📝 ANTES DE INSERIR NA TABELA 'transaction_events'`, eventData);
+
         const { data: eventResult, error: eventError } = await supabase
           .from('transaction_events')
           .insert(eventData)
@@ -461,6 +502,14 @@ Deno.serve(async (req) => {
         } else {
           console.log(`[EVENT_LOG_SUCCESS] ✅ Evento '${eventTypeToLog}' registrado com sucesso para a venda ${newSale.id}`);
           console.log(`[EVENT_LOG_SUCCESS] Evento criado:`, JSON.stringify(eventResult, null, 2));
+          
+          // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar evento criado com sucesso
+          console.log(`[DIAGNOSTIC][${executionId}] ✅ DEPOIS DE INSERIR NA TABELA 'transaction_events'`, {
+            event_id: eventResult?.id,
+            event_type: eventTypeToLog,
+            sale_id: newSale.id,
+            metadata: eventData.metadata
+          });
           
           // Evento criado com sucesso - o trigger automático cuidará do enfileiramento
           console.log(`[ARCHITECTURAL_SUCCESS] Evento registrado. O trigger automático processará o enfileiramento de webhooks.`);
@@ -487,6 +536,13 @@ Deno.serve(async (req) => {
     );
 
   } catch (error: any) {
+    // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar erro fatal
+    console.error(`[DIAGNOSTIC][${executionId}] ❌ ERRO FATAL`, {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    
     console.error('[TRANSACTION_ERROR] Erro no processo de criação da transação:', error.message);
     return new Response(
       JSON.stringify({ success: false, message: error.message }),
