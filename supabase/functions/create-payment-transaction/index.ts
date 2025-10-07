@@ -382,19 +382,34 @@ Deno.serve(async (req) => {
         console.log(`[DIAGNOSTIC][${executionId}] 👤 Usuário existente encontrado: ${existingUser.id}`);
         resolvedBuyerProfileId = existingUser.id;
 
-        // Atualizar perfil com dados adicionais se fornecidos
+        // FASE 3: Fortalecer atualização de usuários existentes
         if (buyer_phone || buyer_cpf_cnpj) {
           const updateData: any = {};
           if (buyer_phone) updateData.phone = buyer_phone;
           if (buyer_cpf_cnpj) updateData.cpf_cnpj = buyer_cpf_cnpj;
           if (buyer_name) updateData.full_name = buyer_name;
 
-          await supabase
+          console.log(`[DIAGNOSTIC][${executionId}] 📝 Atualizando perfil existente com dados:`, updateData);
+
+          const { data: updatedProfile, error: updateError } = await supabase
             .from('profiles')
             .update(updateData)
-            .eq('id', existingUser.id);
+            .eq('id', existingUser.id)
+            .select('phone, cpf_cnpj, full_name')
+            .single();
           
-          console.log(`[DIAGNOSTIC][${executionId}] ✅ Perfil atualizado com dados adicionais`);
+          if (updateError || !updatedProfile) {
+            console.error(`[ERROR][${executionId}] Falha ao atualizar perfil:`, updateError);
+            throw new Error('Falha ao atualizar dados do cliente.');
+          }
+
+          // Verificar se o phone foi realmente salvo
+          if (buyer_phone && updatedProfile.phone !== buyer_phone) {
+            console.error(`[CRITICAL][${executionId}] ❌ PHONE NÃO FOI SALVO! Esperado: ${buyer_phone}, Recebido: ${updatedProfile.phone}`);
+            throw new Error('Falha crítica: Telefone não foi salvo no perfil.');
+          }
+          
+          console.log(`[DIAGNOSTIC][${executionId}] ✅ Perfil atualizado e verificado:`, updatedProfile);
         }
       } else {
         // PASSO 2: Criar novo usuário em auth.users
@@ -438,24 +453,52 @@ Deno.serve(async (req) => {
 
         console.log(`[DIAGNOSTIC][${executionId}] ✅ Perfil criado pelo trigger confirmado`);
 
-        // Atualizar campos adicionais do perfil se fornecidos
-        if (buyer_phone || buyer_cpf_cnpj) {
-          const updateData: any = {};
-          if (buyer_phone) updateData.phone = buyer_phone;
-          if (buyer_cpf_cnpj) updateData.cpf_cnpj = buyer_cpf_cnpj;
+        // FASE 2: Verificar se os dados foram salvos pela trigger
+        const { data: triggerProfile, error: triggerCheckError } = await supabase
+          .from('profiles')
+          .select('phone, cpf_cnpj, full_name')
+          .eq('id', newUser.user.id)
+          .single();
 
-          const { error: updateError } = await supabase
+        if (triggerCheckError) {
+          console.error(`[ERROR][${executionId}] Falha ao verificar perfil criado:`, triggerCheckError);
+          throw new Error('Falha ao verificar perfil criado.');
+        }
+
+        console.log(`[DIAGNOSTIC][${executionId}] 📋 Perfil criado pela trigger:`, {
+          phone: triggerProfile.phone,
+          cpf_cnpj: triggerProfile.cpf_cnpj,
+          full_name: triggerProfile.full_name,
+          buyer_phone_original: buyer_phone
+        });
+
+        // Se a trigger não salvou os dados (por algum motivo), fazer update explícito
+        if ((buyer_phone && !triggerProfile.phone) || (buyer_cpf_cnpj && !triggerProfile.cpf_cnpj)) {
+          console.log(`[DIAGNOSTIC][${executionId}] ⚠️ Trigger não salvou todos os dados, executando update de backup`);
+          
+          const updateData: any = {};
+          if (buyer_phone && !triggerProfile.phone) updateData.phone = buyer_phone;
+          if (buyer_cpf_cnpj && !triggerProfile.cpf_cnpj) updateData.cpf_cnpj = buyer_cpf_cnpj;
+
+          const { data: updatedProfile, error: updateError } = await supabase
             .from('profiles')
             .update(updateData)
-            .eq('id', newUser.user.id);
-
-          // FASE 2: Tornar CRÍTICO o erro de update - não podemos continuar sem salvar o phone
-          if (updateError) {
-            console.error(`[ERROR][${executionId}] Erro crítico ao atualizar perfil:`, updateError);
-            throw new Error('Falha crítica: não foi possível salvar dados do cliente');
+            .eq('id', newUser.user.id)
+            .select('phone, cpf_cnpj')
+            .single();
+          
+          if (updateError || !updatedProfile) {
+            console.error(`[CRITICAL][${executionId}] ❌ Falha no update de backup:`, updateError);
+            throw new Error('Falha crítica ao salvar dados do cliente.');
           }
 
-          console.log(`[DIAGNOSTIC][${executionId}] ✅ Perfil atualizado com phone=${buyer_phone}, cpf_cnpj=${buyer_cpf_cnpj}`);
+          // Verificação final OBRIGATÓRIA
+          if (buyer_phone && updatedProfile.phone !== buyer_phone) {
+            console.error(`[CRITICAL][${executionId}] ❌ PHONE NÃO FOI SALVO MESMO APÓS UPDATE! Esperado: ${buyer_phone}, Recebido: ${updatedProfile.phone}`);
+            throw new Error('Falha crítica: Telefone não foi salvo no perfil.');
+          }
+          
+          console.log(`[DIAGNOSTIC][${executionId}] ✅ Update de backup concluído e verificado:`, updatedProfile);
         }
       }
     }
