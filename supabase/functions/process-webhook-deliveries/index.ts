@@ -46,15 +46,10 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get pending webhook delivery jobs that are ready for delivery
+    // Get pending webhook delivery jobs with row-level lock to prevent race conditions
+    // Using raw SQL with FOR UPDATE SKIP LOCKED to ensure only one worker processes each job
     const { data: jobs, error: jobsError } = await supabaseClient
-      .from('webhook_delivery_jobs')
-      .select('*')
-      .eq('status', 'pending')
-      .lte('next_attempt_at', new Date().toISOString())
-      .lt('attempts', 3) // Filter by max_attempts directly
-      .order('created_at', { ascending: true })
-      .limit(50); // Process up to 50 jobs at a time
+      .rpc('get_pending_webhook_jobs_locked', { max_jobs: 50 });
 
     if (jobsError) {
       console.error('Error fetching webhook jobs:', jobsError);
