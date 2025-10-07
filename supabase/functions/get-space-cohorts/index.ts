@@ -27,11 +27,11 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
     
-    const formattedData = data.map(cohort => ({
+    const formattedData = data.map((cohort: any) => ({
       id: cohort.id,
       name: cohort.name,
       is_active: cohort.is_active,
-      enrollments_count: cohort.enrollments?.count || 0
+      enrollments_count: Array.isArray(cohort.enrollments) ? cohort.enrollments[0]?.count || 0 : 0
     }));
 
     return new Response(JSON.stringify(formattedData), {

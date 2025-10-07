@@ -72,7 +72,9 @@ Deno.serve(async (req) => {
     const releasedSales = []
 
     for (const sale of salesToRelease) {
-      const producerId = sale.products.producer_id
+      const saleProducts = Array.isArray(sale.products) ? sale.products[0] : sale.products
+      const producerId = saleProducts?.producer_id
+      if (!producerId) continue
       const customReserveDays = producerSettingsMap.get(producerId)
       const reserveDays = customReserveDays !== null ? customReserveDays : defaultReserveDays
 

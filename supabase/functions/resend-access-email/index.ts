@@ -21,10 +21,14 @@ Deno.serve(async (req) => {
     const { studentUserId } = await req.json();
     if (!studentUserId) throw new Error("ID do aluno é obrigatório.");
 
+    // Get student user info first
+    const { data: userData, error: userError } = await serviceClient.auth.admin.getUserById(studentUserId);
+    if (userError || !userData.user?.email) throw new Error("Usuário não encontrado ou sem email.");
+
     // Gerar o Magic Link para o aluno
     const { data, error } = await serviceClient.auth.admin.generateLink({
       type: 'magiclink',
-      email: (await serviceClient.auth.admin.getUserById(studentUserId)).data.user.email,
+      email: userData.user.email,
     });
     if (error) throw error;
     

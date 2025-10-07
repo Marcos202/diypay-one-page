@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
       .eq('id', containerId)
       .single();
     
-    const spaceData = ownerCheck?.spaces as any;
+    const spaceData = Array.isArray(ownerCheck?.spaces) ? ownerCheck.spaces[0] : ownerCheck?.spaces;
     if (!ownerCheck || !spaceData || spaceData.producer_id !== user.id) {
       throw new Error('Permissão negada.');
     }

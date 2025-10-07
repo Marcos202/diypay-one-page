@@ -19,7 +19,8 @@ Deno.serve(async (req) => {
       .select('spaces!inner(producer_id)')
       .eq('id', containerId)
       .single();
-    if (!ownerCheck || ownerCheck.spaces.producer_id !== user.id) throw new Error('Permissão negada.');
+    const spaceData = Array.isArray(ownerCheck?.spaces) ? ownerCheck.spaces[0] : ownerCheck?.spaces;
+    if (!ownerCheck || !spaceData || spaceData.producer_id !== user.id) throw new Error('Permissão negada.');
 
     const { data, error } = await serviceClient
       .from('space_containers')

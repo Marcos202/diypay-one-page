@@ -6,7 +6,7 @@ import { createHmac } from 'https://deno.land/std@0.177.0/node/crypto.ts';
 
 const generateMockPayload = (eventType: string) => {
   const now = new Date();
-  const baseData = {
+  const baseData: any = {
     order_id: crypto.randomUUID(),
     order_status: 'paid',
     payment_method: 'credit_card',

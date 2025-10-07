@@ -65,9 +65,9 @@ Deno.serve(async (req) => {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .maybeSingle();
+      .single();
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    if (profileError || !profile || (profile as any).role !== 'admin') {
       throw new Error('Access denied: Admin role required');
     }
 
