@@ -421,7 +421,22 @@ Deno.serve(async (req) => {
 
         // PASSO 3: Aguardar o trigger criar o perfil, então atualizar campos adicionais
         // O trigger handle_new_user() cria o perfil automaticamente
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // FASE 2: Aumentado de 500ms para 1000ms para garantir que o trigger termine
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // FASE 2: Verificar se o perfil foi criado antes de continuar
+        const { data: createdProfile, error: checkError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', newUser.user.id)
+          .single();
+
+        if (checkError || !createdProfile) {
+          console.error(`[ERROR][${executionId}] Perfil não foi criado pelo trigger:`, checkError);
+          throw new Error('Falha ao criar perfil do cliente.');
+        }
+
+        console.log(`[DIAGNOSTIC][${executionId}] ✅ Perfil criado pelo trigger confirmado`);
 
         // Atualizar campos adicionais do perfil se fornecidos
         if (buyer_phone || buyer_cpf_cnpj) {
@@ -434,12 +449,13 @@ Deno.serve(async (req) => {
             .update(updateData)
             .eq('id', newUser.user.id);
 
+          // FASE 2: Tornar CRÍTICO o erro de update - não podemos continuar sem salvar o phone
           if (updateError) {
-            console.error(`[ERROR][${executionId}] Erro ao atualizar perfil:`, updateError);
-            // Não falhar a transação por isso, apenas logar
-          } else {
-            console.log(`[DIAGNOSTIC][${executionId}] ✅ Perfil atualizado com phone/cpf_cnpj`);
+            console.error(`[ERROR][${executionId}] Erro crítico ao atualizar perfil:`, updateError);
+            throw new Error('Falha crítica: não foi possível salvar dados do cliente');
           }
+
+          console.log(`[DIAGNOSTIC][${executionId}] ✅ Perfil atualizado com phone=${buyer_phone}, cpf_cnpj=${buyer_cpf_cnpj}`);
         }
       }
     }
@@ -496,6 +512,25 @@ Deno.serve(async (req) => {
       payment_method_used: newSale.payment_method_used,
       amount_total_cents: newSale.amount_total_cents
     });
+
+    // FASE 2: Verificação final do phone no perfil ANTES de criar o evento
+    if (buyer_phone && resolvedBuyerProfileId) {
+      const { data: finalProfile, error: finalCheckError } = await supabase
+        .from('profiles')
+        .select('phone')
+        .eq('id', resolvedBuyerProfileId)
+        .single();
+      
+      if (finalCheckError) {
+        console.error(`[ERROR][${executionId}] Erro ao verificar phone final:`, finalCheckError);
+      } else {
+        console.log(`[DIAGNOSTIC][${executionId}] 📱 Telefone no perfil ANTES do evento: ${finalProfile?.phone}`);
+        
+        if (!finalProfile?.phone) {
+          console.warn(`[WARNING][${executionId}] ⚠️ ATENÇÃO: phone está NULL no perfil antes de criar o evento!`);
+        }
+      }
+    }
 
     // --- Registrar Evento de Transação ---
     let eventTypeToLog: string | null = null;
