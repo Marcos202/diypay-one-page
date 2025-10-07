@@ -955,6 +955,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       webhook_delivery_jobs: {
         Row: {
           attempts: number
@@ -1145,10 +1166,6 @@ export type Database = {
         Args: { p_producer_id: string }
         Returns: Json
       }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
       get_producer_financial_report: {
         Args: {
           p_end_date: string
@@ -1164,6 +1181,13 @@ export type Database = {
       get_students_with_progress: {
         Args: { p_product_id: string }
         Returns: Json
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
       }
       is_admin: {
         Args: Record<PropertyKey, never>
@@ -1195,7 +1219,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "producer" | "user" | "buyer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1322,6 +1346,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "producer", "user", "buyer"],
+    },
   },
 } as const
