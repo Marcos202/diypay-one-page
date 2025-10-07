@@ -1,1 +1,106 @@
 project_id = "huakzwguwjulxhvcztuh"
+
+[functions.test-transaction-events]
+verify_jwt = false
+
+[functions.get-producer-webhooks]
+verify_jwt = true
+
+[functions.create-producer-webhook]
+verify_jwt = true
+
+[functions.update-producer-webhook]
+verify_jwt = true
+
+[functions.delete-producer-webhook]
+verify_jwt = true
+
+[functions.get-webhook-logs]
+verify_jwt = true
+
+[functions.process-webhook-deliveries]
+verify_jwt = false
+
+[functions.replay-webhook]
+verify_jwt = true
+
+[functions.get-producer-products-list]
+verify_jwt = true
+
+[functions.get-space-details]
+verify_jwt = true
+
+[functions.create-module]
+verify_jwt = true
+
+[functions.add-product-to-space]
+verify_jwt = true
+
+[functions.get-producer-sales-data]
+verify_jwt = true
+
+[functions.get-producer-products]
+verify_jwt = true
+
+[functions.get-or-create-iugu-customer]
+verify_jwt = false
+
+[functions.create-iugu-payment-token]
+verify_jwt = false
+
+[functions.create-iugu-transaction]
+verify_jwt = false
+
+[functions.payment-webhook-handler]
+verify_jwt = false
+
+[functions.get-producer-financials]
+verify_jwt = true
+
+[functions.get-withdrawal-history]
+verify_jwt = true
+
+[functions.request-withdrawal]
+verify_jwt = true
+
+[functions.get-all-withdrawal-requests]
+verify_jwt = true
+
+[functions.process-withdrawal-request]
+verify_jwt = true
+
+[functions.release-security-reserves]
+verify_jwt = false
+
+[functions.get-producer-dashboard-v2]
+verify_jwt = true
+
+[functions.update-user-profile]
+verify_jwt = true
+
+[functions.get-producer-spaces]
+verify_jwt = true
+
+[functions.create-space]
+verify_jwt = true
+
+[functions.create-product]
+verify_jwt = true
+
+[functions.create-lesson]
+verify_jwt = true
+
+[functions.update-container-display-format]
+verify_jwt = true
+
+[functions.send-test-webhook]
+verify_jwt = true
+
+[functions.process-abandoned-carts]
+verify_jwt = false
+
+[functions.create-payment-transaction]
+verify_jwt = false
+
+[functions.manual-webhook-trigger]
+verify_jwt = true
