@@ -17,6 +17,7 @@ import CheckoutTab from './tabs/CheckoutTab';
 import LinksTab from './tabs/LinksTab';
 import TicketsTab from './tabs/TicketsTab';
 import SubscriptionsTab from './tabs/SubscriptionsTab';
+import OrderBumpTab from './tabs/OrderBumpTab';
 
 interface ProductFormData {
   name: string;
@@ -289,10 +290,11 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-6 mb-6 bg-muted">
+            <TabsList className="grid w-full grid-cols-5 lg:grid-cols-7 mb-6 bg-muted">
               <TabsTrigger value="geral">Geral</TabsTrigger>
               <TabsTrigger value="configuracao">Configuração</TabsTrigger>
               <TabsTrigger value="checkout">Checkout</TabsTrigger>
+              <TabsTrigger value="order-bump" disabled={mode === 'create'}>Order Bump</TabsTrigger>
               <TabsTrigger value="links" disabled={mode === 'create'}>Links</TabsTrigger>
               {shouldShowTicketsTab && (
                 <TabsTrigger value="ingressos" disabled={mode === 'create'}>Ingressos</TabsTrigger>
@@ -332,6 +334,10 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
               
               <TabsContent value="checkout">
                 <CheckoutTab formData={formData} onInputChange={handleInputChange} />
+              </TabsContent>
+              
+              <TabsContent value="order-bump">
+                <OrderBumpTab productId={productId} />
               </TabsContent>
               
               <TabsContent value="links">

@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
       amount_total_cents,
       original_product_price_cents,
       producer_assumes_installments,
+      order_bump_items,
     } = await req.json();
 
     // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar dados recebidos
@@ -530,6 +531,7 @@ Deno.serve(async (req) => {
       producer_share_cents: 0, // Será calculado posteriormente
       event_attendees: attendees,
       original_product_price_cents: original_product_price_cents || (donation_amount_cents ? donation_amount_cents : product.price_cents * (quantity || 1)),
+      order_bump_items: order_bump_items ? JSON.stringify(order_bump_items) : null,
     };
 
     // INSTRUMENTAÇÃO DIAGNÓSTICA: Logar saleData antes de inserir

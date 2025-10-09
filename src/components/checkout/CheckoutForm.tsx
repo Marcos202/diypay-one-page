@@ -10,6 +10,7 @@ import { EventTicketsSection } from "./EventTicketsSection";
 import { PaymentMethodTabs } from "./PaymentMethodTabs";
 import { CheckoutButton } from "./CheckoutButton";
 import { DonationValueSection } from "./DonationValueSection";
+import OrderBumpCheckout from "./OrderBumpCheckout";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
@@ -32,6 +33,10 @@ interface CheckoutFormProps {
   product: Product;
   onDonationAmountChange?: (amount: string) => void;
   onEventQuantityChange?: (quantity: number) => void;
+  orderBump?: any;
+  selectedOrderBumps?: any[];
+  onOrderBumpSelect?: (item: any) => void;
+  onOrderBumpDeselect?: (item: any) => void;
 }
 
 // Base schema for all product types with updated validation messages
@@ -115,7 +120,15 @@ const createCheckoutSchema = (isEmailOptional: boolean, isDonation: boolean, isE
   }
 };
 
-export const CheckoutForm = ({ product, onDonationAmountChange, onEventQuantityChange }: CheckoutFormProps) => {
+export const CheckoutForm = ({ 
+  product, 
+  onDonationAmountChange, 
+  onEventQuantityChange,
+  orderBump,
+  selectedOrderBumps = [],
+  onOrderBumpSelect,
+  onOrderBumpDeselect
+}: CheckoutFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"credit_card" | "pix" | "bank_slip">("credit_card");
   const [eventQuantity, setEventQuantity] = useState<number>(1);
@@ -397,6 +410,18 @@ export const CheckoutForm = ({ product, onDonationAmountChange, onEventQuantityC
         transactionPayload.attendees = eventData.attendees;
       }
       
+      // Adicionar order bumps selecionados
+      if (selectedOrderBumps && selectedOrderBumps.length > 0) {
+        transactionPayload.order_bump_items = selectedOrderBumps.map(item => ({
+          bump_item_id: item.id,
+          product_id: item.products.id,
+          product_name: item.products.name,
+          price_cents: item.products.price_cents,
+          discount_percent: item.discount_percent,
+          final_price_cents: Math.round(item.products.price_cents * (1 - item.discount_percent / 100)),
+        }));
+      }
+      
       console.log('[DEBUG] PAYLOAD FINAL SENDO ENVIADO:', transactionPayload);
 
       const { data: result, error: transactionError } = await supabase.functions.invoke(
@@ -425,15 +450,26 @@ export const CheckoutForm = ({ product, onDonationAmountChange, onEventQuantityC
   };
   
   const getDisplayAmount = useCallback((): number => {
+    let baseAmount = 0;
+    
     if (isDonation) {
       const donationValue = form.getValues('donationAmount' as any) as string;
-      return convertToCents(donationValue);
+      baseAmount = convertToCents(donationValue);
+    } else if (isEvent) {
+      baseAmount = product.price_cents * eventQuantity;
+    } else {
+      baseAmount = product.price_cents;
     }
-    if (isEvent) {
-      return product.price_cents * eventQuantity;
-    }
-    return product.price_cents;
-  }, [isDonation, isEvent, product.price_cents, eventQuantity, form]);
+    
+    // Adicionar order bumps selecionados
+    const orderBumpTotal = selectedOrderBumps.reduce((total, item) => {
+      const bumpPrice = item.products.price_cents;
+      const discount = (bumpPrice * item.discount_percent) / 100;
+      return total + (bumpPrice - discount);
+    }, 0);
+    
+    return baseAmount + orderBumpTotal;
+  }, [isDonation, isEvent, product.price_cents, eventQuantity, form, selectedOrderBumps]);
 
   // Fetch active gateway on component mount
   useEffect(() => {
@@ -545,6 +581,15 @@ export const CheckoutForm = ({ product, onDonationAmountChange, onEventQuantityC
                     onInstallmentChange={setSelectedInstallments}
                   />
               </div>
+
+              {/* Order Bump Section */}
+              {orderBump && orderBump.order_bump_items && orderBump.order_bump_items.length > 0 && (
+                <OrderBumpCheckout
+                  orderBump={orderBump}
+                  onSelect={onOrderBumpSelect!}
+                  onDeselect={onOrderBumpDeselect!}
+                />
+              )}
 
               {/* Checkout Button */}
               <div className="pt-2">

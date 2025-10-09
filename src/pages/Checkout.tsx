@@ -6,12 +6,14 @@ import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { ProductInfo } from "@/components/checkout/ProductInfo";
 import { LoadingSpinner } from "@/components/checkout/LoadingSpinner";
 import { toast } from "@/hooks/use-toast";
+import OrderBumpCheckout from "@/components/checkout/OrderBumpCheckout";
 
 const Checkout = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [donationAmount, setDonationAmount] = useState<string>("");
   const [eventQuantity, setEventQuantity] = useState<number>(1);
+  const [selectedOrderBumps, setSelectedOrderBumps] = useState<any[]>([]);
 
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', slug],
@@ -36,6 +38,47 @@ const Checkout = () => {
     },
     enabled: !!slug,
   });
+
+  // Buscar Order Bump
+  const { data: orderBump } = useQuery({
+    queryKey: ['order-bump', product?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('order_bumps')
+        .select(`
+          *,
+          order_bump_items (
+            id,
+            bump_product_id,
+            title,
+            description,
+            image_url,
+            discount_percent,
+            display_order,
+            products:bump_product_id (
+              id,
+              name,
+              price_cents
+            )
+          )
+        `)
+        .eq('product_id', product.id)
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!product?.id,
+  });
+
+  const handleOrderBumpSelect = (item: any) => {
+    setSelectedOrderBumps([...selectedOrderBumps, item]);
+  };
+
+  const handleOrderBumpDeselect = (item: any) => {
+    setSelectedOrderBumps(selectedOrderBumps.filter(i => i.id !== item.id));
+  };
 
   useEffect(() => {
     if (error) {
@@ -90,6 +133,11 @@ const Checkout = () => {
                   product={product} 
                   donationAmount={donationAmount}
                   eventQuantity={eventQuantity}
+                  orderBumpItems={selectedOrderBumps.map(item => ({
+                    name: item.products.name,
+                    price_cents: item.products.price_cents,
+                    discount_percent: item.discount_percent,
+                  }))}
                 />
               </div>
 
@@ -99,6 +147,10 @@ const Checkout = () => {
                   product={product}
                   onDonationAmountChange={setDonationAmount}
                   onEventQuantityChange={setEventQuantity}
+                  orderBump={orderBump}
+                  selectedOrderBumps={selectedOrderBumps}
+                  onOrderBumpSelect={handleOrderBumpSelect}
+                  onOrderBumpDeselect={handleOrderBumpDeselect}
                 />
               </div>
             </div>
@@ -109,6 +161,10 @@ const Checkout = () => {
                 product={product}
                 onDonationAmountChange={setDonationAmount}
                 onEventQuantityChange={setEventQuantity}
+                orderBump={orderBump}
+                selectedOrderBumps={selectedOrderBumps}
+                onOrderBumpSelect={handleOrderBumpSelect}
+                onOrderBumpDeselect={handleOrderBumpDeselect}
               />
             </div>
           )}

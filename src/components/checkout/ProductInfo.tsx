@@ -15,27 +15,40 @@ interface ProductInfoProps {
   product: Product;
   donationAmount?: string;
   eventQuantity?: number;
+  orderBumpItems?: Array<{
+    name: string;
+    price_cents: number;
+    discount_percent: number;
+  }>;
 }
 
-export const ProductInfo = ({ product, donationAmount, eventQuantity = 1 }: ProductInfoProps) => {
+export const ProductInfo = ({ product, donationAmount, eventQuantity = 1, orderBumpItems = [] }: ProductInfoProps) => {
   const isDonation = product.product_type === 'donation';
   const isEvent = product.product_type === 'event';
   const isSubscription = product.product_type === 'subscription';
   
   const getDisplayPrice = () => {
+    let basePrice = 0;
+    
     if (isDonation && donationAmount) {
       const cleanValue = donationAmount.replace(/[R$\s\.]/g, '').replace(',', '.');
       const numberValue = parseFloat(cleanValue);
       if (!isNaN(numberValue) && numberValue > 0) {
-        return Math.round(numberValue * 100);
+        basePrice = Math.round(numberValue * 100);
       }
+    } else if (isEvent) {
+      basePrice = product.price_cents * eventQuantity;
+    } else {
+      basePrice = product.price_cents;
     }
     
-    if (isEvent) {
-      return product.price_cents * eventQuantity;
-    }
+    // Adicionar order bumps
+    const orderBumpTotal = orderBumpItems.reduce((total, item) => {
+      const finalPrice = item.price_cents * (1 - item.discount_percent / 100);
+      return total + finalPrice;
+    }, 0);
     
-    return product.price_cents;
+    return basePrice + orderBumpTotal;
   };
 
   const getSubscriptionFrequencyText = () => {
@@ -88,12 +101,26 @@ export const ProductInfo = ({ product, donationAmount, eventQuantity = 1 }: Prod
             </div>
             <div className="flex justify-between items-center mb-2 pb-2 border-b border-gray-200">
               <span className="text-gray-600">Subtotal:</span>
-              <span className="font-medium">{formatCurrency(displayPrice)}</span>
+              <span className="font-medium">{formatCurrency(product.price_cents * eventQuantity)}</span>
             </div>
           </>
         )}
         
-        <div className="flex justify-between items-center text-lg font-bold">
+        {orderBumpItems.length > 0 && (
+          <div className="border-t border-gray-200 pt-2 mt-2">
+            {orderBumpItems.map((item, index) => {
+              const finalPrice = item.price_cents * (1 - item.discount_percent / 100);
+              return (
+                <div key={index} className="flex justify-between items-center mb-2 text-sm">
+                  <span className="text-gray-600">{item.name}</span>
+                  <span className="font-medium">{formatCurrency(finalPrice)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        
+        <div className="flex justify-between items-center text-lg font-bold mt-3 pt-3 border-t border-gray-200">
           <span>Total:</span>
           <span className="text-blue-600">
             {isSubscription 

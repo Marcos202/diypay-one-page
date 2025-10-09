@@ -1,0 +1,291 @@
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Card } from "@/components/ui/card";
+import { ColorPicker } from "@/components/ui/color-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { Trash2, Plus, GripVertical } from "lucide-react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+
+interface OrderBumpItem {
+  id?: string;
+  bump_product_id: string;
+  title: string;
+  description: string;
+  image_url: string;
+  discount_percent: number;
+  display_order: number;
+}
+
+interface OrderBumpTabProps {
+  productId?: string;
+}
+
+export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
+  const queryClient = useQueryClient();
+  const [isActive, setIsActive] = useState(false);
+  const [customColor, setCustomColor] = useState("#10b981");
+  const [items, setItems] = useState<OrderBumpItem[]>([]);
+
+  // Buscar produtos do produtor (excluindo o produto atual)
+  const { data: availableProducts } = useQuery({
+    queryKey: ["available-products", productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, price_cents, cover_image_url")
+        .eq("producer_id", (await supabase.auth.getUser()).data.user?.id)
+        .neq("id", productId)
+        .eq("is_active", true);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!productId,
+  });
+
+  // Buscar order bump existente
+  const { data: orderBump, isLoading } = useQuery({
+    queryKey: ["order-bump", productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("order_bumps")
+        .select(`
+          *,
+          order_bump_items (
+            id,
+            bump_product_id,
+            title,
+            description,
+            image_url,
+            discount_percent,
+            display_order
+          )
+        `)
+        .eq("product_id", productId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!productId,
+  });
+
+  useEffect(() => {
+    if (orderBump) {
+      setIsActive(orderBump.is_active);
+      setCustomColor(orderBump.custom_color || "#10b981");
+      setItems(orderBump.order_bump_items || []);
+    }
+  }, [orderBump]);
+
+  // Mutation para salvar order bump
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("save-order-bump", {
+        body: {
+          product_id: productId,
+          is_active: isActive,
+          custom_color: customColor,
+          items: items.map((item, idx) => ({
+            ...item,
+            display_order: idx,
+          })),
+        },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Order Bump salvo com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["order-bump", productId] });
+    },
+    onError: (error) => {
+      console.error("Erro ao salvar Order Bump:", error);
+      toast.error("Erro ao salvar Order Bump");
+    },
+  });
+
+  const addItem = () => {
+    if (items.length >= 7) {
+      toast.error("Máximo de 7 produtos permitidos");
+      return;
+    }
+    setItems([
+      ...items,
+      {
+        bump_product_id: "",
+        title: "",
+        description: "",
+        image_url: "",
+        discount_percent: 0,
+        display_order: items.length,
+      },
+    ]);
+  };
+
+  const removeItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
+
+  const updateItem = (index: number, field: keyof OrderBumpItem, value: any) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(newItems);
+  };
+
+  if (isLoading) {
+    return <div className="p-6">Carregando...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-semibold">Ativar Order Bump</h3>
+            <p className="text-sm text-muted-foreground">
+              Ofereça produtos adicionais no checkout
+            </p>
+          </div>
+          <Switch checked={isActive} onCheckedChange={setIsActive} />
+        </div>
+
+        {isActive && (
+          <>
+            <div className="mb-6">
+              <Label>Cor Principal</Label>
+              <ColorPicker
+                value={customColor}
+                onChange={setCustomColor}
+                className="mt-2"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Produtos do Order Bump ({items.length}/7)</Label>
+                <Button
+                  type="button"
+                  onClick={addItem}
+                  disabled={items.length >= 7}
+                  size="sm"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar Produto
+                </Button>
+              </div>
+
+              {items.map((item, index) => (
+                <Card key={index} className="p-4">
+                  <div className="flex items-start gap-4">
+                    <GripVertical className="w-5 h-5 text-muted-foreground mt-2" />
+                    <div className="flex-1 space-y-4">
+                      <div>
+                        <Label>Produto</Label>
+                        <Select
+                          value={item.bump_product_id}
+                          onValueChange={(value) =>
+                            updateItem(index, "bump_product_id", value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um produto" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableProducts?.map((product) => (
+                              <SelectItem key={product.id} value={product.id}>
+                                {product.name} - R${" "}
+                                {(product.price_cents / 100).toFixed(2)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label>Título (máx. 50 caracteres)</Label>
+                        <Input
+                          value={item.title}
+                          onChange={(e) =>
+                            updateItem(index, "title", e.target.value.slice(0, 50))
+                          }
+                          placeholder="Ex: Adicione este bônus especial!"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {item.title.length}/50
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label>Descrição</Label>
+                        <ReactQuill
+                          value={item.description}
+                          onChange={(value) => updateItem(index, "description", value)}
+                          theme="snow"
+                          className="bg-background"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>URL da Imagem</Label>
+                        <Input
+                          value={item.image_url}
+                          onChange={(e) =>
+                            updateItem(index, "image_url", e.target.value)
+                          }
+                          placeholder="https://exemplo.com/imagem.jpg"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Desconto (%)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={item.discount_percent}
+                          onChange={(e) =>
+                            updateItem(
+                              index,
+                              "discount_percent",
+                              Math.min(100, Math.max(0, Number(e.target.value)))
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeItem(index)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div className="flex justify-end mt-6">
+          <Button
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending}
+          >
+            {saveMutation.isPending ? "Salvando..." : "Salvar Order Bump"}
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
