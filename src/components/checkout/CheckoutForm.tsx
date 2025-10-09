@@ -367,6 +367,7 @@ export const CheckoutForm = ({ product, onDonationAmountChange, onEventQuantityC
         installments: data.installments,
         buyer_name: data.fullName,
         buyer_cpf_cnpj: data.cpfCnpj,
+        buyer_phone: data.phone,
         amount_total_cents: Math.round(finalAmountCents),
         original_product_price_cents: baseAmount,
         producer_assumes_installments: product.producer_assumes_installments || false,
