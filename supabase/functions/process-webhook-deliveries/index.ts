@@ -94,7 +94,8 @@ Deno.serve(async (req) => {
               attempts: job.attempts + 1,
               last_error: 'Endpoint not found',
               last_attempt_at: new Date().toISOString(),
-              processing_started_at: null
+              processing_started_at: null,
+              processing_lock_id: null
             })
             .eq('id', job.id);
           failureCount++;
@@ -139,6 +140,7 @@ Deno.serve(async (req) => {
               attempts: job.attempts + 1,
               last_attempt_at: new Date().toISOString(),
               processing_started_at: null,
+              processing_lock_id: null,
               updated_at: new Date().toISOString()
             })
             .eq('id', job.id);
@@ -175,6 +177,7 @@ Deno.serve(async (req) => {
               last_error: `HTTP ${response.status}: ${responseText.substring(0, 500)}`,
               next_attempt_at: nextAttemptAt,
               processing_started_at: null,
+              processing_lock_id: null,
               updated_at: new Date().toISOString()
             })
             .eq('id', job.id);
@@ -214,6 +217,7 @@ Deno.serve(async (req) => {
             last_error: `Error: ${error.message}`.substring(0, 500),
             next_attempt_at: nextAttemptAt,
             processing_started_at: null,
+            processing_lock_id: null,
             updated_at: new Date().toISOString()
           })
           .eq('id', job.id);

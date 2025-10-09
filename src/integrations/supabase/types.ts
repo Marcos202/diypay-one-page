@@ -987,6 +987,7 @@ export type Database = {
           max_attempts: number
           next_attempt_at: string
           payload: Json
+          processing_lock_id: string | null
           processing_started_at: string | null
           status: string
           transaction_event_id: string
@@ -1003,6 +1004,7 @@ export type Database = {
           max_attempts?: number
           next_attempt_at?: string
           payload: Json
+          processing_lock_id?: string | null
           processing_started_at?: string | null
           status?: string
           transaction_event_id: string
@@ -1019,6 +1021,7 @@ export type Database = {
           max_attempts?: number
           next_attempt_at?: string
           payload?: Json
+          processing_lock_id?: string | null
           processing_started_at?: string | null
           status?: string
           transaction_event_id?: string
@@ -1169,6 +1172,18 @@ export type Database = {
         Args: { p_producer_id: string }
         Returns: Json
       }
+      get_and_lock_pending_webhook_jobs: {
+        Args: { p_limit: number }
+        Returns: {
+          attempts: number
+          event_type: string
+          id: string
+          max_attempts: number
+          payload: Json
+          transaction_event_id: string
+          webhook_endpoint_id: string
+        }[]
+      }
       get_pending_webhook_jobs_locked: {
         Args: { max_jobs?: number }
         Returns: {
@@ -1181,6 +1196,7 @@ export type Database = {
           max_attempts: number
           next_attempt_at: string
           payload: Json
+          processing_lock_id: string | null
           processing_started_at: string | null
           status: string
           transaction_event_id: string
