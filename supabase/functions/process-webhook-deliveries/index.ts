@@ -25,10 +25,10 @@ async function generateSignature(payload: string, secret: string): Promise<strin
 
 // Exponential backoff calculation
 function calculateBackoffDelay(attempts: number): number {
-  const baseDelay = 60; // 1 minute
-  const maxDelay = 3600; // 1 hour
-  const delay = Math.min(baseDelay * Math.pow(2, attempts), maxDelay);
-  return delay;
+  const baseDelay = 60; // 1 minute in seconds
+  const maxDelay = 3600; // 1 hour in seconds
+  const delayInSeconds = Math.min(baseDelay * Math.pow(2, attempts), maxDelay);
+  return delayInSeconds * 1000; // Return in milliseconds
 }
 
 Deno.serve(async (req) => {
@@ -40,32 +40,23 @@ Deno.serve(async (req) => {
   try {
     console.log('Processing webhook delivery jobs...');
 
-    // Initialize Supabase client with service role
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // FASE 2: Buscar jobs com locking adequado para prevenir duplicação
-    const processingStarted = new Date().toISOString();
-    const staleThreshold = new Date(Date.now() - 300000).toISOString(); // 5 min
-
+    // ======================= INÍCIO DA CORREÇÃO =======================
+    // PASSO 1: Chamar a função RPC para buscar e travar jobs atomicamente, prevenindo race conditions.
     const { data: jobs, error: jobsError } = await supabaseClient
-      .from('webhook_delivery_jobs')
-      .select('*')
-      .eq('status', 'pending')
-      .lte('next_attempt_at', new Date().toISOString())
-      .lt('attempts', 3)
-      .or(`processing_started_at.is.null,processing_started_at.lt.${staleThreshold}`)
-      .order('created_at', { ascending: true })
-      .limit(50);
+      .rpc('get_and_lock_pending_webhook_jobs', { p_limit: 50 });
 
     if (jobsError) {
-      console.error('Error fetching webhook jobs:', jobsError);
+      console.error('Error fetching and locking webhook jobs:', jobsError);
       throw jobsError;
     }
+    // ======================== FIM DA CORREÇÃO =========================
 
-    console.log(`Found ${jobs?.length || 0} webhook delivery jobs to process`);
+    console.log(`Found and locked ${jobs?.length || 0} webhook delivery jobs to process`);
 
     if (!jobs || jobs.length === 0) {
       return new Response(JSON.stringify({ 
@@ -83,18 +74,8 @@ Deno.serve(async (req) => {
     // Process each webhook delivery job
     for (const job of jobs) {
       try {
-        // FASE 2: LOCK ATÔMICO - Tentar adquirir lock antes de processar
-        const { error: lockError } = await supabaseClient
-          .from('webhook_delivery_jobs')
-          .update({ processing_started_at: processingStarted })
-          .eq('id', job.id)
-          .is('processing_started_at', null);
-
-        if (lockError) {
-          console.warn(`Could not acquire lock for job ${job.id}, skipping...`);
-          continue;
-        }
-
+        // REMOVIDO: O lock manual que estava aqui foi removido pois a função RPC já cuida disso.
+        
         // Fetch webhook endpoint details separately
         const { data: endpoint, error: endpointError } = await supabaseClient
           .from('webhook_endpoints')
@@ -105,7 +86,7 @@ Deno.serve(async (req) => {
         if (endpointError || !endpoint) {
           console.error(`Failed to fetch webhook endpoint for job ${job.id}:`, endpointError);
           
-          // Liberar lock
+          // Liberar lock e marcar como falha
           await supabaseClient
             .from('webhook_delivery_jobs')
             .update({
@@ -116,7 +97,7 @@ Deno.serve(async (req) => {
               processing_started_at: null
             })
             .eq('id', job.id);
-          
+          failureCount++;
           continue;
         }
 
@@ -141,7 +122,6 @@ Deno.serve(async (req) => {
           method: 'POST',
           headers,
           body: payloadString,
-          // Set a 30-second timeout
           signal: AbortSignal.timeout(30000)
         });
 
@@ -151,7 +131,7 @@ Deno.serve(async (req) => {
         console.log(`Webhook delivery attempt for job ${job.id}: status ${response.status}, success: ${isSuccess}`);
 
         if (isSuccess) {
-          // Mark as successful (FASE 2: Liberar lock)
+          // Mark as successful and release lock
           const { error: updateError } = await supabaseClient
             .from('webhook_delivery_jobs')
             .update({
@@ -167,42 +147,29 @@ Deno.serve(async (req) => {
             console.error(`Error updating successful job ${job.id}:`, updateError);
           } else {
             successCount++;
-            
-            // Log successful delivery
-            const { error: logError } = await supabaseClient
-              .from('webhook_event_logs')
-              .insert({
-                endpoint_id: endpoint.id,
-                event_type: job.event_type,
-                status: 'success',
-                payload: job.payload,
-                response_code: response.status,
-                response_body: responseText.substring(0, 1000) // Limit response body size
-              });
-
-            if (logError) {
-              console.error(`Error logging successful delivery for job ${job.id}:`, logError);
-            }
+            await supabaseClient.from('webhook_event_logs').insert({
+              endpoint_id: endpoint.id,
+              event_type: job.event_type,
+              status: 'success',
+              payload: job.payload,
+              response_code: response.status,
+              response_body: responseText.substring(0, 1000)
+            });
           }
         } else {
-          // Handle failure
+          // Handle failure and release lock
           const nextAttempts = job.attempts + 1;
           const shouldRetry = nextAttempts < job.max_attempts;
-
-          let jobStatus = 'failed';
           let nextAttemptAt = null;
 
           if (shouldRetry) {
-            jobStatus = 'pending';
-            const backoffSeconds = calculateBackoffDelay(nextAttempts);
-            nextAttemptAt = new Date(Date.now() + backoffSeconds * 1000).toISOString();
+            nextAttemptAt = new Date(Date.now() + calculateBackoffDelay(nextAttempts)).toISOString();
           }
 
-          // Update job with failure info (FASE 2: Liberar lock)
           const { error: updateError } = await supabaseClient
             .from('webhook_delivery_jobs')
             .update({
-              status: jobStatus,
+              status: shouldRetry ? 'pending' : 'failed',
               attempts: nextAttempts,
               last_attempt_at: new Date().toISOString(),
               last_error: `HTTP ${response.status}: ${responseText.substring(0, 500)}`,
@@ -216,47 +183,32 @@ Deno.serve(async (req) => {
             console.error(`Error updating failed job ${job.id}:`, updateError);
           } else {
             failureCount++;
-            
-            // Log failed delivery
-            const { error: logError } = await supabaseClient
-              .from('webhook_event_logs')
-              .insert({
-                endpoint_id: endpoint.id,
-                event_type: job.event_type,
-                status: 'failed',
-                payload: job.payload,
-                response_code: response.status,
-                response_body: responseText.substring(0, 1000)
-              });
-
-            if (logError) {
-              console.error(`Error logging failed delivery for job ${job.id}:`, logError);
-            }
+            await supabaseClient.from('webhook_event_logs').insert({
+              endpoint_id: endpoint.id,
+              event_type: job.event_type,
+              status: 'failed',
+              payload: job.payload,
+              response_code: response.status,
+              response_body: responseText.substring(0, 1000)
+            });
           }
-
           console.log(`Webhook job ${job.id} failed with status ${response.status}. ${shouldRetry ? 'Will retry' : 'Max attempts reached'}`);
         }
-
       } catch (error: any) {
         console.error(`Error processing webhook job ${job.id}:`, error);
         
-        // Update job with error
         const nextAttempts = job.attempts + 1;
         const shouldRetry = nextAttempts < job.max_attempts;
-
-        let jobStatus = 'failed';
         let nextAttemptAt = null;
 
         if (shouldRetry) {
-          jobStatus = 'pending';
-          const backoffSeconds = calculateBackoffDelay(nextAttempts);
-          nextAttemptAt = new Date(Date.now() + backoffSeconds * 1000).toISOString();
+          nextAttemptAt = new Date(Date.now() + calculateBackoffDelay(nextAttempts)).toISOString();
         }
 
-        const { error: updateError } = await supabaseClient
+        await supabaseClient
           .from('webhook_delivery_jobs')
           .update({
-            status: jobStatus,
+            status: shouldRetry ? 'pending' : 'failed',
             attempts: nextAttempts,
             last_attempt_at: new Date().toISOString(),
             last_error: `Error: ${error.message}`.substring(0, 500),
@@ -266,27 +218,15 @@ Deno.serve(async (req) => {
           })
           .eq('id', job.id);
 
-        if (updateError) {
-          console.error(`Error updating job ${job.id} after exception:`, updateError);
-        }
-
         failureCount++;
-
-        // Log error
-        const { error: logError } = await supabaseClient
-          .from('webhook_event_logs')
-          .insert({
-            endpoint_id: job.webhook_endpoint_id, // Use job.webhook_endpoint_id for errors since we might not have fetched the endpoint
-            event_type: job.event_type,
-            status: 'error',
-            payload: job.payload,
-            response_code: null,
-            response_body: `Error: ${error.message}`.substring(0, 1000)
-          });
-
-        if (logError) {
-          console.error(`Error logging error for job ${job.id}:`, logError);
-        }
+        await supabaseClient.from('webhook_event_logs').insert({
+          endpoint_id: job.webhook_endpoint_id,
+          event_type: job.event_type,
+          status: 'error',
+          payload: job.payload,
+          response_code: null,
+          response_body: `Error: ${error.message}`.substring(0, 1000)
+        });
       }
     }
 
@@ -307,7 +247,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: 'Failed to process webhook deliveries',
-        details: error.message
+        details: error.message 
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
