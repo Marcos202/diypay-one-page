@@ -272,6 +272,95 @@ export type Database = {
           },
         ]
       }
+      order_bump_items: {
+        Row: {
+          bump_product_id: string
+          created_at: string
+          description: string | null
+          discount_percent: number | null
+          display_order: number
+          id: string
+          image_url: string | null
+          order_bump_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bump_product_id: string
+          created_at?: string
+          description?: string | null
+          discount_percent?: number | null
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          order_bump_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bump_product_id?: string
+          created_at?: string
+          description?: string | null
+          discount_percent?: number | null
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          order_bump_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_bump_items_bump_product_id_fkey"
+            columns: ["bump_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_bump_items_order_bump_id_fkey"
+            columns: ["order_bump_id"]
+            isOneToOne: false
+            referencedRelation: "order_bumps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_bumps: {
+        Row: {
+          created_at: string
+          custom_color: string | null
+          id: string
+          is_active: boolean
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_color?: string | null
+          id?: string
+          is_active?: boolean
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_color?: string | null
+          id?: string
+          is_active?: boolean
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_bumps_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pages: {
         Row: {
           category: string | null
@@ -691,6 +780,7 @@ export type Database = {
           installments_chosen: number | null
           iugu_charge_id: string | null
           iugu_subscription_id: string | null
+          order_bump_items: Json | null
           original_product_price_cents: number | null
           paid_at: string | null
           payment_method_used: string
@@ -722,6 +812,7 @@ export type Database = {
           installments_chosen?: number | null
           iugu_charge_id?: string | null
           iugu_subscription_id?: string | null
+          order_bump_items?: Json | null
           original_product_price_cents?: number | null
           paid_at?: string | null
           payment_method_used: string
@@ -753,6 +844,7 @@ export type Database = {
           installments_chosen?: number | null
           iugu_charge_id?: string | null
           iugu_subscription_id?: string | null
+          order_bump_items?: Json | null
           original_product_price_cents?: number | null
           paid_at?: string | null
           payment_method_used?: string
