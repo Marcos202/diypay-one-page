@@ -94,17 +94,17 @@ export default function OrderBumpCheckout({
               </div>
             </div>
 
-            {/* SEÇÃO INFERIOR: Fundo branco e layout responsivo */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 bg-white">
+            {/* SEÇÃO INFERIOR: Fundo branco e layout de linha em TODAS as telas */}
+            <div className="flex flex-row items-start gap-4 p-4 bg-white">
               {item.image_url && (
                 <img
                   src={item.image_url}
                   alt={item.title}
-                  className="w-24 h-24 object-cover rounded border border-gray-200 flex-shrink-0"
+                  className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded border border-gray-200 flex-shrink-0"
                 />
               )}
               
-              <div className="flex-1 w-full text-center sm:text-left">
+              <div className="flex-1 text-left">
                 <h4 
                   className="font-bold text-sm uppercase mb-1" 
                   style={{ color: '#FF0000' }}
