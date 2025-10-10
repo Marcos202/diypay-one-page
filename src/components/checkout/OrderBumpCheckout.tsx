@@ -51,11 +51,11 @@ export default function OrderBumpCheckout({
 
   const colors = {
     background: '#FFFFFF',
-    border: '#D1D5DB',
-    checkboxText: '#374151',
-    productName: '#1F2937',
-    offerTag: '#DC2626',
-    price: '#111827',
+    border: '#E0E0E0',
+    checkboxText: '#333333',
+    productName: '#000000',
+    price: '#000000',
+    description: '#444444',
   };
 
   return (
@@ -69,7 +69,7 @@ export default function OrderBumpCheckout({
         return (
           <Card
             key={item.id}
-            className="p-4 lg:p-6 border-2 border-dashed"
+            className="p-5 lg:p-6 border-2 border-dashed rounded-lg"
             style={{
               borderColor: colors.border,
               backgroundColor: colors.background,
@@ -79,16 +79,16 @@ export default function OrderBumpCheckout({
             <div className="flex justify-between items-start gap-4 mb-4">
               <label 
                 htmlFor={`order-bump-${item.id}`}
-                className="flex items-start gap-2 flex-1 cursor-pointer"
+                className="flex items-start gap-3 flex-1 cursor-pointer"
               >
                 <Checkbox
                   id={`order-bump-${item.id}`}
                   checked={selectedItems.has(item.id)}
                   onCheckedChange={(checked) => handleToggle(item, checked as boolean)}
-                  className="mt-1 flex-shrink-0"
+                  className="mt-0.5 flex-shrink-0"
                 />
                 <span 
-                  className="text-sm lg:text-base"
+                  className="text-[15px] lg:text-base font-semibold"
                   style={{ color: colors.checkboxText }}
                 >
                   {item.title || "Sim, adicione no meu pedido!"}
@@ -125,7 +125,7 @@ export default function OrderBumpCheckout({
                 <img
                   src={item.image_url}
                   alt={item.title}
-                  className="w-full sm:w-24 sm:h-24 lg:w-32 lg:h-32 object-cover rounded flex-shrink-0"
+                  className="w-20 h-20 object-cover rounded flex-shrink-0"
                 />
               )}
               
@@ -139,17 +139,10 @@ export default function OrderBumpCheckout({
                   {item.products.name}
                 </h4>
                 
-                {/* TAG [OFERTA ESPECIAL] */}
-                <p 
-                  className="text-xs lg:text-sm mb-2 font-medium"
-                  style={{ color: colors.offerTag }}
-                >
-                  [OFERTA ESPECIAL]
-                </p>
-                
                 {/* DESCRIÇÃO */}
                 <div 
-                  className="text-xs lg:text-sm prose prose-sm max-w-none text-muted-foreground"
+                  className="text-[13px] lg:text-sm prose prose-sm max-w-none leading-relaxed"
+                  style={{ color: colors.description }}
                   dangerouslySetInnerHTML={{ __html: item.description }}
                 />
               </div>
