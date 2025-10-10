@@ -24,14 +24,36 @@ const PublicPage = () => {
   // Inicializar tracking quando a página carregar
   useEffect(() => {
     const initTracking = async () => {
-      if (!page?.product_id) return;
+      console.log('[Tracking Debug] 🚀 INICIANDO tracking na PublicPage');
+      console.log('[Tracking Debug] Page Product ID:', page?.product_id);
+      
+      if (!page?.product_id) {
+        console.log('[Tracking Debug] ⚠️ ABORTADO: Product ID ausente');
+        return;
+      }
       
       try {
-        const { data: trackingConfig } = await supabase.functions.invoke(
+        console.log('[Tracking Debug] 📡 Chamando get-public-tracking-config...');
+        
+        const { data: trackingConfig, error } = await supabase.functions.invoke(
           `get-public-tracking-config?productId=${page.product_id}`
         );
         
-        if (trackingConfig?.is_active && trackingConfig.tracking_enabled_pages?.includes('product_page')) {
+        console.log('[Tracking Debug] 📥 RESPOSTA BRUTA da Edge Function:', trackingConfig);
+        console.log('[Tracking Debug] Erro (se houver):', error);
+        
+        // VALIDAÇÃO ROBUSTA
+        const isValidConfig = trackingConfig?.is_active && 
+                             (trackingConfig.meta_pixel_id || 
+                              trackingConfig.tiktok_pixel_id || 
+                              trackingConfig.google_ads_conversion_id);
+        
+        console.log('[Tracking Debug] Config é válida?', isValidConfig);
+        console.log('[Tracking Debug] Páginas habilitadas:', trackingConfig?.tracking_enabled_pages);
+        
+        if (isValidConfig && trackingConfig.tracking_enabled_pages?.includes('product_page')) {
+          console.log('[Tracking Debug] ✅ CONFIGURAÇÃO VÁLIDA! Inicializando tracking...');
+          
           await tracking.init(trackingConfig);
           
           tracking.trackViewContent({
@@ -40,9 +62,11 @@ const PublicPage = () => {
             value: page.price_cents ? page.price_cents / 100 : 0,
             currency: 'BRL'
           });
+        } else {
+          console.log('[Tracking Debug] ❌ Config inválida ou product_page não habilitada');
         }
       } catch (err) {
-        console.error('[PublicPage] Erro ao inicializar tracking:', err);
+        console.error('[Tracking Debug] ❌ ERRO FATAL:', err);
       }
     };
     

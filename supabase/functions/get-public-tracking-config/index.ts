@@ -9,10 +9,15 @@ serve(async (req) => {
   }
 
   try {
+    console.log('[Tracking Debug] 🌐 Edge Function get-public-tracking-config ACIONADA');
+    
     const url = new URL(req.url);
     const productId = url.searchParams.get('productId');
+    
+    console.log('[Tracking Debug] Product ID recebido:', productId);
 
     if (!productId) {
+      console.log('[Tracking Debug] ❌ productId ausente na requisição');
       return new Response(
         JSON.stringify({ error: 'productId é obrigatório' }),
         { 
@@ -28,6 +33,8 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
+    console.log('[Tracking Debug] 🔍 Buscando no DB para product_id:', productId);
+    
     // Buscar configuração de tracking do produto
     const { data: trackingConfig, error } = await supabaseClient
       .from('producer_tracking')
@@ -36,11 +43,24 @@ serve(async (req) => {
       .eq('is_active', true)
       .single();
 
+    console.log('[Tracking Debug] 📊 Resultado da query:', { 
+      found: !!trackingConfig, 
+      error: error?.message,
+      data: trackingConfig 
+    });
+
     if (error) {
-      console.log(`[get-public-tracking-config] Nenhuma configuração encontrada para produto ${productId}`);
-      // Retornar objeto vazio se não houver configuração
+      console.log(`[Tracking Debug] ⚠️ Nenhuma config encontrada (${error.code}). Retornando objeto vazio estruturado.`);
+      // Retornar estrutura consistente mesmo quando não há configuração
       return new Response(
-        JSON.stringify({}),
+        JSON.stringify({ 
+          is_active: false, 
+          tracking_enabled_pages: [],
+          meta_pixel_id: null,
+          tiktok_pixel_id: null,
+          google_ads_conversion_id: null,
+          google_ads_conversion_label: null
+        }),
         { 
           status: 200, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -49,15 +69,19 @@ serve(async (req) => {
     }
 
     // Retornar apenas campos públicos (NUNCA os tokens de API)
+    const response = {
+      meta_pixel_id: trackingConfig.meta_pixel_id,
+      tiktok_pixel_id: trackingConfig.tiktok_pixel_id,
+      google_ads_conversion_id: trackingConfig.google_ads_conversion_id,
+      google_ads_conversion_label: trackingConfig.google_ads_conversion_label,
+      is_active: trackingConfig.is_active,
+      tracking_enabled_pages: trackingConfig.tracking_enabled_pages || []
+    };
+    
+    console.log('[Tracking Debug] ✅ Retornando config PÚBLICA:', response);
+    
     return new Response(
-      JSON.stringify({
-        meta_pixel_id: trackingConfig.meta_pixel_id,
-        tiktok_pixel_id: trackingConfig.tiktok_pixel_id,
-        google_ads_conversion_id: trackingConfig.google_ads_conversion_id,
-        google_ads_conversion_label: trackingConfig.google_ads_conversion_label,
-        is_active: trackingConfig.is_active,
-        tracking_enabled_pages: trackingConfig.tracking_enabled_pages || []
-      }),
+      JSON.stringify(response),
       { 
         status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -65,7 +89,7 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('[get-public-tracking-config] Erro:', error.message);
+    console.error('[Tracking Debug] ❌ ERRO FATAL na Edge Function:', error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

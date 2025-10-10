@@ -84,14 +84,36 @@ const Checkout = () => {
   // Inicializar tracking quando o produto carregar
   useEffect(() => {
     const initTracking = async () => {
-      if (!product?.id) return;
+      console.log('[Tracking Debug] 🚀 INICIANDO tracking no Checkout');
+      console.log('[Tracking Debug] Product ID:', product?.id);
+      
+      if (!product?.id) {
+        console.log('[Tracking Debug] ⚠️ ABORTADO: Product ID ausente');
+        return;
+      }
       
       try {
-        const { data: trackingConfig } = await supabase.functions.invoke(
+        console.log('[Tracking Debug] 📡 Chamando get-public-tracking-config...');
+        
+        const { data: trackingConfig, error } = await supabase.functions.invoke(
           `get-public-tracking-config?productId=${product.id}`
         );
         
-        if (trackingConfig?.is_active && trackingConfig.tracking_enabled_pages?.includes('checkout')) {
+        console.log('[Tracking Debug] 📥 RESPOSTA BRUTA da Edge Function:', trackingConfig);
+        console.log('[Tracking Debug] Erro (se houver):', error);
+        
+        // VALIDAÇÃO ROBUSTA
+        const isValidConfig = trackingConfig?.is_active && 
+                             (trackingConfig.meta_pixel_id || 
+                              trackingConfig.tiktok_pixel_id || 
+                              trackingConfig.google_ads_conversion_id);
+        
+        console.log('[Tracking Debug] Config é válida?', isValidConfig);
+        console.log('[Tracking Debug] Páginas habilitadas:', trackingConfig?.tracking_enabled_pages);
+        
+        if (isValidConfig && trackingConfig.tracking_enabled_pages?.includes('checkout')) {
+          console.log('[Tracking Debug] ✅ CONFIGURAÇÃO VÁLIDA! Inicializando tracking...');
+          
           await tracking.init(trackingConfig);
           
           const totalValue = (product.price_cents || 0) / 100;
@@ -102,9 +124,11 @@ const Checkout = () => {
             currency: 'BRL',
             num_items: 1
           });
+        } else {
+          console.log('[Tracking Debug] ❌ Config inválida ou checkout não habilitado');
         }
       } catch (err) {
-        console.error('[Checkout] Erro ao inicializar tracking:', err);
+        console.error('[Tracking Debug] ❌ ERRO FATAL:', err);
       }
     };
     

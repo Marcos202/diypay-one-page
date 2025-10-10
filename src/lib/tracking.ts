@@ -46,7 +46,26 @@ class TrackingService {
    * Inicializa os scripts de rastreamento dinamicamente
    */
   async init(config: TrackingConfig): Promise<void> {
-    if (this.initialized || !config.is_active) {
+    console.log('[Tracking Debug] 🔧 TrackingService.init() CHAMADO');
+    console.log('[Tracking Debug] Config recebida:', JSON.stringify(config, null, 2));
+    
+    if (this.initialized) {
+      console.log('[Tracking Debug] ⚠️ Já inicializado, pulando...');
+      return;
+    }
+    
+    if (!config.is_active) {
+      console.log('[Tracking Debug] ❌ Config inativa (is_active = false)');
+      return;
+    }
+    
+    // VALIDAÇÃO: Pelo menos um pixel deve estar configurado
+    const hasAtLeastOnePixel = config.meta_pixel_id || 
+                               config.tiktok_pixel_id || 
+                               config.google_ads_conversion_id;
+    
+    if (!hasAtLeastOnePixel) {
+      console.log('[Tracking Debug] ❌ Nenhum pixel configurado, abortando');
       return;
     }
 
@@ -55,23 +74,26 @@ class TrackingService {
     try {
       // Inicializar Meta Pixel
       if (config.meta_pixel_id && !window.fbq) {
+        console.log('[Tracking Debug] 🎯 Inicializando META PIXEL...');
         this.initMetaPixel(config.meta_pixel_id);
       }
 
       // Inicializar TikTok Pixel
       if (config.tiktok_pixel_id && !window.ttq) {
+        console.log('[Tracking Debug] 🎯 Inicializando TIKTOK PIXEL...');
         this.initTikTokPixel(config.tiktok_pixel_id);
       }
 
       // Inicializar Google Ads
       if (config.google_ads_conversion_id && !window.gtag) {
+        console.log('[Tracking Debug] 🎯 Inicializando GOOGLE ADS...');
         this.initGoogleAds(config.google_ads_conversion_id);
       }
 
       this.initialized = true;
-      console.log('[Tracking] Scripts inicializados com sucesso');
+      console.log('[Tracking Debug] ✅ Scripts inicializados com SUCESSO');
     } catch (error) {
-      console.error('[Tracking] Erro ao inicializar scripts:', error);
+      console.error('[Tracking Debug] ❌ ERRO ao inicializar scripts:', error);
     }
   }
 
@@ -79,8 +101,13 @@ class TrackingService {
    * Inicializa o Meta Pixel
    */
   private initMetaPixel(pixelId: string): void {
+    console.log('[Tracking Debug] 💉 INJETANDO script do Meta Pixel. ID:', pixelId);
+    
     (function(f: any, b: Document, e: string, v: string, n?: any, t?: any, s?: any) {
-      if (f.fbq) return;
+      if (f.fbq) {
+        console.log('[Tracking Debug] ⚠️ window.fbq já existe, pulando injeção');
+        return;
+      }
       n = f.fbq = function() {
         n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
       };
@@ -98,13 +125,15 @@ class TrackingService {
 
     window.fbq('init', pixelId);
     window.fbq('track', 'PageView');
-    console.log('[Tracking] Meta Pixel inicializado:', pixelId);
+    console.log('[Tracking Debug] ✅ Meta Pixel ATIVO. ID:', pixelId);
   }
 
   /**
    * Inicializa o TikTok Pixel
    */
   private initTikTokPixel(pixelId: string): void {
+    console.log('[Tracking Debug] 💉 INJETANDO script do TikTok Pixel. ID:', pixelId);
+    
     (function(w: any, d: Document, t: string) {
       w.TiktokAnalyticsObject = t;
       const ttq = w[t] = w[t] || [];
@@ -140,13 +169,15 @@ class TrackingService {
       ttq.page();
     })(window, document, 'ttq');
 
-    console.log('[Tracking] TikTok Pixel inicializado:', pixelId);
+    console.log('[Tracking Debug] ✅ TikTok Pixel ATIVO. ID:', pixelId);
   }
 
   /**
    * Inicializa o Google Ads
    */
   private initGoogleAds(conversionId: string): void {
+    console.log('[Tracking Debug] 💉 INJETANDO script do Google Ads. ID:', conversionId);
+    
     // Criar dataLayer se não existir
     window.dataLayer = window.dataLayer || [];
     
@@ -164,7 +195,7 @@ class TrackingService {
     script.src = `https://www.googletagmanager.com/gtag/js?id=${conversionId}`;
     document.head.appendChild(script);
 
-    console.log('[Tracking] Google Ads inicializado:', conversionId);
+    console.log('[Tracking Debug] ✅ Google Ads ATIVO. ID:', conversionId);
   }
 
   /**
