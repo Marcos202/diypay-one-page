@@ -575,6 +575,68 @@ export type Database = {
           },
         ]
       }
+      producer_tracking: {
+        Row: {
+          created_at: string
+          google_ads_conversion_id: string | null
+          google_ads_conversion_label: string | null
+          id: string
+          is_active: boolean
+          meta_access_token: string | null
+          meta_pixel_id: string | null
+          meta_test_event_code: string | null
+          producer_id: string
+          product_id: string
+          tiktok_access_token: string | null
+          tiktok_pixel_id: string | null
+          tiktok_test_event_code: string | null
+          tracking_enabled_pages: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          google_ads_conversion_id?: string | null
+          google_ads_conversion_label?: string | null
+          id?: string
+          is_active?: boolean
+          meta_access_token?: string | null
+          meta_pixel_id?: string | null
+          meta_test_event_code?: string | null
+          producer_id: string
+          product_id: string
+          tiktok_access_token?: string | null
+          tiktok_pixel_id?: string | null
+          tiktok_test_event_code?: string | null
+          tracking_enabled_pages?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          google_ads_conversion_id?: string | null
+          google_ads_conversion_label?: string | null
+          id?: string
+          is_active?: boolean
+          meta_access_token?: string | null
+          meta_pixel_id?: string | null
+          meta_test_event_code?: string | null
+          producer_id?: string
+          product_id?: string
+          tiktok_access_token?: string | null
+          tiktok_pixel_id?: string | null
+          tiktok_test_event_code?: string | null
+          tracking_enabled_pages?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "producer_tracking_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           allowed_payment_methods: Json
