@@ -13,7 +13,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import OrderBumpImageUpload from "../OrderBumpImageUpload";
 
-const DEFAULT_TITLE = "Sim, adicione no meu pedido!";
+const DEFAULT_TITLE = "SIM, EU ACEITO ESSA OFERTA ESPECIAL!";
 
 interface OrderBumpItem {
   id?: string;
@@ -140,22 +140,67 @@ export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
   };
 
   const sanitizeDescription = (html: string): string => {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    const links = tempDiv.querySelectorAll('a');
-    links.forEach(link => {
-      const text = document.createTextNode(link.textContent || '');
-      link.parentNode?.replaceChild(text, link);
-    });
-    return tempDiv.innerHTML;
+    return html.replace(/<a\s+[^>]*href=['"][^'"]*['"][^>]*>/gi, '')
+               .replace(/<\/a>/gi, '');
   };
 
   const handleDescriptionChange = (index: number, value: string) => {
+    // Remove links se existirem
     if (value.includes('<a href') || value.includes('http://') || value.includes('https://')) {
       toast.error("Links não são permitidos na descrição");
       return;
     }
-    updateItem(index, "description", sanitizeDescription(value));
+    
+    // Sanitiza a descrição
+    const sanitized = sanitizeDescription(value);
+    
+    // Extrai apenas o texto (sem tags HTML)
+    const plainText = sanitized.replace(/<[^>]*>/g, '');
+    
+    // Se ultrapassou 200 caracteres, trunca mantendo a formatação HTML
+    if (plainText.length > 200) {
+      // Trunca o texto HTML mantendo as tags
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = sanitized;
+      let currentLength = 0;
+      let truncatedHTML = '';
+      
+      const traverse = (node: Node): boolean => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent || '';
+          if (currentLength + text.length <= 200) {
+            truncatedHTML += text;
+            currentLength += text.length;
+            return true;
+          } else {
+            truncatedHTML += text.substring(0, 200 - currentLength);
+            currentLength = 200;
+            return false;
+          }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as Element;
+          const tagName = element.tagName.toLowerCase();
+          truncatedHTML += `<${tagName}>`;
+          
+          for (const child of Array.from(node.childNodes)) {
+            if (!traverse(child)) {
+              truncatedHTML += `</${tagName}>`;
+              return false;
+            }
+          }
+          
+          truncatedHTML += `</${tagName}>`;
+          return true;
+        }
+        return true;
+      };
+      
+      traverse(tempDiv);
+      updateItem(index, "description", truncatedHTML);
+      return;
+    }
+    
+    updateItem(index, "description", sanitized);
   };
 
   const quillModules = {
@@ -169,7 +214,22 @@ export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
     }
   };
 
-  const removeItem = (index: number) => {
+  const removeItem = async (index: number) => {
+    const itemToRemove = items[index];
+    
+    // Se o item tem imagem, deletar do storage
+    if (itemToRemove.image_url) {
+      try {
+        const filePath = new URL(itemToRemove.image_url).pathname.split('/order-bump-images/')[1];
+        if (filePath) {
+          await supabase.storage.from('order-bump-images').remove([filePath]);
+        }
+      } catch (err) {
+        console.error("Erro ao remover imagem:", err);
+        // Não bloqueia a remoção do item mesmo se falhar a remoção da imagem
+      }
+    }
+    
     setItems(items.filter((_, i) => i !== index));
   };
 

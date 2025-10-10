@@ -45,6 +45,18 @@ export default function OrderBumpImageUpload({ value, onChange }: OrderBumpImage
       
       URL.revokeObjectURL(objectUrl);
       
+      // Deletar imagem antiga antes de fazer upload
+      if (value) {
+        try {
+          const oldFilePath = new URL(value).pathname.split('/order-bump-images/')[1];
+          if (oldFilePath) {
+            await supabase.storage.from('order-bump-images').remove([oldFilePath]);
+          }
+        } catch (err) {
+          console.error("Erro ao remover imagem antiga:", err);
+        }
+      }
+      
       // Upload para Supabase Storage
       setIsUploading(true);
       const fileName = `${Date.now()}-${file.name}`;
@@ -73,9 +85,26 @@ export default function OrderBumpImageUpload({ value, onChange }: OrderBumpImage
     }
   };
 
-  const handleRemove = () => {
-    onChange("");
-    toast.success("Imagem removida");
+  const handleRemove = async () => {
+    if (!value) return;
+    
+    try {
+      // Deletar do storage
+      const oldFilePath = new URL(value).pathname.split('/order-bump-images/')[1];
+      if (oldFilePath) {
+        const { error } = await supabase.storage
+          .from('order-bump-images')
+          .remove([oldFilePath]);
+        
+        if (error) throw error;
+      }
+      
+      onChange("");
+      toast.success("Imagem removida do servidor");
+    } catch (err: any) {
+      console.error("Erro ao remover imagem:", err);
+      toast.error("Erro ao remover imagem");
+    }
   };
   
   return (
