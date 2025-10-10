@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
-import { ColorPicker } from "@/components/ui/color-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Trash2, Plus, GripVertical } from "lucide-react";
@@ -33,7 +32,6 @@ interface OrderBumpTabProps {
 export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
   const queryClient = useQueryClient();
   const [isActive, setIsActive] = useState(false);
-  const [customColor, setCustomColor] = useState("#6B7280");
   const [items, setItems] = useState<OrderBumpItem[]>([]);
 
   // Buscar produtos do produtor (excluindo o produto atual)
@@ -60,7 +58,8 @@ export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
       const { data, error } = await supabase
         .from("order_bumps")
         .select(`
-          *,
+          id,
+          is_active,
           order_bump_items (
             id,
             bump_product_id,
@@ -83,7 +82,6 @@ export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
   useEffect(() => {
     if (orderBump) {
       setIsActive(orderBump.is_active);
-      setCustomColor(orderBump.custom_color || "#6B7280");
       setItems(orderBump.order_bump_items || []);
     }
   }, [orderBump]);
@@ -95,7 +93,6 @@ export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
         body: {
           product_id: productId,
           is_active: isActive,
-          custom_color: customColor,
           items: items.map((item, idx) => ({
             ...item,
             display_order: idx,
@@ -194,15 +191,6 @@ export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
 
         {isActive && (
           <>
-            <div className="mb-6">
-              <Label>Cor Principal</Label>
-              <ColorPicker
-                value={customColor}
-                onChange={setCustomColor}
-                className="mt-2"
-              />
-            </div>
-
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label>Produtos do Order Bump ({items.length}/7)</Label>
