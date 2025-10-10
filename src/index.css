@@ -234,6 +234,7 @@
 /* ==========================================================================
    Order Bump Arrow Animation
    ========================================================================== */
+/* Removido - não é usado no modelo de referência
 @keyframes pulse-arrow {
   0%, 100% {
     opacity: 1;
@@ -248,3 +249,4 @@
 .animate-pulse-arrow {
   animation: pulse-arrow 2s ease-in-out infinite;
 }
+*/

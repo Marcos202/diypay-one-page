@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import { ArrowDown } from "lucide-react";
 
 interface OrderBumpProduct {
   id: string;
@@ -50,18 +49,14 @@ export default function OrderBumpCheckout({
     setSelectedItems(newSelected);
   };
 
-  const getColorPalette = (baseColor: string = '#6B7280') => {
-    return {
-      border: baseColor,
-      background: `${baseColor}10`,
-      titleBackground: '#F3F4F6',
-      titleText: '#374151',
-      productName: '#D90000',
-      text: baseColor,
-    };
+  const colors = {
+    background: '#FFFFFF',
+    border: '#D1D5DB',
+    checkboxText: '#374151',
+    productName: '#1F2937',
+    offerTag: '#DC2626',
+    price: '#111827',
   };
-
-  const colors = getColorPalette(orderBump.custom_color || '#6B7280');
 
   return (
     <div className="space-y-4 my-6 w-full px-4 lg:px-0">
@@ -74,94 +69,89 @@ export default function OrderBumpCheckout({
         return (
           <Card
             key={item.id}
-            className="p-0 border-2 border-dashed relative overflow-hidden"
+            className="p-4 lg:p-6 border-2 border-dashed"
             style={{
               borderColor: colors.border,
               backgroundColor: colors.background,
             }}
           >
-            {/* CABEÇALHO COM FUNDO MAIS ESCURO */}
-            <div 
-              className="px-4 py-3 lg:px-6 lg:py-4"
-              style={{ backgroundColor: colors.titleBackground }}
-            >
-              <h4 
-                className="font-bold text-sm lg:text-base uppercase leading-tight"
-                style={{ color: colors.titleText }}
+            {/* LINHA 1: CHECKBOX + TÍTULO + PREÇO */}
+            <div className="flex justify-between items-start gap-4 mb-4">
+              <label 
+                htmlFor={`order-bump-${item.id}`}
+                className="flex items-start gap-2 flex-1 cursor-pointer"
               >
-                {item.title || "SIM, EU ACEITO ESSA OFERTA ESPECIAL!"}
-              </h4>
-              <p 
-                className="text-xs lg:text-sm font-medium mt-1"
-                style={{ color: colors.productName }}
-              >
-                {item.products.name}
-              </p>
-            </div>
-            
-            {/* CORPO DO CARD */}
-            <div className="p-4 lg:p-6">
-              <div className="flex flex-col lg:flex-row items-start gap-3 lg:gap-4">
-                {/* SETA VERMELHA + CHECKBOX */}
-                <div className="flex items-start gap-2 self-start">
-                  <ArrowDown 
-                    className="w-5 h-5 text-red-500 animate-pulse-arrow mt-0.5" 
-                  />
-                  <Checkbox
-                    id={`order-bump-${item.id}`}
-                    checked={selectedItems.has(item.id)}
-                    onCheckedChange={(checked) =>
-                      handleToggle(item, checked as boolean)
-                    }
-                    className="mt-0.5"
-                  />
-                </div>
-                
-                {/* CONTEÚDO */}
-                <label 
-                  htmlFor={`order-bump-${item.id}`} 
-                  className="flex-1 cursor-pointer w-full lg:w-auto"
+                <Checkbox
+                  id={`order-bump-${item.id}`}
+                  checked={selectedItems.has(item.id)}
+                  onCheckedChange={(checked) => handleToggle(item, checked as boolean)}
+                  className="mt-1 flex-shrink-0"
+                />
+                <span 
+                  className="text-sm lg:text-base"
+                  style={{ color: colors.checkboxText }}
                 >
-                  <div 
-                    className="text-xs lg:text-sm prose prose-sm max-w-none mb-3"
-                    dangerouslySetInnerHTML={{ __html: item.description }}
-                  />
-                  
-                  {/* PREÇO */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {hasDiscount && (
-                      <span className="text-xs lg:text-sm text-muted-foreground line-through">
-                        R$ {(originalPrice / 100).toFixed(2)}
-                      </span>
-                    )}
-                    <span
-                      className="font-bold text-base lg:text-lg"
-                      style={{ color: colors.text }}
-                    >
-                      R$ {(finalPrice / 100).toFixed(2)}
-                    </span>
-                    {hasDiscount && (
-                      <span
-                        className="text-xs px-2 py-1 rounded"
-                        style={{
-                          backgroundColor: colors.border,
-                          color: "white",
-                        }}
-                      >
-                        -{item.discount_percent}%
-                      </span>
-                    )}
-                  </div>
-                </label>
-                
-                {/* IMAGEM */}
-                {item.image_url && (
-                  <img
-                    src={item.image_url}
-                    alt={item.title}
-                    className="w-full h-auto lg:w-20 lg:h-20 object-cover rounded mt-3 lg:mt-0 order-first lg:order-last"
-                  />
+                  {item.title || "Sim, adicione no meu pedido!"}
+                </span>
+              </label>
+              
+              {/* PREÇO À DIREITA */}
+              <div className="text-right flex-shrink-0">
+                {hasDiscount && (
+                  <span className="text-xs text-muted-foreground line-through block">
+                    R$ {(originalPrice / 100).toFixed(2)}
+                  </span>
                 )}
+                <span
+                  className="font-bold text-lg whitespace-nowrap"
+                  style={{ color: colors.price }}
+                >
+                  R$ {(finalPrice / 100).toFixed(2)}
+                </span>
+                {hasDiscount && (
+                  <span
+                    className="inline-block text-xs px-2 py-0.5 rounded mt-1 bg-red-600 text-white"
+                  >
+                    -{item.discount_percent}%
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* LINHA 2: IMAGEM À ESQUERDA + CONTEÚDO */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* IMAGEM À ESQUERDA */}
+              {item.image_url && (
+                <img
+                  src={item.image_url}
+                  alt={item.title}
+                  className="w-full sm:w-24 sm:h-24 lg:w-32 lg:h-32 object-cover rounded flex-shrink-0"
+                />
+              )}
+              
+              {/* CONTEÚDO À DIREITA */}
+              <div className="flex-1">
+                {/* NOME DO PRODUTO EM CAIXA ALTA */}
+                <h4 
+                  className="font-bold text-sm lg:text-base uppercase mb-1"
+                  style={{ color: colors.productName }}
+                >
+                  {item.products.name}
+                </h4>
+                
+                {/* TAG [OFERTA ESPECIAL] */}
+                <p 
+                  className="text-xs lg:text-sm mb-2 font-medium"
+                  style={{ color: colors.offerTag }}
+                >
+                  [OFERTA ESPECIAL]
+                </p>
+                
+                {/* DESCRIÇÃO */}
+                <div 
+                  className="text-xs lg:text-sm prose prose-sm max-w-none text-muted-foreground"
+                  dangerouslySetInnerHTML={{ __html: item.description }}
+                />
               </div>
             </div>
           </Card>

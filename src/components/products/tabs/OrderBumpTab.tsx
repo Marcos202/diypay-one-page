@@ -14,7 +14,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import OrderBumpImageUpload from "../OrderBumpImageUpload";
 
-const DEFAULT_TITLE = "SIM, EU ACEITO ESSA OFERTA ESPECIAL!";
+const DEFAULT_TITLE = "Sim, adicione no meu pedido!";
 
 interface OrderBumpItem {
   id?: string;
