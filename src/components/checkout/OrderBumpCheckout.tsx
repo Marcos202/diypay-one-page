@@ -58,25 +58,26 @@ export default function OrderBumpCheckout({
         const hasDiscount = item.discount_percent > 0;
 
         return (
-          // Div principal com a borda tracejada e fundo amarelo claro
+          // Div principal com a borda tracejada
           <div
             key={item.id}
-            className="overflow-hidden rounded-lg border-2 border-dashed border-yellow-400 bg-yellow-50"
+            className="overflow-hidden rounded-lg border-2 border-dashed border-gray-300"
           >
-            {/* SEÇÃO SUPERIOR */}
-            <div className="flex justify-between items-center p-4">
+            {/* SEÇÃO SUPERIOR: Fundo cinza claro */}
+            <div className="flex justify-between items-center bg-gray-50 p-4">
               <label 
                 htmlFor={`order-bump-${item.id}`}
                 className="flex items-center gap-2 cursor-pointer group"
               >
-                <ArrowRight className="h-6 w-6 text-red-500 animate-pulse" />
+                <ArrowRight className="h-5 w-5 text-red-500" />
+                
                 <Checkbox
                   id={`order-bump-${item.id}`}
                   checked={selectedItems.has(item.id)}
                   onCheckedChange={(checked) => handleToggle(item, checked as boolean)}
                 />
-                <span className="text-lg font-bold uppercase text-green-600 group-hover:text-green-700">
-                  {item.title || "YES!"}
+                <span className="text-base font-semibold text-gray-800 group-hover:text-black">
+                  {item.title || "Sim, adicione no meu pedido!"}
                 </span>
               </label>
               
@@ -92,30 +93,27 @@ export default function OrderBumpCheckout({
               </div>
             </div>
 
-            {/* SEÇÃO INFERIOR: Layout responsivo */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 pt-0">
+            {/* SEÇÃO INFERIOR: Fundo branco e layout responsivo */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 bg-white">
               {item.image_url && (
                 <img
                   src={item.image_url}
                   alt={item.title}
-                  className="w-24 h-24 object-cover rounded border-2 border-gray-200 flex-shrink-0"
+                  className="w-24 h-24 object-cover rounded border border-gray-200 flex-shrink-0"
                 />
               )}
               
-              {/* Container da descrição centralizado */}
-              <div className="flex-1 flex justify-center sm:justify-start text-center sm:text-left">
-                <div>
-                  <h4 
-                    className="font-bold text-sm uppercase mb-1" 
-                    style={{ color: '#FF0000' }}
-                  >
-                    {item.products.name}
-                  </h4>
-                  <div 
-                    className="text-sm prose prose-sm max-w-none leading-relaxed text-gray-600"
-                    dangerouslySetInnerHTML={{ __html: item.description }}
-                  />
-                </div>
+              <div className="flex-1 text-center sm:text-left">
+                <h4 
+                  className="font-bold text-sm uppercase mb-1" 
+                  style={{ color: '#FF0000' }}
+                >
+                  {item.products.name}
+                </h4>
+                <div 
+                  className="text-sm prose prose-sm max-w-none leading-relaxed text-gray-600"
+                  dangerouslySetInnerHTML={{ __html: item.description }}
+                />
               </div>
             </div>
           </div>
