@@ -1,5 +1,8 @@
 project_id = "huakzwguwjulxhvcztuh"
 
+[functions.manage-product-tracking]
+verify_jwt = true
+
 [functions.test-transaction-events]
 verify_jwt = false
 
