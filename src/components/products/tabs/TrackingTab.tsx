@@ -31,20 +31,26 @@ const TrackingTab = ({ productId }: TrackingTabProps) => {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Query: Buscar configuração existente
-  const { data: trackingData, isLoading } = useQuery({
+  const { data: trackingData, isInitialLoading } = useQuery({
     queryKey: ['product-tracking', productId],
     queryFn: async () => {
       if (!productId) return null;
       
-      const { data, error } = await supabase.functions.invoke('manage-product-tracking', {
-        method: 'GET',
-        body: { productId },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        `manage-product-tracking?productId=${productId}`,
+        {
+          method: 'GET',
+        }
+      );
 
       if (error) throw error;
       return data;
     },
     enabled: !!productId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   // Preencher formulário quando os dados forem carregados
@@ -67,10 +73,13 @@ const TrackingTab = ({ productId }: TrackingTabProps) => {
     mutationFn: async () => {
       if (!productId) throw new Error('Product ID não fornecido');
 
-      const { data, error } = await supabase.functions.invoke('manage-product-tracking', {
-        method: 'POST',
-        body: { productId, ...config },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        `manage-product-tracking?productId=${productId}`,
+        {
+          method: 'POST',
+          body: config,
+        }
+      );
 
       if (error) throw error;
       return data;
@@ -127,7 +136,7 @@ const TrackingTab = ({ productId }: TrackingTabProps) => {
     return false;
   };
 
-  if (isLoading) {
+  if (isInitialLoading) {
     return (
       <div className="flex items-center justify-center p-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
