@@ -7,6 +7,7 @@ import { ProductInfo } from "@/components/checkout/ProductInfo";
 import { LoadingSpinner } from "@/components/checkout/LoadingSpinner";
 import { toast } from "@/hooks/use-toast";
 import OrderBumpCheckout from "@/components/checkout/OrderBumpCheckout";
+import { tracking } from "@/lib/tracking";
 
 const Checkout = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -79,6 +80,36 @@ const Checkout = () => {
   const handleOrderBumpDeselect = (item: any) => {
     setSelectedOrderBumps(selectedOrderBumps.filter(i => i.id !== item.id));
   };
+
+  // Inicializar tracking quando o produto carregar
+  useEffect(() => {
+    const initTracking = async () => {
+      if (!product?.id) return;
+      
+      try {
+        const { data: trackingConfig } = await supabase.functions.invoke(
+          `get-public-tracking-config?productId=${product.id}`
+        );
+        
+        if (trackingConfig?.is_active && trackingConfig.tracking_enabled_pages?.includes('checkout')) {
+          await tracking.init(trackingConfig);
+          
+          const totalValue = (product.price_cents || 0) / 100;
+          
+          tracking.trackInitiateCheckout({
+            content_ids: [product.id],
+            value: totalValue,
+            currency: 'BRL',
+            num_items: 1
+          });
+        }
+      } catch (err) {
+        console.error('[Checkout] Erro ao inicializar tracking:', err);
+      }
+    };
+    
+    initTracking();
+  }, [product]);
 
   useEffect(() => {
     if (error) {

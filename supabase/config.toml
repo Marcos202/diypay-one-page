@@ -1,5 +1,8 @@
 project_id = "huakzwguwjulxhvcztuh"
 
+[functions.get-public-tracking-config]
+verify_jwt = false
+
 [functions.manage-product-tracking]
 verify_jwt = true
 

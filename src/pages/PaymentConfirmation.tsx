@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { CheckCircle, Copy, Download, ArrowLeft, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { tracking } from "@/lib/tracking";
 
 interface SaleData {
   id: string;
@@ -162,6 +163,34 @@ const PaymentConfirmation = () => {
       channel.unsubscribe();
     };
   }, [saleId, sale?.status]);
+
+  // Inicializar tracking quando a venda for confirmada
+  useEffect(() => {
+    const initTracking = async () => {
+      if (!sale?.product_id || sale.status !== 'paid') return;
+      
+      try {
+        const { data: trackingConfig } = await supabase.functions.invoke(
+          `get-public-tracking-config?productId=${sale.product_id}`
+        );
+        
+        if (trackingConfig?.is_active && trackingConfig.tracking_enabled_pages?.includes('thank_you')) {
+          await tracking.init(trackingConfig);
+          
+          tracking.trackPurchase({
+            transaction_id: sale.id,
+            value: (sale.amount_total_cents || 0) / 100,
+            currency: 'BRL',
+            content_ids: [sale.product_id]
+          });
+        }
+      } catch (err) {
+        console.error('[PaymentConfirmation] Erro ao inicializar tracking:', err);
+      }
+    };
+    
+    initTracking();
+  }, [sale]);
 
   const handleCopyPixCode = async () => {
     if (sale?.gateway_pix_qrcode_text) {

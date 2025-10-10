@@ -2,6 +2,8 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, AlertTriangle } from 'lucide-react';
+import { useEffect } from 'react';
+import { tracking } from '@/lib/tracking';
 
 const PublicPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -18,6 +20,34 @@ const PublicPage = () => {
     },
     enabled: !!slug,
   });
+
+  // Inicializar tracking quando a página carregar
+  useEffect(() => {
+    const initTracking = async () => {
+      if (!page?.product_id) return;
+      
+      try {
+        const { data: trackingConfig } = await supabase.functions.invoke(
+          `get-public-tracking-config?productId=${page.product_id}`
+        );
+        
+        if (trackingConfig?.is_active && trackingConfig.tracking_enabled_pages?.includes('product_page')) {
+          await tracking.init(trackingConfig);
+          
+          tracking.trackViewContent({
+            content_id: page.product_id,
+            content_name: page.title,
+            value: page.price_cents ? page.price_cents / 100 : 0,
+            currency: 'BRL'
+          });
+        }
+      } catch (err) {
+        console.error('[PublicPage] Erro ao inicializar tracking:', err);
+      }
+    };
+    
+    initTracking();
+  }, [page]);
 
   if (isLoading) {
     return (

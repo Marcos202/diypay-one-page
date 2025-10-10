@@ -1,6 +1,7 @@
 // FASE 3: Suporte Completo para Webhooks Asaas + Iugu
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createHash } from 'https://deno.land/std@0.177.0/node/crypto.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -299,6 +300,114 @@ Deno.serve(async (req) => {
       } else {
         console.log(`[WEBHOOK_HANDLER] Student ${studentUserId} enrolled successfully`);
       }
+
+      // ===== INÍCIO: RASTREAMENTO SERVER-SIDE (CAPI) =====
+      try {
+        console.log(`[TRACKING] Iniciando rastreamento server-side para venda ${sale.id}`);
+        
+        // Buscar configuração de tracking do produtor
+        const { data: trackingConfig, error: trackingError } = await supabaseAdmin
+          .from('producer_tracking')
+          .select('*')
+          .eq('product_id', sale.product_id)
+          .eq('is_active', true)
+          .single();
+        
+        if (trackingError) {
+          console.log(`[TRACKING] Nenhuma configuração ativa encontrada para produto ${sale.product_id}`);
+        } else if (trackingConfig) {
+          console.log(`[TRACKING] Configuração encontrada: Meta=${!!trackingConfig.meta_access_token}, TikTok=${!!trackingConfig.tiktok_access_token}`);
+          
+          // 1. META CAPI (Conversions API)
+          if (trackingConfig.meta_pixel_id && trackingConfig.meta_access_token) {
+            try {
+              const emailHash = createHash('sha256').update(sale.buyer_email.toLowerCase().trim()).digest('hex');
+              
+              const metaPayload = {
+                data: [{
+                  event_name: 'Purchase',
+                  event_time: Math.floor(Date.now() / 1000),
+                  event_id: sale.id, // Para deduplicação com client-side
+                  event_source_url: `https://diypay.com.br/payment-confirmation/${sale.id}`,
+                  user_data: {
+                    em: [emailHash]
+                  },
+                  custom_data: {
+                    currency: 'BRL',
+                    value: sale.amount_total_cents / 100,
+                    content_ids: [sale.product_id],
+                    content_type: 'product',
+                    num_items: 1
+                  },
+                  action_source: 'website'
+                }]
+              };
+              
+              const metaResponse = await fetch(
+                `https://graph.facebook.com/v21.0/${trackingConfig.meta_pixel_id}/events?access_token=${trackingConfig.meta_access_token}`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(metaPayload)
+                }
+              );
+              
+              const metaResult = await metaResponse.json();
+              console.log(`[TRACKING] Meta CAPI Response:`, JSON.stringify(metaResult));
+            } catch (metaError: any) {
+              console.error(`[TRACKING] Erro ao enviar para Meta CAPI:`, metaError.message);
+            }
+          }
+          
+          // 2. TIKTOK EVENTS API
+          if (trackingConfig.tiktok_pixel_id && trackingConfig.tiktok_access_token) {
+            try {
+              const emailHash = createHash('sha256').update(sale.buyer_email.toLowerCase().trim()).digest('hex');
+              
+              const tiktokPayload = {
+                pixel_code: trackingConfig.tiktok_pixel_id,
+                event: 'CompletePayment',
+                event_id: sale.id,
+                timestamp: new Date().toISOString(),
+                context: {
+                  user: {
+                    email: emailHash
+                  },
+                  page: {
+                    url: `https://diypay.com.br/payment-confirmation/${sale.id}`
+                  }
+                },
+                properties: {
+                  content_id: sale.product_id,
+                  value: sale.amount_total_cents / 100,
+                  currency: 'BRL'
+                }
+              };
+              
+              const tiktokResponse = await fetch(
+                'https://business-api.tiktok.com/open_api/v1.3/event/track/',
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Token': trackingConfig.tiktok_access_token
+                  },
+                  body: JSON.stringify(tiktokPayload)
+                }
+              );
+              
+              const tiktokResult = await tiktokResponse.json();
+              console.log(`[TRACKING] TikTok Events API Response:`, JSON.stringify(tiktokResult));
+            } catch (tiktokError: any) {
+              console.error(`[TRACKING] Erro ao enviar para TikTok Events API:`, tiktokError.message);
+            }
+          }
+        }
+      } catch (trackingError: any) {
+        console.error(`[TRACKING] Erro geral no rastreamento server-side:`, trackingError.message);
+        // NÃO FALHAR O WEBHOOK se tracking falhar
+      }
+      // ===== FIM: RASTREAMENTO SERVER-SIDE =====
     }
     
     // Atualizar status da venda para outros eventos
