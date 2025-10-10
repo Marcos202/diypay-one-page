@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface OrderBumpProduct {
   id: string;
@@ -28,6 +29,19 @@ interface OrderBumpCheckoutProps {
   onDeselect: (item: OrderBumpItem) => void;
 }
 
+// Função para gerar uma paleta de cores a partir da cor base
+const generateColorPalette = (baseColor: string | null) => {
+    const color = baseColor || '#10b981'; // Verde como padrão se nenhuma cor for fornecida
+    // Lógica para clarear a cor base para o fundo. Exemplo simples: opacidade.
+    const backgroundColor = `${color}1A`; // Adiciona ~10% de opacidade em hex
+    return {
+        '--border-color': color,
+        '--background-color': backgroundColor,
+        '--text-color': color,
+        '--checkbox-color': color,
+    };
+};
+
 export default function OrderBumpCheckout({
   orderBump,
   onSelect,
@@ -49,100 +63,65 @@ export default function OrderBumpCheckout({
     setSelectedItems(newSelected);
   };
 
-  const colors = {
-    background: '#FFFFFF',
-    border: '#E0E0E0',
-    checkboxText: '#333333',
-    productName: '#000000',
-    price: '#000000',
-    description: '#444444',
-  };
+  const colorPalette = generateColorPalette(orderBump.custom_color);
 
   return (
-    <div className="space-y-4 my-6 w-full px-4 lg:px-0">
+    <div className="my-6 w-full px-4 lg:px-0">
       {orderBump.order_bump_items.map((item) => {
-        const finalPrice =
-          item.products.price_cents * (1 - item.discount_percent / 100);
+        const finalPrice = item.products.price_cents * (1 - (item.discount_percent || 0) / 100);
         const originalPrice = item.products.price_cents;
         const hasDiscount = item.discount_percent > 0;
 
         return (
           <Card
             key={item.id}
-            className="p-5 lg:p-6 border-2 border-dashed rounded-lg"
-            style={{
-              borderColor: colors.border,
-              backgroundColor: colors.background,
-            }}
+            className="p-4 border-2 border-dashed rounded-lg transition-all"
+            style={colorPalette as React.CSSProperties}
           >
-            {/* LINHA 1: CHECKBOX + TÍTULO + PREÇO */}
-            <div className="flex justify-between items-start gap-4 mb-4">
+            {/* LINHA 1: CHECKBOX, TÍTULO E PREÇO */}
+            <div className="flex justify-between items-center mb-4">
               <label 
                 htmlFor={`order-bump-${item.id}`}
-                className="flex items-start gap-3 flex-1 cursor-pointer"
+                className="flex items-center gap-3 cursor-pointer group"
               >
                 <Checkbox
                   id={`order-bump-${item.id}`}
                   checked={selectedItems.has(item.id)}
                   onCheckedChange={(checked) => handleToggle(item, checked as boolean)}
-                  className="mt-0.5 flex-shrink-0"
                 />
-                <span 
-                  className="text-[15px] lg:text-base font-semibold"
-                  style={{ color: colors.checkboxText }}
-                >
+                <span className="text-base font-semibold text-gray-700 group-hover:text-gray-900">
                   {item.title || "Sim, adicione no meu pedido!"}
                 </span>
               </label>
               
-              {/* PREÇO À DIREITA */}
-              <div className="text-right flex-shrink-0">
+              <div className="text-right">
                 {hasDiscount && (
                   <span className="text-xs text-muted-foreground line-through block">
-                    R$ {(originalPrice / 100).toFixed(2)}
+                    R$ {(originalPrice / 100).toFixed(2).replace('.', ',')}
                   </span>
                 )}
-                <span
-                  className="font-bold text-lg whitespace-nowrap"
-                  style={{ color: colors.price }}
-                >
-                  R$ {(finalPrice / 100).toFixed(2)}
+                <span className="font-bold text-lg whitespace-nowrap text-gray-800">
+                  R$ {(finalPrice / 100).toFixed(2).replace('.', ',')}
                 </span>
-                {hasDiscount && (
-                  <span
-                    className="inline-block text-xs px-2 py-0.5 rounded mt-1 bg-red-600 text-white"
-                  >
-                    -{item.discount_percent}%
-                  </span>
-                )}
               </div>
             </div>
 
-            {/* LINHA 2: IMAGEM À ESQUERDA + CONTEÚDO */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* IMAGEM À ESQUERDA */}
+            {/* LINHA 2: IMAGEM E CONTEÚDO (EXATAMENTE COMO NO MODELO) */}
+            <div className="flex items-start gap-4 pl-8">
               {item.image_url && (
                 <img
                   src={item.image_url}
                   alt={item.title}
-                  className="w-20 h-20 object-cover rounded flex-shrink-0"
+                  className="w-20 h-20 lg:w-24 lg:h-24 object-cover rounded flex-shrink-0"
                 />
               )}
               
-              {/* CONTEÚDO À DIREITA */}
               <div className="flex-1">
-                {/* NOME DO PRODUTO EM CAIXA ALTA */}
-                <h4 
-                  className="font-bold text-sm lg:text-base uppercase mb-1"
-                  style={{ color: colors.productName }}
-                >
+                <h4 className="font-bold text-sm uppercase text-gray-600 mb-1">
                   {item.products.name}
                 </h4>
-                
-                {/* DESCRIÇÃO */}
                 <div 
-                  className="text-[13px] lg:text-sm prose prose-sm max-w-none leading-relaxed"
-                  style={{ color: colors.description }}
+                  className="text-sm prose prose-sm max-w-none leading-relaxed text-gray-500"
                   dangerouslySetInnerHTML={{ __html: item.description }}
                 />
               </div>
