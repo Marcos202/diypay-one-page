@@ -112,8 +112,8 @@ export default function OrderBumpCheckout({
                   {item.products.name}
                 </h4>
                 <div 
-                  className="text-sm leading-relaxed text-gray-600"
-                  dangerouslySetInnerHTML={{ __html: item.description }}
+                  className="text-sm prose prose-sm max-w-none leading-relaxed text-gray-600"
+                  dangerouslySetInnerHTML={{ __html: item.description || '' }}
                 />
               </div>
             </div>
@@ -122,4 +122,4 @@ export default function OrderBumpCheckout({
       })}
     </div>
   );
-}```
+}
