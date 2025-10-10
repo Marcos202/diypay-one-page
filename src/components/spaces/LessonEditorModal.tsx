@@ -20,7 +20,7 @@ const lessonSchema = z.object({
   title: z.string().min(3, { message: "O título deve ter no mínimo 3 caracteres." }),
   video_source: z.string().optional(),
   content_url: z.string().url({ message: "Por favor, insira uma URL válida." }).optional().or(z.literal('')),
-  content_text: z.string().optional(),
+  content_text: z.string().max(200, { message: "A descrição deve ter no máximo 200 caracteres." }).optional(),
   release_type: z.string().default('immediate'),
   release_days: z.coerce.number().optional(),
   release_date: z.string().optional(),
@@ -34,7 +34,6 @@ const quillModules = {
     ['bold', 'italic', 'strike', 'blockquote'],
     [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
     ['link', 'image'],
-    [{ 'align': [] }],
     ['code-block'],
     ['clean']
   ],
@@ -137,7 +136,7 @@ export function LessonEditorModal({ isOpen, onClose, moduleId, spaceId, initialD
           <DialogTitle>{mode === 'create' ? 'Criar Nova' : 'Editar'} Aula</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
             <FormField control={form.control} name="title" render={({ field }) => (
               <FormItem>
                 <FormLabel>Título da Aula *</FormLabel>
@@ -174,10 +173,17 @@ export function LessonEditorModal({ isOpen, onClose, moduleId, spaceId, initialD
               <FormItem>
                 <FormLabel>Conteúdo da Aula (Descrição, links, etc.)</FormLabel>
                 <FormControl>
-                  <div className="quill-editor-container">
-                    <ReactQuill theme="snow" modules={quillModules} {...field} />
-                  </div>
+                  <ReactQuill
+                    theme="snow"
+                    modules={quillModules}
+                    className="bg-background min-h-[120px]"
+                    style={{ minHeight: '120px' }}
+                    {...field}
+                  />
                 </FormControl>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {field.value?.replace(/<[^>]*>/g, '').length || 0}/200 caracteres
+                </p>
                 <FormMessage />
               </FormItem>
             )}/>
