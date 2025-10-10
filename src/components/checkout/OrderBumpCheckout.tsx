@@ -76,7 +76,7 @@ export default function OrderBumpCheckout({
                   checked={selectedItems.has(item.id)}
                   onCheckedChange={(checked) => handleToggle(item, checked as boolean)}
                 />
-                <span className="text-base font-semibold text-gray-800 group-hover:text-black">
+                <span className="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-black">
                   {item.title || "Sim, adicione no meu pedido!"}
                 </span>
               </label>
@@ -87,23 +87,23 @@ export default function OrderBumpCheckout({
                     R$ {(originalPrice / 100).toFixed(2).replace('.', ',')}
                   </span>
                 )}
-                <span className="font-bold text-lg whitespace-nowrap text-gray-900">
+                <span className="font-bold text-base sm:text-lg whitespace-nowrap text-gray-900">
                   R$ {(finalPrice / 100).toFixed(2).replace('.', ',')}
                 </span>
               </div>
             </div>
 
-            {/* SEÇÃO INFERIOR: Fundo branco e layout responsivo */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 bg-white">
+            {/* SEÇÃO INFERIOR: Fundo branco e layout de linha em TODOS os tamanhos de tela */}
+            <div className="flex flex-row items-start gap-4 p-4 bg-white">
               {item.image_url && (
                 <img
                   src={item.image_url}
                   alt={item.title}
-                  className="w-24 h-24 object-cover rounded border border-gray-200 flex-shrink-0"
+                  className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded border border-gray-200 flex-shrink-0"
                 />
               )}
               
-              <div className="flex-1 text-center sm:text-left">
+              <div className="flex-1 text-left">
                 <h4 
                   className="font-bold text-sm uppercase mb-1" 
                   style={{ color: '#FF0000' }}
