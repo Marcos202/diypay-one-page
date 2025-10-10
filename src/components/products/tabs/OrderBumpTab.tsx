@@ -12,6 +12,9 @@ import { toast } from "sonner";
 import { Trash2, Plus, GripVertical } from "lucide-react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import OrderBumpImageUpload from "../OrderBumpImageUpload";
+
+const DEFAULT_TITLE = "SIM, EU ACEITO ESSA OFERTA ESPECIAL!";
 
 interface OrderBumpItem {
   id?: string;
@@ -30,7 +33,7 @@ interface OrderBumpTabProps {
 export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
   const queryClient = useQueryClient();
   const [isActive, setIsActive] = useState(false);
-  const [customColor, setCustomColor] = useState("#10b981");
+  const [customColor, setCustomColor] = useState("#6B7280");
   const [items, setItems] = useState<OrderBumpItem[]>([]);
 
   // Buscar produtos do produtor (excluindo o produto atual)
@@ -80,7 +83,7 @@ export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
   useEffect(() => {
     if (orderBump) {
       setIsActive(orderBump.is_active);
-      setCustomColor(orderBump.custom_color || "#10b981");
+      setCustomColor(orderBump.custom_color || "#6B7280");
       setItems(orderBump.order_bump_items || []);
     }
   }, [orderBump]);
@@ -122,13 +125,44 @@ export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
       ...items,
       {
         bump_product_id: "",
-        title: "",
+        title: DEFAULT_TITLE,
         description: "",
         image_url: "",
         discount_percent: 0,
         display_order: items.length,
       },
     ]);
+  };
+
+  const sanitizeDescription = (html: string): string => {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    const links = tempDiv.querySelectorAll('a');
+    links.forEach(link => {
+      const text = document.createTextNode(link.textContent || '');
+      link.parentNode?.replaceChild(text, link);
+    });
+    return tempDiv.innerHTML;
+  };
+
+  const handleDescriptionChange = (index: number, value: string) => {
+    if (value.includes('<a href') || value.includes('http://') || value.includes('https://')) {
+      toast.error("Links não são permitidos na descrição");
+      return;
+    }
+    updateItem(index, "description", sanitizeDescription(value));
+  };
+
+  const quillModules = {
+    toolbar: [
+      ['bold', 'italic', 'underline'],
+      [{ 'align': ['', 'center', 'right', 'justify'] }],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      ['clean']
+    ],
+    clipboard: {
+      matchVisual: false,
+    }
   };
 
   const removeItem = (index: number) => {
@@ -228,20 +262,21 @@ export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
                         <Label>Descrição</Label>
                         <ReactQuill
                           value={item.description}
-                          onChange={(value) => updateItem(index, "description", value)}
+                          onChange={(value) => handleDescriptionChange(index, value)}
                           theme="snow"
-                          className="bg-background"
+                          modules={quillModules}
+                          className="bg-background min-h-[120px]"
+                          style={{
+                            minHeight: '120px'
+                          }}
                         />
                       </div>
 
                       <div>
-                        <Label>URL da Imagem</Label>
-                        <Input
+                        <Label>Imagem Quadrada (máx. 100KB)</Label>
+                        <OrderBumpImageUpload
                           value={item.image_url}
-                          onChange={(e) =>
-                            updateItem(index, "image_url", e.target.value)
-                          }
-                          placeholder="https://exemplo.com/imagem.jpg"
+                          onChange={(url) => updateItem(index, "image_url", url)}
                         />
                       </div>
 

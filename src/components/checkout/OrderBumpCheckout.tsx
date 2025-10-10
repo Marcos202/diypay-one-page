@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
+import { ArrowDown } from "lucide-react";
 
 interface OrderBumpProduct {
   id: string;
@@ -49,20 +50,21 @@ export default function OrderBumpCheckout({
     setSelectedItems(newSelected);
   };
 
-  const getColorPalette = (baseColor: string) => {
-    // Extrair valores HSL do baseColor
-    const hue = baseColor;
+  const getColorPalette = (baseColor: string = '#6B7280') => {
     return {
       border: baseColor,
-      background: `${baseColor}15`,
+      background: `${baseColor}10`,
+      titleBackground: '#F3F4F6',
+      titleText: '#374151',
+      productName: '#D90000',
       text: baseColor,
     };
   };
 
-  const colors = getColorPalette(orderBump.custom_color);
+  const colors = getColorPalette(orderBump.custom_color || '#6B7280');
 
   return (
-    <div className="space-y-4 my-6">
+    <div className="space-y-4 my-6 w-full px-4 lg:px-0">
       {orderBump.order_bump_items.map((item) => {
         const finalPrice =
           item.products.price_cents * (1 - item.discount_percent / 100);
@@ -72,47 +74,68 @@ export default function OrderBumpCheckout({
         return (
           <Card
             key={item.id}
-            className="p-4 border-2 border-dashed relative"
+            className="p-0 border-2 border-dashed relative overflow-hidden"
             style={{
               borderColor: colors.border,
               backgroundColor: colors.background,
             }}
           >
-            <div className="flex items-start gap-4">
-              <Checkbox
-                id={`order-bump-${item.id}`}
-                checked={selectedItems.has(item.id)}
-                onCheckedChange={(checked) =>
-                  handleToggle(item, checked as boolean)
-                }
-                className="mt-1"
-              />
-              
-              <div className="flex-1">
-                <label
-                  htmlFor={`order-bump-${item.id}`}
-                  className="cursor-pointer block"
+            {/* CABEÇALHO COM FUNDO MAIS ESCURO */}
+            <div 
+              className="px-4 py-3 lg:px-6 lg:py-4"
+              style={{ backgroundColor: colors.titleBackground }}
+            >
+              <h4 
+                className="font-bold text-sm lg:text-base uppercase leading-tight"
+                style={{ color: colors.titleText }}
+              >
+                {item.title || "SIM, EU ACEITO ESSA OFERTA ESPECIAL!"}
+              </h4>
+              <p 
+                className="text-xs lg:text-sm font-medium mt-1"
+                style={{ color: colors.productName }}
+              >
+                {item.products.name}
+              </p>
+            </div>
+            
+            {/* CORPO DO CARD */}
+            <div className="p-4 lg:p-6">
+              <div className="flex flex-col lg:flex-row items-start gap-3 lg:gap-4">
+                {/* SETA VERMELHA + CHECKBOX */}
+                <div className="flex items-start gap-2 self-start">
+                  <ArrowDown 
+                    className="w-5 h-5 text-red-500 animate-pulse-arrow mt-0.5" 
+                  />
+                  <Checkbox
+                    id={`order-bump-${item.id}`}
+                    checked={selectedItems.has(item.id)}
+                    onCheckedChange={(checked) =>
+                      handleToggle(item, checked as boolean)
+                    }
+                    className="mt-0.5"
+                  />
+                </div>
+                
+                {/* CONTEÚDO */}
+                <label 
+                  htmlFor={`order-bump-${item.id}`} 
+                  className="flex-1 cursor-pointer w-full lg:w-auto"
                 >
-                  <h4
-                    className="font-semibold mb-2"
-                    style={{ color: colors.text }}
-                  >
-                    ✓ {item.title}
-                  </h4>
-                  
-                  <div
-                    className="text-sm prose prose-sm max-w-none mb-3"
+                  <div 
+                    className="text-xs lg:text-sm prose prose-sm max-w-none mb-3"
                     dangerouslySetInnerHTML={{ __html: item.description }}
                   />
                   
-                  <div className="flex items-center gap-2">
+                  {/* PREÇO */}
+                  <div className="flex items-center gap-2 flex-wrap">
                     {hasDiscount && (
-                      <span className="text-sm text-muted-foreground line-through">
+                      <span className="text-xs lg:text-sm text-muted-foreground line-through">
                         R$ {(originalPrice / 100).toFixed(2)}
                       </span>
                     )}
                     <span
-                      className="font-bold text-lg"
+                      className="font-bold text-base lg:text-lg"
                       style={{ color: colors.text }}
                     >
                       R$ {(finalPrice / 100).toFixed(2)}
@@ -130,15 +153,16 @@ export default function OrderBumpCheckout({
                     )}
                   </div>
                 </label>
+                
+                {/* IMAGEM */}
+                {item.image_url && (
+                  <img
+                    src={item.image_url}
+                    alt={item.title}
+                    className="w-full h-auto lg:w-20 lg:h-20 object-cover rounded mt-3 lg:mt-0 order-first lg:order-last"
+                  />
+                )}
               </div>
-              
-              {item.image_url && (
-                <img
-                  src={item.image_url}
-                  alt={item.title}
-                  className="w-20 h-20 object-cover rounded"
-                />
-              )}
             </div>
           </Card>
         );

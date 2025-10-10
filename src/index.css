@@ -230,3 +230,21 @@
 .dark-theme-override .override-success {
   color: hsl(var(--override-success)) !important;
 }
+
+/* ==========================================================================
+   Order Bump Arrow Animation
+   ========================================================================== */
+@keyframes pulse-arrow {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateY(-6px);
+  }
+}
+
+.animate-pulse-arrow {
+  animation: pulse-arrow 2s ease-in-out infinite;
+}
