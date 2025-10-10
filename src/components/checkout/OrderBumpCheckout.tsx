@@ -58,18 +58,19 @@ export default function OrderBumpCheckout({
         const hasDiscount = item.discount_percent > 0;
 
         return (
-          // Div principal com a borda tracejada, agora sem padding horizontal
+          // Div principal com a borda tracejada amarela
           <div
             key={item.id}
-            className="overflow-hidden rounded-lg border-2 border-dashed border-gray-300"
+            className="overflow-hidden rounded-lg border-2 border-dashed border-yellow-400"
           >
-            {/* SEÇÃO SUPERIOR: Fundo cinza claro com padding */}
-            <div className="flex justify-between items-center bg-gray-50 p-4">
+            {/* SEÇÃO SUPERIOR: Fundo amarelo claro */}
+            <div className="flex justify-between items-center bg-yellow-50 p-4">
               <label 
                 htmlFor={`order-bump-${item.id}`}
-                className="flex items-center gap-2 cursor-pointer group"
+                className="flex items-center gap-3 cursor-pointer group"
               >
-                <ArrowRight className="h-5 w-5 text-red-500 flex-shrink-0" />
+                {/* Seta Vermelha Mais Grossa */}
+                <ArrowRight className="h-6 w-6 text-red-500 stroke-[3px] flex-shrink-0" />
                 
                 <Checkbox
                   id={`order-bump-${item.id}`}
@@ -93,17 +94,17 @@ export default function OrderBumpCheckout({
               </div>
             </div>
 
-            {/* SEÇÃO INFERIOR: Fundo branco, layout de linha em TODAS as telas e padding */}
-            <div className="flex flex-row items-start gap-4 p-4 bg-white">
+            {/* SEÇÃO INFERIOR: Fundo branco e layout responsivo */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 bg-white">
               {item.image_url && (
                 <img
                   src={item.image_url}
                   alt={item.title}
-                  className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded border border-gray-200 flex-shrink-0"
+                  className="w-24 h-24 object-cover rounded border border-gray-200 flex-shrink-0"
                 />
               )}
               
-              <div className="flex-1 text-left">
+              <div className="flex-1 w-full text-center sm:text-left">
                 <h4 
                   className="font-bold text-sm uppercase mb-1" 
                   style={{ color: '#FF0000' }}
