@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card } from "@/components/ui/card"; // Embora não usemos o Card, mantemos a importação por consistência
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface OrderBumpProduct {
@@ -28,18 +28,6 @@ interface OrderBumpCheckoutProps {
   onSelect: (item: OrderBumpItem) => void;
   onDeselect: (item: OrderBumpItem) => void;
 }
-
-// A função generateColorPalette não é mais necessária para este layout, mas mantida caso seja usada em outro lugar
-const generateColorPalette = (baseColor: string | null) => {
-    const color = baseColor || '#10b981';
-    const backgroundColor = `${color}1A`; 
-    return {
-        '--border-color': color,
-        '--background-color': backgroundColor,
-        '--text-color': color,
-        '--checkbox-color': color,
-    };
-};
 
 export default function OrderBumpCheckout({
   orderBump,
@@ -70,24 +58,25 @@ export default function OrderBumpCheckout({
         const hasDiscount = item.discount_percent > 0;
 
         return (
-          // Div principal com a borda tracejada
+          // Div principal com a borda tracejada e fundo amarelo claro
           <div
             key={item.id}
-            className="overflow-hidden rounded-lg border-2 border-dashed border-gray-300"
+            className="overflow-hidden rounded-lg border-2 border-dashed border-yellow-400 bg-yellow-50"
           >
-            {/* SEÇÃO SUPERIOR: Fundo cinza claro */}
-            <div className="flex justify-between items-center bg-gray-50 p-4">
+            {/* SEÇÃO SUPERIOR */}
+            <div className="flex justify-between items-center p-4">
               <label 
                 htmlFor={`order-bump-${item.id}`}
-                className="flex items-center gap-3 cursor-pointer group"
+                className="flex items-center gap-2 cursor-pointer group"
               >
+                <ArrowRight className="h-6 w-6 text-red-500 animate-pulse" />
                 <Checkbox
                   id={`order-bump-${item.id}`}
                   checked={selectedItems.has(item.id)}
                   onCheckedChange={(checked) => handleToggle(item, checked as boolean)}
                 />
-                <span className="text-base font-semibold text-gray-800 group-hover:text-black">
-                  {item.title || "Sim, adicione no meu pedido!"}
+                <span className="text-lg font-bold uppercase text-green-600 group-hover:text-green-700">
+                  {item.title || "YES!"}
                 </span>
               </label>
               
@@ -103,24 +92,30 @@ export default function OrderBumpCheckout({
               </div>
             </div>
 
-            {/* SEÇÃO INFERIOR: Fundo branco */}
-            <div className="flex items-start gap-4 p-4 bg-white">
+            {/* SEÇÃO INFERIOR: Layout responsivo */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 pt-0">
               {item.image_url && (
                 <img
                   src={item.image_url}
                   alt={item.title}
-                  className="w-20 h-20 lg:w-24 lg:h-24 object-cover rounded border border-gray-200 flex-shrink-0"
+                  className="w-24 h-24 object-cover rounded border-2 border-gray-200 flex-shrink-0"
                 />
               )}
               
-              <div className="flex-1">
-                <h4 className="font-bold text-sm uppercase text-gray-700 mb-1">
-                  {item.products.name}
-                </h4>
-                <div 
-                  className="text-sm prose prose-sm max-w-none leading-relaxed text-gray-600"
-                  dangerouslySetInnerHTML={{ __html: item.description }}
-                />
+              {/* Container da descrição centralizado */}
+              <div className="flex-1 flex justify-center sm:justify-start text-center sm:text-left">
+                <div>
+                  <h4 
+                    className="font-bold text-sm uppercase mb-1" 
+                    style={{ color: '#FF0000' }}
+                  >
+                    {item.products.name}
+                  </h4>
+                  <div 
+                    className="text-sm prose prose-sm max-w-none leading-relaxed text-gray-600"
+                    dangerouslySetInnerHTML={{ __html: item.description }}
+                  />
+                </div>
               </div>
             </div>
           </div>
