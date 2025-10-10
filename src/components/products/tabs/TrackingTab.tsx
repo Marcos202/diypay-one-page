@@ -429,7 +429,7 @@ const TrackingTab = ({ productId }: TrackingTabProps) => {
               Salvando...
             </>
           ) : (
-            'Salvar Configurações'
+            'Salvar Pixels'
           )}
         </Button>
       </div>

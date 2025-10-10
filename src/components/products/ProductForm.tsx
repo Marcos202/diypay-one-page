@@ -364,15 +364,22 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
             </div>
           </Tabs>
           
-          <div className="flex justify-end pt-6 mt-6 border-t">
-            <Button 
-              onClick={handleSubmit} 
-              className="bg-primary hover:bg-primary/90 text-primary-foreground" 
-              disabled={saveProductMutation.isPending}
-            >
-              {saveProductMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
-            </Button>
-          </div>
+          {(() => {
+            const tabsWithGlobalSave = ['geral', 'configuracao', 'checkout'];
+            const shouldShowGlobalSaveButton = tabsWithGlobalSave.includes(activeTab);
+            
+            return shouldShowGlobalSaveButton ? (
+              <div className="flex justify-end pt-6 mt-6 border-t">
+                <Button 
+                  onClick={handleSubmit} 
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground" 
+                  disabled={saveProductMutation.isPending}
+                >
+                  {saveProductMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                </Button>
+              </div>
+            ) : null;
+          })()}
         </CardContent>
       </Card>
 
