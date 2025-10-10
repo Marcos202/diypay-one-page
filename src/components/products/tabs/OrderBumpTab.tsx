@@ -89,6 +89,14 @@ export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
   // Mutation para salvar order bump
   const saveMutation = useMutation({
     mutationFn: async () => {
+      // Validar comprimento das descrições
+      for (const item of items) {
+        const textLength = item.description?.replace(/<[^>]*>/g, '').length || 0;
+        if (textLength > 200) {
+          throw new Error(`A descrição deve ter no máximo 200 caracteres. Atual: ${textLength}`);
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke("save-order-bump", {
         body: {
           product_id: productId,
@@ -153,7 +161,6 @@ export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
   const quillModules = {
     toolbar: [
       ['bold', 'italic', 'underline'],
-      [{ 'align': ['', 'center', 'right', 'justify'] }],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
       ['clean']
     ],
@@ -248,16 +255,17 @@ export default function OrderBumpTab({ productId }: OrderBumpTabProps) {
 
                       <div>
                         <Label>Descrição</Label>
-                        <ReactQuill
-                          value={item.description}
-                          onChange={(value) => handleDescriptionChange(index, value)}
-                          theme="snow"
-                          modules={quillModules}
-                          className="bg-background min-h-[120px]"
-                          style={{
-                            minHeight: '120px'
-                          }}
-                        />
+                        <div className="quill-editor-container">
+                          <ReactQuill
+                            value={item.description}
+                            onChange={(value) => handleDescriptionChange(index, value)}
+                            theme="snow"
+                            modules={quillModules}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {item.description?.replace(/<[^>]*>/g, '').length || 0}/200 caracteres
+                        </p>
                       </div>
 
                       <div>

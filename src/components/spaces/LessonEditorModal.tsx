@@ -173,17 +173,10 @@ export function LessonEditorModal({ isOpen, onClose, moduleId, spaceId, initialD
               <FormItem>
                 <FormLabel>Conteúdo da Aula (Descrição, links, etc.)</FormLabel>
                 <FormControl>
-                  <ReactQuill
-                    theme="snow"
-                    modules={quillModules}
-                    className="bg-background min-h-[120px]"
-                    style={{ minHeight: '120px' }}
-                    {...field}
-                  />
+                  <div className="quill-editor-container">
+                    <ReactQuill theme="snow" modules={quillModules} {...field} />
+                  </div>
                 </FormControl>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {field.value?.replace(/<[^>]*>/g, '').length || 0}/200 caracteres
-                </p>
                 <FormMessage />
               </FormItem>
             )}/>
