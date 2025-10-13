@@ -825,6 +825,7 @@ export type Database = {
       sales: {
         Row: {
           amount_total_cents: number
+          batch_id: string | null
           buyer_email: string
           buyer_profile_id: string | null
           created_at: string
@@ -857,6 +858,7 @@ export type Database = {
         }
         Insert: {
           amount_total_cents: number
+          batch_id?: string | null
           buyer_email: string
           buyer_profile_id?: string | null
           created_at?: string
@@ -889,6 +891,7 @@ export type Database = {
         }
         Update: {
           amount_total_cents?: number
+          batch_id?: string | null
           buyer_email?: string
           buyer_profile_id?: string | null
           created_at?: string
@@ -920,6 +923,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_buyer_profile_id_fkey"
             columns: ["buyer_profile_id"]
@@ -1070,6 +1080,65 @@ export type Database = {
           },
           {
             foreignKeyName: "spaces_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_batches: {
+        Row: {
+          auto_advance_to_next: boolean
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          max_quantity_per_purchase: number | null
+          min_quantity_per_purchase: number | null
+          name: string
+          price_cents: number
+          product_id: string
+          sale_end_date: string | null
+          sold_quantity: number
+          total_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          auto_advance_to_next?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          max_quantity_per_purchase?: number | null
+          min_quantity_per_purchase?: number | null
+          name: string
+          price_cents: number
+          product_id: string
+          sale_end_date?: string | null
+          sold_quantity?: number
+          total_quantity: number
+          updated_at?: string
+        }
+        Update: {
+          auto_advance_to_next?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          max_quantity_per_purchase?: number | null
+          min_quantity_per_purchase?: number | null
+          name?: string
+          price_cents?: number
+          product_id?: string
+          sale_end_date?: string | null
+          sold_quantity?: number
+          total_quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_batches_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"

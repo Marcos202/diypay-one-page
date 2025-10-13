@@ -16,6 +16,7 @@ import ProducerSalesPage from "./pages/ProducerSalesPage";
 import ProducerFinancialsPage from "./pages/ProducerFinancialsPage";
 import SpacesListPage from "./pages/SpacesListPage";
 import ProducerSubscriptionsPage from "./pages/ProducerSubscriptionsPage";
+import TicketsPage from "./pages/TicketsPage";
 
 // Lazy load only heavy admin and less-used components
 import { lazy } from 'react';
@@ -90,6 +91,7 @@ const App = () => {
               <Route path="/spaces/edit/:spaceId" element={<ProtectedRoute requiredView="producer"><LazyRoute Component={EditSpacePage} /></ProtectedRoute>} />
               <Route path="/personalize/edit/:spaceId" element={<ProtectedRoute requiredView="producer"><PersonalizeSpacePage /></ProtectedRoute>} />
               <Route path="/producer/subscriptions" element={<ProtectedRoute requiredView="producer"><ProducerSubscriptionsPage /></ProtectedRoute>} />
+              <Route path="/tickets" element={<ProtectedRoute requiredView="producer"><TicketsPage /></ProtectedRoute>} />
               <Route path="/financials" element={<ProtectedRoute requiredView="producer"><ProducerFinancialsPage /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute requiredView="producer"><SettingsHubPage /></ProtectedRoute>} />
               <Route path="/settings/account" element={<ProtectedRoute requiredView="producer"><AccountPage /></ProtectedRoute>} />

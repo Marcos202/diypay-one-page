@@ -26,6 +26,7 @@ import {
   LogOut,
   RefreshCw,
   TrendingUp,
+  Ticket,
 } from 'lucide-react';
 
 const menuItems = [
@@ -53,6 +54,11 @@ const menuItems = [
     title: "Assinaturas",
     url: "/producer/subscriptions",
     icon: RefreshCw,
+  },
+  {
+    title: "Ingressos",
+    url: "/tickets",
+    icon: Ticket,
   },
   {
     title: "Financeiro",

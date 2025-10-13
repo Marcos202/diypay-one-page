@@ -314,6 +314,7 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
                   userId={user?.id} 
                   mode={mode} 
                   isLoading={isLoading}
+                  productId={productId}
                 />
                 {mode === 'edit' && (
                   <div className="flex justify-start pt-6 mt-6 border-t">

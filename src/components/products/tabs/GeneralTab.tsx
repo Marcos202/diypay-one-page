@@ -9,19 +9,27 @@ import { ProductCoverUpload } from "../ProductCoverUpload";
 import { ProductVerticalCoverUpload } from "../ProductVerticalCoverUpload";
 import { ImageFormatGuide } from "../ImageFormatGuide";
 import DeliveryTypeSection from "../DeliveryTypeSection";
+import { BatchManagementSection } from "../BatchManagementSection";
 
 interface GeneralTabProps {
   formData: any;
   onInputChange: (field: string, value: any) => void;
   userId?: string;
   mode?: 'create' | 'edit';
-  isLoading?: boolean; // ADICIONADO: Nova prop para receber o estado de carregamento
+  isLoading?: boolean;
+  productId?: string;
 }
 
-const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoading = false }: GeneralTabProps) => {
+const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoading = false, productId }: GeneralTabProps) => {
   const isPriceDisabled = formData.product_type === 'donation';
   const isDonation = formData.product_type === 'donation';
   const isSubscription = formData.product_type === 'subscription';
+  const isEvent = formData.product_type === 'event';
+
+  const convertPriceToCents = (price: string): number => {
+    const numbers = price.replace(/\D/g, '');
+    return parseInt(numbers) || 0;
+  };
 
   const formatCurrency = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -139,6 +147,13 @@ const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoadin
           {isSubscription && (<p className="text-sm text-muted-foreground">Para assinaturas, o pagamento deve ser à vista</p>)}
         </div>
       </div>
+
+      {isEvent && mode === 'edit' && productId && (
+        <BatchManagementSection 
+          productId={productId}
+          basePrice={convertPriceToCents(formData.price)}
+        />
+      )}
       
       <div className="flex items-center justify-between p-4 border rounded-lg">
         <div className="space-y-1">
