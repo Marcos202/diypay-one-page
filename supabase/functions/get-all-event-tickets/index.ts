@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     // Buscar produtos do produtor
     let productsQuery = supabaseClient
       .from('products')
-      .select('id')
+      .select('id, name')
       .eq('producer_id', producer_id)
       .eq('product_type', 'event');
 

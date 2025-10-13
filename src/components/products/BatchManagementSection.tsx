@@ -22,7 +22,8 @@ export function BatchManagementSection({ productId, basePrice }: BatchManagement
   const { data: batches, isLoading } = useQuery({
     queryKey: ['ticket-batches', productId],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('get-ticket-batches', {
+      const { data, error } = await supabase.functions.invoke('ticket-batches-handler', {
+        method: 'GET',
         body: { product_id: productId }
       });
       if (error) throw error;
@@ -32,7 +33,8 @@ export function BatchManagementSection({ productId, basePrice }: BatchManagement
 
   const createBatchMutation = useMutation({
     mutationFn: async (batchData: any) => {
-      const { data, error } = await supabase.functions.invoke('create-ticket-batch', {
+      const { data, error } = await supabase.functions.invoke('ticket-batches-handler', {
+        method: 'POST',
         body: { ...batchData, product_id: productId }
       });
       if (error) throw error;
@@ -54,7 +56,8 @@ export function BatchManagementSection({ productId, basePrice }: BatchManagement
 
   const updateBatchMutation = useMutation({
     mutationFn: async ({ batch_id, updates }: any) => {
-      const { data, error } = await supabase.functions.invoke('update-ticket-batch', {
+      const { data, error } = await supabase.functions.invoke('ticket-batches-handler', {
+        method: 'PUT',
         body: { batch_id, updates }
       });
       if (error) throw error;
@@ -77,7 +80,8 @@ export function BatchManagementSection({ productId, basePrice }: BatchManagement
 
   const deleteBatchMutation = useMutation({
     mutationFn: async (batch_id: string) => {
-      const { data, error } = await supabase.functions.invoke('delete-ticket-batch', {
+      const { data, error } = await supabase.functions.invoke('ticket-batches-handler', {
+        method: 'DELETE',
         body: { batch_id }
       });
       if (error) throw error;
