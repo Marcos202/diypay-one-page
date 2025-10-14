@@ -301,6 +301,100 @@ Deno.serve(async (req) => {
         console.log(`[WEBHOOK_HANDLER] Student ${studentUserId} enrolled successfully`);
       }
 
+      // ============================================================
+      // 🎫 GERENCIAMENTO DE LOTES DE INGRESSOS
+      // ============================================================
+      if (sale.batch_id) {
+        console.log(`[BATCH] Processing batch update for batch_id: ${sale.batch_id}`);
+        
+        try {
+          // 1. Buscar informações do lote atual
+          const { data: currentBatch, error: batchFetchError } = await supabaseAdmin
+            .from('ticket_batches')
+            .select('*')
+            .eq('id', sale.batch_id)
+            .single();
+
+          if (batchFetchError) {
+            console.error('[BATCH] Error fetching batch:', batchFetchError);
+          } else if (currentBatch) {
+            const newSoldQuantity = currentBatch.sold_quantity + 1;
+            console.log(`[BATCH] Current sold: ${currentBatch.sold_quantity}, New sold: ${newSoldQuantity}, Total: ${currentBatch.total_quantity}`);
+
+            // 2. Incrementar sold_quantity do lote
+            const { error: updateError } = await supabaseAdmin
+              .from('ticket_batches')
+              .update({ 
+                sold_quantity: newSoldQuantity,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', currentBatch.id);
+
+            if (updateError) {
+              console.error('[BATCH] Error updating sold_quantity:', updateError);
+            } else {
+              console.log(`[BATCH] Successfully incremented sold_quantity to ${newSoldQuantity}`);
+            }
+
+            // 3. Verificar se lote esgotou E tem auto_advance ativado
+            const isBatchExhausted = newSoldQuantity >= currentBatch.total_quantity;
+            const hasAutoAdvance = currentBatch.auto_advance_to_next;
+
+            console.log(`[BATCH] Exhausted: ${isBatchExhausted}, Auto-advance: ${hasAutoAdvance}`);
+
+            if (isBatchExhausted && hasAutoAdvance) {
+              console.log('[BATCH] Batch exhausted with auto-advance enabled. Activating next batch...');
+
+              // 3a. Desativar lote atual
+              const { error: deactivateError } = await supabaseAdmin
+                .from('ticket_batches')
+                .update({ is_active: false })
+                .eq('id', currentBatch.id);
+
+              if (deactivateError) {
+                console.error('[BATCH] Error deactivating current batch:', deactivateError);
+              } else {
+                console.log('[BATCH] Current batch deactivated successfully');
+              }
+
+              // 3b. Buscar próximo lote inativo (próximo na ordem)
+              const { data: nextBatch, error: nextBatchError } = await supabaseAdmin
+                .from('ticket_batches')
+                .select('*')
+                .eq('product_id', currentBatch.product_id)
+                .eq('is_active', false) // Buscar lotes inativos
+                .gt('display_order', currentBatch.display_order) // Próximo na ordem
+                .order('display_order', { ascending: true })
+                .limit(1)
+                .maybeSingle();
+
+              if (nextBatchError) {
+                console.error('[BATCH] Error fetching next batch:', nextBatchError);
+              } else if (nextBatch) {
+                console.log(`[BATCH] Found next batch: ${nextBatch.name} (id: ${nextBatch.id})`);
+
+                // 3c. Ativar próximo lote
+                const { error: activateError } = await supabaseAdmin
+                  .from('ticket_batches')
+                  .update({ is_active: true })
+                  .eq('id', nextBatch.id);
+
+                if (activateError) {
+                  console.error('[BATCH] Error activating next batch:', activateError);
+                } else {
+                  console.log(`[BATCH] Next batch "${nextBatch.name}" activated successfully`);
+                }
+              } else {
+                console.log('[BATCH] No next batch available. This was the last batch.');
+              }
+            }
+          }
+        } catch (batchError) {
+          console.error('[BATCH] Unexpected error in batch management:', batchError);
+          // Não interromper o fluxo principal mesmo se houver erro nos lotes
+        }
+      }
+
       // ===== INÍCIO: RASTREAMENTO SERVER-SIDE (CAPI) =====
       try {
         console.log(`[TRACKING] Iniciando rastreamento server-side para venda ${sale.id}`);

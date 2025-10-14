@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PersonalInfoSection } from "./PersonalInfoSection";
 import { EmailSection } from "./EmailSection";
 import { EventTicketsSection } from "./EventTicketsSection";
@@ -29,6 +31,16 @@ interface Product {
   producer_assumes_installments?: boolean;
 }
 
+interface TicketBatch {
+  id: string;
+  name: string;
+  price_cents: number;
+  total_quantity: number;
+  sold_quantity: number;
+  is_active: boolean;
+  display_order: number;
+}
+
 interface CheckoutFormProps {
   product: Product;
   onDonationAmountChange?: (amount: string) => void;
@@ -37,6 +49,9 @@ interface CheckoutFormProps {
   selectedOrderBumps?: any[];
   onOrderBumpSelect?: (item: any) => void;
   onOrderBumpDeselect?: (item: any) => void;
+  selectedBatch?: TicketBatch | null;
+  availableBatches?: TicketBatch[] | null;
+  onBatchChange?: (batch: TicketBatch) => void;
 }
 
 // Base schema for all product types with updated validation messages
@@ -127,7 +142,10 @@ export const CheckoutForm = ({
   orderBump,
   selectedOrderBumps = [],
   onOrderBumpSelect,
-  onOrderBumpDeselect
+  onOrderBumpDeselect,
+  selectedBatch,
+  availableBatches,
+  onBatchChange
 }: CheckoutFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"credit_card" | "pix" | "bank_slip">("credit_card");
@@ -384,7 +402,10 @@ export const CheckoutForm = ({
         amount_total_cents: Math.round(finalAmountCents),
         original_product_price_cents: baseAmount,
         producer_assumes_installments: product.producer_assumes_installments || false,
+        batch_id: selectedBatch?.id || null,
       };
+
+      console.log('[CHECKOUT] Sending payment with batch_id:', selectedBatch?.id);
 
       // Adicionar dados do cartão baseado no gateway
       if (cardTokenResult) {
@@ -527,6 +548,51 @@ export const CheckoutForm = ({
         <CardContent className="px-4 sm:px-8 pb-6 pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+              {/* Batch Selection Section - Only for events with multiple batches */}
+              {product.product_type === 'event' && availableBatches && availableBatches.length > 1 && (
+                <div className="bg-gradient-to-r from-primary/5 to-primary/10 border-2 border-primary/20 rounded-lg p-4 sm:p-5 shadow-sm mb-4">
+                  <Label htmlFor="batch-select" className="text-base font-semibold mb-2 block">
+                    Selecione o Lote de Ingressos
+                  </Label>
+                  <Select
+                    value={selectedBatch?.id || ''}
+                    onValueChange={(batchId) => {
+                      const batch = availableBatches.find(b => b.id === batchId);
+                      if (batch) onBatchChange?.(batch);
+                    }}
+                  >
+                    <SelectTrigger id="batch-select" className="bg-white">
+                      <SelectValue placeholder="Escolha um lote" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableBatches.map((batch) => {
+                        const available = batch.total_quantity - batch.sold_quantity;
+                        const isAvailable = available > 0;
+                        
+                        return (
+                          <SelectItem 
+                            key={batch.id} 
+                            value={batch.id}
+                            disabled={!isAvailable}
+                          >
+                            {batch.name} - R$ {(batch.price_cents / 100).toFixed(2).replace('.', ',')} 
+                            {isAvailable 
+                              ? ` (${available} ${available === 1 ? 'ingresso disponível' : 'ingressos disponíveis'})`
+                              : ' (ESGOTADO)'
+                            }
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  {selectedBatch && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      <strong>{selectedBatch.name}</strong> - {selectedBatch.total_quantity - selectedBatch.sold_quantity} ingressos restantes
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Personal Info Section */}
               <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-5 shadow-sm">
                 <PersonalInfoSection form={form} isPhoneRequired={isEmailOptional} />

@@ -9,12 +9,23 @@ import { toast } from "@/hooks/use-toast";
 import OrderBumpCheckout from "@/components/checkout/OrderBumpCheckout";
 import { tracking } from "@/lib/tracking";
 
+interface TicketBatch {
+  id: string;
+  name: string;
+  price_cents: number;
+  total_quantity: number;
+  sold_quantity: number;
+  is_active: boolean;
+  display_order: number;
+}
+
 const Checkout = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [donationAmount, setDonationAmount] = useState<string>("");
   const [eventQuantity, setEventQuantity] = useState<number>(1);
   const [selectedOrderBumps, setSelectedOrderBumps] = useState<any[]>([]);
+  const [selectedBatch, setSelectedBatch] = useState<TicketBatch | null>(null);
 
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', slug],
@@ -73,6 +84,29 @@ const Checkout = () => {
     enabled: !!product?.id,
   });
 
+  // Buscar lotes ativos se produto for evento
+  const { data: ticketBatches } = useQuery({
+    queryKey: ['ticket-batches', product?.id],
+    queryFn: async () => {
+      if (!product || product.product_type !== 'event') return null;
+      
+      const { data, error } = await supabase
+        .from('ticket_batches')
+        .select('*')
+        .eq('product_id', product.id)
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching batches:', error);
+        return null;
+      }
+
+      return data as TicketBatch[];
+    },
+    enabled: !!product && product.product_type === 'event',
+  });
+
   const handleOrderBumpSelect = (item: any) => {
     setSelectedOrderBumps([...selectedOrderBumps, item]);
   };
@@ -80,6 +114,19 @@ const Checkout = () => {
   const handleOrderBumpDeselect = (item: any) => {
     setSelectedOrderBumps(selectedOrderBumps.filter(i => i.id !== item.id));
   };
+
+  // Auto-selecionar primeiro lote disponível
+  useEffect(() => {
+    if (ticketBatches && ticketBatches.length > 0 && !selectedBatch) {
+      const availableBatch = ticketBatches.find(
+        (batch) => batch.sold_quantity < batch.total_quantity
+      );
+      if (availableBatch) {
+        setSelectedBatch(availableBatch);
+        console.log('[CHECKOUT] Auto-selected batch:', availableBatch);
+      }
+    }
+  }, [ticketBatches, selectedBatch]);
 
   // Inicializar tracking quando o produto carregar
   useEffect(() => {
@@ -206,6 +253,9 @@ const Checkout = () => {
                   selectedOrderBumps={selectedOrderBumps}
                   onOrderBumpSelect={handleOrderBumpSelect}
                   onOrderBumpDeselect={handleOrderBumpDeselect}
+                  selectedBatch={selectedBatch}
+                  availableBatches={ticketBatches}
+                  onBatchChange={setSelectedBatch}
                 />
               </div>
             </div>
@@ -220,6 +270,9 @@ const Checkout = () => {
                 selectedOrderBumps={selectedOrderBumps}
                 onOrderBumpSelect={handleOrderBumpSelect}
                 onOrderBumpDeselect={handleOrderBumpDeselect}
+                selectedBatch={selectedBatch}
+                availableBatches={ticketBatches}
+                onBatchChange={setSelectedBatch}
               />
             </div>
           )}
