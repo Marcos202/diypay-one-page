@@ -149,10 +149,84 @@ const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoadin
       </div>
 
       {isEvent && mode === 'edit' && productId && (
-        <BatchManagementSection 
-          productId={productId}
-          basePrice={convertPriceToCents(formData.price)}
-        />
+        <>
+          <BatchManagementSection 
+            productId={productId}
+            basePrice={convertPriceToCents(formData.price)}
+          />
+          
+          {/* Special Offer Section */}
+          <div className="space-y-4 p-5 border-2 border-primary/20 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label htmlFor="special_offer_enabled" className="text-base font-semibold">
+                  Meia Entrada / Ofertas Especiais
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Ative para oferecer ingressos com desconto (estudantes, idosos, etc)
+                </p>
+              </div>
+              <Switch
+                id="special_offer_enabled"
+                checked={formData.special_offer_enabled || false}
+                onCheckedChange={(checked) => {
+                  onInputChange('special_offer_enabled', checked);
+                  if (checked && !formData.special_offer_title) {
+                    onInputChange('special_offer_title', 'Meia Entrada');
+                  }
+                  if (checked && !formData.special_offer_discount_percent) {
+                    onInputChange('special_offer_discount_percent', 50);
+                  }
+                }}
+              />
+            </div>
+
+            {formData.special_offer_enabled && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-primary/10">
+                <div className="space-y-2">
+                  <Label htmlFor="special_offer_title">
+                    Título da Oferta *
+                  </Label>
+                  <Input
+                    id="special_offer_title"
+                    value={formData.special_offer_title || ''}
+                    onChange={(e) => {
+                      const value = e.target.value.slice(0, 22);
+                      onInputChange('special_offer_title', value);
+                    }}
+                    placeholder="Ex: Meia Entrada, Estudante da UFT"
+                    maxLength={22}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Máximo 22 caracteres ({22 - (formData.special_offer_title?.length || 0)} restantes)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="special_offer_discount_percent">
+                    Desconto (%) *
+                  </Label>
+                  <Input
+                    id="special_offer_discount_percent"
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={formData.special_offer_discount_percent || 50}
+                    onChange={(e) => {
+                      const value = Math.max(1, Math.min(100, parseInt(e.target.value) || 50));
+                      onInputChange('special_offer_discount_percent', value);
+                    }}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Valor entre 1% e 100%
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
       )}
       
       <div className="flex items-center justify-between p-4 border rounded-lg">

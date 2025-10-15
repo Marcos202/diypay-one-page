@@ -8,6 +8,9 @@ import { useEffect, useCallback, memo } from "react";
 interface EventTicketsSectionProps {
   form: UseFormReturn<any>;
   onQuantityChange?: (quantity: number) => void;
+  specialOfferEnabled?: boolean;
+  specialOfferTitle?: string;
+  onSpecialQuantityChange?: (quantity: number) => void;
 }
 
 interface AttendeeFieldProps {
@@ -17,11 +20,20 @@ interface AttendeeFieldProps {
 
 // Memoizar os campos individuais de participantes para evitar re-renderizações desnecessárias
 const AttendeeField = memo(({ form, index }: AttendeeFieldProps) => {
+  const isSpecialOffer = form.watch(`attendees.${index}.is_special_offer`);
+  
   return (
     <div className="border border-gray-200 rounded-lg p-4 space-y-3">
-      <h5 className="text-sm font-medium text-gray-700">
-        Participante {index + 1}
-      </h5>
+      <div className="flex items-center justify-between">
+        <h5 className="text-sm font-medium text-gray-700">
+          Participante {index + 1}
+        </h5>
+        {isSpecialOffer && (
+          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
+            Participante beneficiário
+          </span>
+        )}
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
@@ -69,23 +81,37 @@ const AttendeeField = memo(({ form, index }: AttendeeFieldProps) => {
   );
 });
 
-export const EventTicketsSection = memo(({ form, onQuantityChange }: EventTicketsSectionProps) => {
+export const EventTicketsSection = memo(({ 
+  form, 
+  onQuantityChange, 
+  specialOfferEnabled = false,
+  specialOfferTitle = 'Meia Entrada',
+  onSpecialQuantityChange 
+}: EventTicketsSectionProps) => {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "attendees"
   });
 
   const quantity = form.watch("quantity");
+  const specialQuantity = form.watch("specialQuantity");
 
-  // Usar useCallback para memoizar a função de mudança de quantidade
+  // Usar useCallback para memoizar as funções de mudança de quantidade
   const handleQuantityChange = useCallback((newQuantity: string) => {
     const numQuantity = parseInt(newQuantity, 10) || 0;
     onQuantityChange?.(numQuantity);
   }, [onQuantityChange]);
 
+  const handleSpecialQuantityChange = useCallback((newQuantity: string) => {
+    const numQuantity = parseInt(newQuantity, 10) || 0;
+    onSpecialQuantityChange?.(numQuantity);
+  }, [onSpecialQuantityChange]);
+
   // Gerenciar campos de participantes de forma eficiente
   useEffect(() => {
-    const targetCount = parseInt(quantity, 10) || 0;
+    const normalQty = parseInt(quantity, 10) || 0;
+    const specialQty = specialOfferEnabled ? (parseInt(specialQuantity, 10) || 0) : 0;
+    const targetCount = normalQty + specialQty;
     const currentCount = fields.length;
 
     if (targetCount <= 0) {
@@ -97,10 +123,12 @@ export const EventTicketsSection = memo(({ form, onQuantityChange }: EventTicket
     }
 
     if (currentCount < targetCount) {
-      // Adicionar novos campos
+      // Adicionar novos campos, marcando os especiais
       const fieldsToAdd = targetCount - currentCount;
+      const normalQty = parseInt(quantity, 10) || 0;
       for (let i = 0; i < fieldsToAdd; i++) {
-        append({ name: "", email: "" });
+        const isSpecialOffer = (currentCount + i) >= normalQty;
+        append({ name: "", email: "", is_special_offer: isSpecialOffer });
       }
     } else if (currentCount > targetCount) {
       // Remover campos excedentes
@@ -108,7 +136,7 @@ export const EventTicketsSection = memo(({ form, onQuantityChange }: EventTicket
         remove(i);
       }
     }
-  }, [quantity, fields.length, append, remove]);
+  }, [quantity, specialQuantity, specialOfferEnabled, fields.length, append, remove]);
 
   return (
     <div className="space-y-4">
@@ -117,7 +145,7 @@ export const EventTicketsSection = memo(({ form, onQuantityChange }: EventTicket
         <h3 className="text-lg font-semibold text-gray-900">Ingressos</h3>
       </div>
       
-      {/* Campo de Quantidade */}
+      {/* Campo de Quantidade Normal */}
       <FormField
         control={form.control}
         name="quantity"
@@ -129,9 +157,9 @@ export const EventTicketsSection = memo(({ form, onQuantityChange }: EventTicket
             <FormControl>
               <Input 
                 type="number"
-                min="1"
+                min={specialOfferEnabled ? "0" : "1"}
                 max="10"
-                placeholder="1" 
+                placeholder={specialOfferEnabled ? "0" : "1"}
                 className="h-9 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 {...field}
                 onChange={(e) => {
@@ -144,6 +172,36 @@ export const EventTicketsSection = memo(({ form, onQuantityChange }: EventTicket
           </FormItem>
         )}
       />
+
+      {/* Campo de Quantidade Especial */}
+      {specialOfferEnabled && (
+        <FormField
+          control={form.control}
+          name="specialQuantity"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-sm font-medium text-gray-700">
+                {specialOfferTitle} *
+              </FormLabel>
+              <FormControl>
+                <Input 
+                  type="number"
+                  min="0"
+                  max="10"
+                  placeholder="0"
+                  className="h-9 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  {...field}
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    handleSpecialQuantityChange(e.target.value);
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
 
       {/* Campos Dinâmicos de Participantes */}
       {fields.length > 0 && (

@@ -29,6 +29,9 @@ interface Product {
   is_email_optional?: boolean;
   require_email_confirmation?: boolean;
   producer_assumes_installments?: boolean;
+  special_offer_enabled?: boolean;
+  special_offer_title?: string;
+  special_offer_discount_percent?: number;
 }
 
 interface TicketBatch {
@@ -83,11 +86,20 @@ const donationSchema = z.object({
 // Schema for events
 const eventSchema = z.object({
   ...baseSchema,
-  quantity: z.string().min(1, "Obrigatório"),
+  quantity: z.string(),
+  specialQuantity: z.string().optional(),
   attendees: z.array(z.object({
     name: z.string().min(1, "Obrigatório"),
-    email: z.string().min(1, "Obrigatório").email("Email inválido")
+    email: z.string().min(1, "Obrigatório").email("Email inválido"),
+    is_special_offer: z.boolean().optional()
   })).min(1, "Pelo menos um participante é obrigatório"),
+}).refine((data) => {
+  const normalQty = parseInt(data.quantity) || 0;
+  const specialQty = parseInt(data.specialQuantity || "0") || 0;
+  return (normalQty + specialQty) >= 1;
+}, {
+  message: "Selecione pelo menos 1 ingresso (normal ou especial)",
+  path: ["quantity"]
 });
 
 // Schema for regular products
@@ -149,7 +161,8 @@ export const CheckoutForm = ({
 }: CheckoutFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"credit_card" | "pix" | "bank_slip">("credit_card");
-  const [eventQuantity, setEventQuantity] = useState<number>(1);
+  const [eventQuantity, setEventQuantity] = useState<number>(product.special_offer_enabled ? 0 : 1);
+  const [specialEventQuantity, setSpecialEventQuantity] = useState<number>(0);
   const [activeGateway, setActiveGateway] = useState<string | null>(null);
   const [installmentInterestRate, setInstallmentInterestRate] = useState<number>(0);
   const [selectedInstallments, setSelectedInstallments] = useState<number>(1);
@@ -205,7 +218,11 @@ export const CheckoutForm = ({
       installments: 1,
       saveData: false,
       ...(isDonation && { donationAmount: "" }),
-      ...(isEvent && { quantity: "1", attendees: [] }),
+      ...(isEvent && { 
+        quantity: product.special_offer_enabled ? "0" : "1", 
+        specialQuantity: "0",
+        attendees: [] 
+      }),
       email: "",
       confirmEmail: "",
       phone: "",
@@ -225,6 +242,10 @@ export const CheckoutForm = ({
     setEventQuantity(quantity);
     onEventQuantityChange?.(quantity);
   }, [onEventQuantityChange]);
+
+  const handleSpecialEventQuantityChange = useCallback((quantity: number) => {
+    setSpecialEventQuantity(quantity);
+  }, []);
 
   // Chamar a função de mudança apenas quando necessário
   useMemo(() => {
@@ -427,8 +448,17 @@ export const CheckoutForm = ({
 
       if (isEvent) {
         const eventData = data as any;
-        transactionPayload.quantity = parseInt(eventData.quantity || "1");
+        const normalQty = parseInt(eventData.quantity || "0");
+        const specialQty = parseInt(eventData.specialQuantity || "0");
+        
+        transactionPayload.quantity = normalQty + specialQty;
+        transactionPayload.normal_tickets_quantity = normalQty;
+        transactionPayload.special_tickets_quantity = specialQty;
         transactionPayload.attendees = eventData.attendees;
+        
+        if (product.special_offer_enabled && specialQty > 0) {
+          transactionPayload.special_offer_discount_percent = product.special_offer_discount_percent || 50;
+        }
       }
       
       // Adicionar order bumps selecionados
@@ -548,48 +578,24 @@ export const CheckoutForm = ({
         <CardContent className="px-4 sm:px-8 pb-6 pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
-              {/* Batch Selection Section - Only for events with multiple batches */}
-              {product.product_type === 'event' && availableBatches && availableBatches.length > 1 && (
+              {/* Active Batch Display - Only for events */}
+              {product.product_type === 'event' && selectedBatch && (
                 <div className="bg-gradient-to-r from-primary/5 to-primary/10 border-2 border-primary/20 rounded-lg p-4 sm:p-5 shadow-sm mb-4">
-                  <Label htmlFor="batch-select" className="text-base font-semibold mb-2 block">
-                    Selecione o Lote de Ingressos
-                  </Label>
-                  <Select
-                    value={selectedBatch?.id || ''}
-                    onValueChange={(batchId) => {
-                      const batch = availableBatches.find(b => b.id === batchId);
-                      if (batch) onBatchChange?.(batch);
-                    }}
-                  >
-                    <SelectTrigger id="batch-select" className="bg-white">
-                      <SelectValue placeholder="Escolha um lote" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableBatches.map((batch) => {
-                        const available = batch.total_quantity - batch.sold_quantity;
-                        const isAvailable = available > 0;
-                        
-                        return (
-                          <SelectItem 
-                            key={batch.id} 
-                            value={batch.id}
-                            disabled={!isAvailable}
-                          >
-                            {batch.name} - R$ {(batch.price_cents / 100).toFixed(2).replace('.', ',')} 
-                            {isAvailable 
-                              ? ` (${available} ${available === 1 ? 'ingresso disponível' : 'ingressos disponíveis'})`
-                              : ' (ESGOTADO)'
-                            }
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  {selectedBatch && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      <strong>{selectedBatch.name}</strong> - {selectedBatch.total_quantity - selectedBatch.sold_quantity} ingressos restantes
-                    </p>
-                  )}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground font-medium">Lote Ativo</p>
+                      <p className="text-lg font-bold text-foreground">{selectedBatch.name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">Preço</p>
+                      <p className="text-xl font-bold text-primary">
+                        R$ {(selectedBatch.price_cents / 100).toFixed(2).replace('.', ',')}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {selectedBatch.total_quantity - selectedBatch.sold_quantity} ingressos disponíveis
+                  </p>
                 </div>
               )}
 
@@ -615,6 +621,9 @@ export const CheckoutForm = ({
                   <EventTicketsSection 
                     form={form}
                     onQuantityChange={handleEventQuantityChange}
+                    specialOfferEnabled={product.special_offer_enabled || false}
+                    specialOfferTitle={product.special_offer_title || 'Meia Entrada'}
+                    onSpecialQuantityChange={handleSpecialEventQuantityChange}
                   />
                 </div>
               )}
