@@ -405,33 +405,35 @@ export const CheckoutForm = ({
       // Calculate final amount based on installments and interest
       const baseAmount = isDonation 
         ? convertToCents((data as any).donationAmount) 
-        : isEvent && selectedBatch
+        : isEvent
           ? (() => {
               const normalQty = parseInt((data as any).quantity || "0");
               const specialQty = parseInt((data as any).specialQuantity || "0");
-              const totalQty = normalQty + specialQty;
               
-              // Calcular valor base usando preço do lote ativo
-              let batchTotal = selectedBatch.price_cents * normalQty;
+              // Usar preço do lote se disponível, senão usar preço base do produto
+              const unitPrice = selectedBatch ? selectedBatch.price_cents : product.price_cents;
+              
+              // Calcular valor dos ingressos normais
+              let total = unitPrice * normalQty;
               
               // Se houver ingressos especiais, aplicar desconto
               if (product.special_offer_enabled && specialQty > 0) {
                 const discountPercent = product.special_offer_discount_percent || 50;
-                const specialPrice = selectedBatch.price_cents * (1 - discountPercent / 100);
-                batchTotal += specialPrice * specialQty;
+                const specialPrice = unitPrice * (1 - discountPercent / 100);
+                total += specialPrice * specialQty;
               }
               
               console.log('[CHECKOUT] Base amount calculation:', {
                 normalQty,
                 specialQty,
-                totalQty,
-                batchPrice: selectedBatch.price_cents,
-                batchTotal,
+                unitPrice,
+                hasSelectedBatch: !!selectedBatch,
+                total,
                 specialOfferEnabled: product.special_offer_enabled,
                 specialOfferDiscount: product.special_offer_discount_percent
               });
               
-              return Math.round(batchTotal);
+              return Math.round(total);
             })()
           : product.price_cents;
       

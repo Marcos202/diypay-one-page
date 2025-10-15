@@ -222,13 +222,33 @@ const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoadin
             )}
           </div>
 
-          {/* Batch Management Section - Only in edit mode with productId */}
-          {mode === 'edit' && productId && (
+          {/* Batch Management Section */}
+          {mode === 'edit' && productId ? (
             <BatchManagementSection 
               productId={productId}
               basePrice={convertPriceToCents(formData.price)}
             />
-          )}
+          ) : mode === 'create' ? (
+            <div className="space-y-4 p-5 border-2 border-yellow-500/20 rounded-lg bg-gradient-to-r from-yellow-500/5 to-yellow-500/10">
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <span>📋</span>
+                  Lotes
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Configure diferentes lotes com preços e quantidades variadas (máximo 10 lotes)
+                </p>
+                <div className="mt-4 p-4 border border-yellow-500/30 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    💡 Para configurar lotes, você precisa primeiro <strong>salvar o produto</strong>.
+                  </p>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-2">
+                    Após salvar, você poderá criar lotes com preços e quantidades personalizadas.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </>
       )}
       
