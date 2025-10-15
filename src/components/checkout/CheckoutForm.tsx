@@ -403,9 +403,37 @@ export const CheckoutForm = ({
       const cardTokenResult = await createPaymentToken(data);
 
       // Calculate final amount based on installments and interest
-      const baseAmount = isDonation ? convertToCents((data as any).donationAmount) : 
-                        isEvent ? product.price_cents * parseInt((data as any).quantity || "1") :
-                        product.price_cents;
+      const baseAmount = isDonation 
+        ? convertToCents((data as any).donationAmount) 
+        : isEvent && selectedBatch
+          ? (() => {
+              const normalQty = parseInt((data as any).quantity || "0");
+              const specialQty = parseInt((data as any).specialQuantity || "0");
+              const totalQty = normalQty + specialQty;
+              
+              // Calcular valor base usando preço do lote ativo
+              let batchTotal = selectedBatch.price_cents * normalQty;
+              
+              // Se houver ingressos especiais, aplicar desconto
+              if (product.special_offer_enabled && specialQty > 0) {
+                const discountPercent = product.special_offer_discount_percent || 50;
+                const specialPrice = selectedBatch.price_cents * (1 - discountPercent / 100);
+                batchTotal += specialPrice * specialQty;
+              }
+              
+              console.log('[CHECKOUT] Base amount calculation:', {
+                normalQty,
+                specialQty,
+                totalQty,
+                batchPrice: selectedBatch.price_cents,
+                batchTotal,
+                specialOfferEnabled: product.special_offer_enabled,
+                specialOfferDiscount: product.special_offer_discount_percent
+              });
+              
+              return Math.round(batchTotal);
+            })()
+          : product.price_cents;
       
       const finalAmountCents = data.paymentMethod === 'credit_card' ? 
         calculateTotalWithInterest(baseAmount, data.installments) : 

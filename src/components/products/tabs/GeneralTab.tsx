@@ -148,14 +148,9 @@ const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoadin
         </div>
       </div>
 
-      {isEvent && mode === 'edit' && productId && (
+      {isEvent && (
         <>
-          <BatchManagementSection 
-            productId={productId}
-            basePrice={convertPriceToCents(formData.price)}
-          />
-          
-          {/* Special Offer Section */}
+          {/* Meia Entrada / Ofertas Especiais - Always show for events */}
           <div className="space-y-4 p-5 border-2 border-primary/20 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
@@ -226,6 +221,14 @@ const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoadin
               </div>
             )}
           </div>
+
+          {/* Batch Management Section - Only in edit mode with productId */}
+          {mode === 'edit' && productId && (
+            <BatchManagementSection 
+              productId={productId}
+              basePrice={convertPriceToCents(formData.price)}
+            />
+          )}
         </>
       )}
       
