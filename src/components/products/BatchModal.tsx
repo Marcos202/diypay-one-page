@@ -24,6 +24,7 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
     name: "",
     total_quantity: 100,
     price_cents: basePrice,
+    price_display: "",
     auto_advance_to_next: false,
     min_quantity_per_purchase: 1,
     max_quantity_per_purchase: null as number | null,
@@ -33,12 +34,29 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
     useSaleEndDate: false,
   });
 
+  const formatCurrency = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    const amount = parseFloat(numbers) / 100;
+    return amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const handlePriceChange = (value: string) => {
+    const formatted = formatCurrency(value);
+    setFormData(prev => ({ 
+      ...prev, 
+      price_display: formatted,
+      price_cents: parseInt(value.replace(/\D/g, '')) || 0 
+    }));
+  };
+
   useEffect(() => {
     if (batch) {
+      const priceInReais = (batch.price_cents / 100).toFixed(2).replace('.', ',');
       setFormData({
         name: batch.name,
         total_quantity: batch.total_quantity,
         price_cents: batch.price_cents,
+        price_display: priceInReais,
         auto_advance_to_next: batch.auto_advance_to_next,
         min_quantity_per_purchase: batch.min_quantity_per_purchase || 1,
         max_quantity_per_purchase: batch.max_quantity_per_purchase,
@@ -48,9 +66,12 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
         useSaleEndDate: !!batch.sale_end_date,
       });
     } else {
+      const initialPrice = isFirstBatch ? basePrice : 0;
+      const priceInReais = (initialPrice / 100).toFixed(2).replace('.', ',');
       setFormData(prev => ({
         ...prev,
-        price_cents: isFirstBatch ? basePrice : prev.price_cents,
+        price_cents: initialPrice,
+        price_display: priceInReais,
       }));
     }
   }, [batch, basePrice, isFirstBatch]);
@@ -99,20 +120,17 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
 
           <div>
             <Label htmlFor="price">Preço por Ingresso (R$) *</Label>
-            <Input
-              id="price"
-              type="number"
-              step="0.01"
-              min="0"
-              value={(formData.price_cents / 100).toFixed(2)}
-              onChange={(e) => setFormData(prev => ({ ...prev, price_cents: Math.round(parseFloat(e.target.value) * 100) || 0 }))}
-              disabled={isFirstBatch && !batch}
-            />
-            {isFirstBatch && !batch && (
-              <p className="text-sm text-muted-foreground mt-1">
-                O primeiro lote deve ter o mesmo valor do produto
-              </p>
-            )}
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">R$</span>
+              <Input
+                id="price"
+                type="text"
+                placeholder="0,00"
+                value={formData.price_display}
+                onChange={(e) => handlePriceChange(e.target.value)}
+                className="pl-10 text-lg font-semibold"
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-between">
