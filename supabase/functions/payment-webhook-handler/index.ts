@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
       
       const { data: product, error: productError } = await supabaseAdmin
         .from('products')
-        .select('producer_id, price_cents, special_offer_enabled, special_offer_discount_percent')
+        .select('producer_id')
         .eq('id', sale.product_id)
         .single();
       
@@ -168,44 +168,10 @@ Deno.serve(async (req) => {
         throw new Error(`Failed to fetch product ${sale.product_id}: ${productError.message}`);
       }
       
-      // ============================================================
-      // 💰 RECALCULAR VALOR TOTAL COM OFERTAS ESPECIAIS
-      // ============================================================
-      let finalAmountCents = sale.amount_total_cents;
-      
-      if (product.special_offer_enabled && sale.normal_tickets_quantity && sale.special_tickets_quantity) {
-        const normalQty = sale.normal_tickets_quantity || 0;
-        const specialQty = sale.special_tickets_quantity || 0;
-        const discountPercent = product.special_offer_discount_percent || 50;
-        
-        console.log(`[SPECIAL_OFFER] Recalculating total with special offer: normalQty=${normalQty}, specialQty=${specialQty}, discount=${discountPercent}%`);
-        
-        const normalTotal = normalQty * product.price_cents;
-        const specialPricePerTicket = Math.round(product.price_cents * (1 - discountPercent / 100));
-        const specialTotal = specialQty * specialPricePerTicket;
-        
-        finalAmountCents = normalTotal + specialTotal;
-        
-        console.log(`[SPECIAL_OFFER] Calculated: normalTotal=${normalTotal}, specialTotal=${specialTotal}, finalTotal=${finalAmountCents}`);
-        
-        // Atualizar o sale com o valor correto
-        const { error: amountUpdateError } = await supabaseAdmin
-          .from('sales')
-          .update({ 
-            amount_total_cents: finalAmountCents,
-            original_product_price_cents: finalAmountCents
-          })
-          .eq('id', sale.id);
-        
-        if (amountUpdateError) {
-          console.error(`[SPECIAL_OFFER] Error updating sale amount: ${amountUpdateError.message}`);
-        }
-      }
-      
       // Lógica financeira
       const paidAtDate = new Date();
       const settings = await getFinancialSettings(supabaseAdmin, product.producer_id);
-      const originalPriceCents = finalAmountCents; // Usar o valor recalculado
+      const originalPriceCents = sale.original_product_price_cents || sale.amount_total_cents;
       const platformFeeCents = calculatePlatformFee(settings, sale.payment_method_used, sale.installments_chosen || 1, originalPriceCents);
       const securityReserveCents = Math.round(originalPriceCents * ((settings.security_reserve_percent || 0) / 100));
       
