@@ -18,13 +18,17 @@ interface GeneralTabProps {
   mode?: 'create' | 'edit';
   isLoading?: boolean;
   productId?: string;
+  localBatches?: any[];
+  onLocalBatchesChange?: (batches: any[]) => void;
 }
 
-const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoading = false, productId }: GeneralTabProps) => {
+const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoading = false, productId, localBatches = [], onLocalBatchesChange }: GeneralTabProps) => {
   const isPriceDisabled = formData.product_type === 'donation';
   const isDonation = formData.product_type === 'donation';
   const isSubscription = formData.product_type === 'subscription';
   const isEvent = formData.product_type === 'event';
+  
+  const useBatches = formData.use_batches ?? false;
 
   const convertPriceToCents = (price: string): number => {
     const numbers = price.replace(/\D/g, '');
@@ -129,16 +133,37 @@ const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoadin
         isLoading={isLoading}
       />
 
+      {/* Switch de Vender por Lotes - apenas para eventos */}
+      {isEvent && (
+        <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50 border-blue-200">
+          <div className="space-y-1">
+            <Label htmlFor="use_batches" className="text-base font-medium">Vender Ingressos por Lote</Label>
+            <p className="text-sm text-muted-foreground">Ative para definir preços diferentes por lote de ingressos</p>
+          </div>
+          <Switch 
+            id="use_batches" 
+            checked={useBatches} 
+            onCheckedChange={(checked) => onInputChange('use_batches', checked)} 
+          />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="price">{isPriceDisabled ? 'Valor (Definido pelo Cliente)' : isSubscription ? 'Valor da Assinatura (R$) *' : 'Valor do Produto (R$) *'}</Label>
-          {isPriceDisabled ? ( <Input id="price" type="text" value="Valor livre" disabled={true} className="bg-muted" /> ) : (
+          {isPriceDisabled ? ( <Input id="price" type="text" value="Valor livre" disabled={true} className="bg-muted" /> ) : useBatches && isEvent ? (
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">R$</span>
+              <Input id="price" placeholder="0,00" value="Definido por lote" disabled={true} className="pl-10 text-lg font-semibold bg-muted" />
+            </div>
+          ) : (
             <div className="relative">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">R$</span>
               <Input id="price" placeholder="0,00" value={formData.price} onChange={(e) => handlePriceChange(e.target.value)} className="pl-10 text-lg font-semibold" required />
             </div>
           )}
           {isPriceDisabled && (<p className="text-sm text-muted-foreground">Para doações, o valor será definido pelo cliente no momento da compra</p>)}
+          {useBatches && isEvent && (<p className="text-sm text-blue-600">O preço será definido individualmente para cada lote</p>)}
           {isSubscription && (<p className="text-sm text-blue-600">Este valor será cobrado de acordo com a frequência selecionada</p>)}
         </div>
         <div className="space-y-2">
@@ -148,12 +173,15 @@ const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoadin
         </div>
       </div>
 
-      {/* Batch Management Section - Only for events */}
-      {isEvent && (
+      {/* Batch Management Section - Only for events with batches enabled */}
+      {isEvent && useBatches && (
         <div className="mt-6">
           <BatchManagementSection 
             productId={productId}
             basePrice={convertPriceToCents(formData.price)}
+            localBatches={localBatches}
+            onLocalBatchesChange={onLocalBatchesChange}
+            mode={mode}
           />
         </div>
       )}

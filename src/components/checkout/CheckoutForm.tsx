@@ -549,26 +549,6 @@ export const CheckoutForm = ({
         <CardContent className="px-4 sm:px-8 pb-6 pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
-              {/* Batch Info for Events - Display Only */}
-              {product.product_type === 'event' && selectedBatch && (
-                <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Ticket className="w-5 h-5 text-blue-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Ingressos</h3>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-base font-medium text-gray-800">
-                      {selectedBatch.name}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      R$ {(selectedBatch.price_cents / 100).toFixed(2).replace('.', ',')} por ingresso
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {selectedBatch.total_quantity - selectedBatch.sold_quantity} ingressos disponíveis
-                    </p>
-                  </div>
-                </div>
-              )}
 
               {/* Personal Info Section */}
               <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-5 shadow-sm">
@@ -592,6 +572,7 @@ export const CheckoutForm = ({
                   <EventTicketsSection 
                     form={form}
                     onQuantityChange={handleEventQuantityChange}
+                    selectedBatchName={selectedBatch?.name}
                   />
                 </div>
               )}

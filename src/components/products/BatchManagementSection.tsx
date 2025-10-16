@@ -11,13 +11,19 @@ import { ConfirmationModal } from "@/components/core/ConfirmationModal";
 interface BatchManagementSectionProps {
   productId: string | undefined;
   basePrice: number;
+  localBatches?: any[];
+  onLocalBatchesChange?: (batches: any[]) => void;
+  mode?: 'create' | 'edit';
 }
 
-export function BatchManagementSection({ productId, basePrice }: BatchManagementSectionProps) {
+export function BatchManagementSection({ productId, basePrice, localBatches = [], onLocalBatchesChange, mode = 'edit' }: BatchManagementSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
   const [batchToDelete, setBatchToDelete] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  
+  // Use local batches in create mode, database batches in edit mode
+  const isCreateMode = mode === 'create' || !productId;
 
   const { data: batches, isLoading } = useQuery({
     queryKey: ['ticket-batches', productId],
@@ -104,10 +110,33 @@ export function BatchManagementSection({ productId, basePrice }: BatchManagement
   });
 
   const handleSave = (batchData: any) => {
-    if (selectedBatch) {
-      updateBatchMutation.mutate({ batch_id: selectedBatch.id, updates: batchData });
+    if (isCreateMode) {
+      // In create mode, manage batches locally
+      if (selectedBatch) {
+        // Update existing batch in local state
+        const updatedBatches = localBatches.map(batch => 
+          batch.temp_id === selectedBatch.temp_id ? { ...batch, ...batchData } : batch
+        );
+        onLocalBatchesChange?.(updatedBatches);
+      } else {
+        // Add new batch to local state
+        const newBatch = {
+          ...batchData,
+          temp_id: `temp_${Date.now()}`, // Temporary ID for local management
+          sold_quantity: 0
+        };
+        onLocalBatchesChange?.([...localBatches, newBatch]);
+      }
+      setIsModalOpen(false);
+      setSelectedBatch(null);
+      toast({ title: selectedBatch ? "Lote atualizado!" : "Lote criado!" });
     } else {
-      createBatchMutation.mutate(batchData);
+      // In edit mode, save to database
+      if (selectedBatch) {
+        updateBatchMutation.mutate({ batch_id: selectedBatch.id, updates: batchData });
+      } else {
+        createBatchMutation.mutate(batchData);
+      }
     }
   };
 
@@ -116,44 +145,30 @@ export function BatchManagementSection({ productId, basePrice }: BatchManagement
     setIsModalOpen(true);
   };
 
-  const handleDelete = (batchId: string) => {
-    setBatchToDelete(batchId);
+  const handleDelete = (batchIdOrTempId: string) => {
+    setBatchToDelete(batchIdOrTempId);
   };
 
   const confirmDelete = () => {
     if (batchToDelete) {
-      deleteBatchMutation.mutate(batchToDelete);
+      if (isCreateMode) {
+        // In create mode, remove from local state
+        const updatedBatches = localBatches.filter(batch => 
+          batch.temp_id !== batchToDelete && batch.id !== batchToDelete
+        );
+        onLocalBatchesChange?.(updatedBatches);
+        setBatchToDelete(null);
+        toast({ title: "Lote excluído!" });
+      } else {
+        // In edit mode, delete from database
+        deleteBatchMutation.mutate(batchToDelete);
+      }
     }
   };
 
-  const canAddMoreBatches = !batches || batches.length < 10;
-
-  // Show informative message if no productId (during creation)
-  if (!productId) {
-    return (
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-lg font-medium">Lotes</h3>
-          <p className="text-sm text-muted-foreground">
-            Configure diferentes lotes com preços e quantidades variadas (máximo 10 lotes)
-          </p>
-        </div>
-        <Card className="p-8 text-center bg-blue-50 border-blue-200">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-              <Plus className="w-6 h-6 text-blue-600" />
-            </div>
-            <p className="text-base font-medium text-gray-900">
-              Para configurar lotes, você precisa salvar o produto primeiro
-            </p>
-            <p className="text-sm text-gray-600">
-              Após salvar, você poderá criar e gerenciar lotes aqui.
-            </p>
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  // Use local or database batches depending on mode
+  const displayBatches = isCreateMode ? localBatches : (batches || []);
+  const canAddMoreBatches = displayBatches.length < 10;
 
   return (
     <div className="space-y-4">
@@ -176,11 +191,11 @@ export function BatchManagementSection({ productId, basePrice }: BatchManagement
         </Button>
       </div>
 
-      {isLoading ? (
+      {!isCreateMode && isLoading ? (
         <Card className="p-4">
           <p className="text-center text-muted-foreground">Carregando lotes...</p>
         </Card>
-      ) : batches && batches.length > 0 ? (
+      ) : displayBatches.length > 0 ? (
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -193,11 +208,11 @@ export function BatchManagementSection({ productId, basePrice }: BatchManagement
                 </tr>
               </thead>
               <tbody>
-                {batches.map((batch: any) => (
-                  <tr key={batch.id} className="border-b last:border-0">
+                {displayBatches.map((batch: any) => (
+                  <tr key={batch.id || batch.temp_id} className="border-b last:border-0">
                     <td className="p-4">{batch.name}</td>
                     <td className="p-4">
-                      {batch.sold_quantity} / {batch.total_quantity}
+                      {batch.sold_quantity || 0} / {batch.total_quantity}
                     </td>
                     <td className="p-4">
                       R$ {(batch.price_cents / 100).toFixed(2)}
@@ -214,7 +229,7 @@ export function BatchManagementSection({ productId, basePrice }: BatchManagement
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDelete(batch.id)}
+                          onClick={() => handleDelete(batch.id || batch.temp_id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -247,7 +262,7 @@ export function BatchManagementSection({ productId, basePrice }: BatchManagement
         onSave={handleSave}
         batch={selectedBatch}
         basePrice={basePrice}
-        isFirstBatch={!batches || batches.length === 0}
+        isFirstBatch={displayBatches.length === 0}
       />
 
       <ConfirmationModal

@@ -8,6 +8,7 @@ import { useEffect, useCallback, memo } from "react";
 interface EventTicketsSectionProps {
   form: UseFormReturn<any>;
   onQuantityChange?: (quantity: number) => void;
+  selectedBatchName?: string;
 }
 
 interface AttendeeFieldProps {
@@ -69,7 +70,7 @@ const AttendeeField = memo(({ form, index }: AttendeeFieldProps) => {
   );
 });
 
-export const EventTicketsSection = memo(({ form, onQuantityChange }: EventTicketsSectionProps) => {
+export const EventTicketsSection = memo(({ form, onQuantityChange, selectedBatchName }: EventTicketsSectionProps) => {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "attendees"
@@ -116,6 +117,15 @@ export const EventTicketsSection = memo(({ form, onQuantityChange }: EventTicket
         <Ticket className="w-5 h-5 text-blue-600" />
         <h3 className="text-lg font-semibold text-gray-900">Ingressos</h3>
       </div>
+      
+      {/* Nome do Lote Ativo */}
+      {selectedBatchName && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+          <p className="text-sm font-medium text-blue-900">
+            Lote: {selectedBatchName}
+          </p>
+        </div>
+      )}
       
       {/* Campo de Quantidade */}
       <FormField

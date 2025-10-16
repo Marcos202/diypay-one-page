@@ -41,6 +41,7 @@ interface ProductFormData {
   require_email_confirmation: boolean;
   producer_assumes_installments: boolean;
   delivery_type: string;
+  use_batches?: boolean;
 }
 
 interface ProductFormProps {
@@ -71,8 +72,10 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     subscription_frequency: '', allowed_payment_methods: getDefaultPaymentMethods(productTypeFromUrl),
     show_order_summary: true, donation_title: '', donation_description: '', checkout_image_url: '',
     checkout_background_color: '#F3F4F6', is_email_optional: false, require_email_confirmation: true,
-    producer_assumes_installments: false, delivery_type: ''
+    producer_assumes_installments: false, delivery_type: '', use_batches: false
   });
+  
+  const [localBatches, setLocalBatches] = useState<any[]>([]);
 
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab');
@@ -114,7 +117,8 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         is_email_optional: product.is_email_optional ?? false,
         require_email_confirmation: product.require_email_confirmation ?? true,
         producer_assumes_installments: product.producer_assumes_installments ?? false,
-        delivery_type: (product as any).delivery_type || ''
+        delivery_type: (product as any).delivery_type || '',
+        use_batches: (product as any).use_batches ?? false
       });
     }
   }, [product, mode]);
@@ -315,6 +319,8 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
                   mode={mode} 
                   isLoading={isLoading}
                   productId={productId}
+                  localBatches={localBatches}
+                  onLocalBatchesChange={setLocalBatches}
                 />
                 {mode === 'edit' && (
                   <div className="flex justify-start pt-6 mt-6 border-t">
