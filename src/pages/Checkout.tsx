@@ -209,6 +209,11 @@ const Checkout = () => {
     ? { backgroundColor: product.checkout_background_color }
     : {};
 
+  // Centralizar cálculo de preço - fonte única da verdade
+  const displayPriceCents = product.product_type === 'event' && selectedBatch
+    ? selectedBatch.price_cents
+    : product.price_cents;
+
   // ### INÍCIO DA ALTERAÇÃO ###
   return (
     <div className="min-h-screen bg-white lg:bg-gray-50 py-4 lg:py-8" style={backgroundStyle}>
@@ -232,7 +237,7 @@ const Checkout = () => {
               {/* Resumo do Pedido (Product Info Sidebar) */}
               <div className="w-full lg:w-1/3 px-4 lg:px-0">
                 <ProductInfo 
-                  product={product} 
+                  product={{ ...product, price_cents: displayPriceCents }} 
                   donationAmount={donationAmount}
                   eventQuantity={eventQuantity}
                   orderBumpItems={selectedOrderBumps.map(item => ({

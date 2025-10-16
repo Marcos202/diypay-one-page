@@ -410,23 +410,20 @@ export const CheckoutForm = ({
               const normalQty = parseInt((data as any).quantity || "0");
               const specialQty = parseInt((data as any).specialQuantity || "0");
               
-              // Usar preço do lote se disponível, senão usar preço base do produto
-              const unitPrice = selectedBatch ? selectedBatch.price_cents : product.price_cents;
-              
-              // Calcular valor dos ingressos normais
-              let total = unitPrice * normalQty;
+              // Calcular valor dos ingressos normais usando displayPriceCents
+              let total = displayPriceCents * normalQty;
               
               // Se houver ingressos especiais, aplicar desconto
               if (product.special_offer_enabled && specialQty > 0) {
                 const discountPercent = product.special_offer_discount_percent || 50;
-                const specialPrice = unitPrice * (1 - discountPercent / 100);
+                const specialPrice = displayPriceCents * (1 - discountPercent / 100);
                 total += specialPrice * specialQty;
               }
               
               console.log('[CHECKOUT] Base amount calculation:', {
                 normalQty,
                 specialQty,
-                unitPrice,
+                displayPriceCents,
                 hasSelectedBatch: !!selectedBatch,
                 total,
                 specialOfferEnabled: product.special_offer_enabled,
@@ -529,6 +526,11 @@ export const CheckoutForm = ({
       setIsLoading(false);
     }
   };
+
+  // Centralizar cálculo de preço - fonte única da verdade
+  const displayPriceCents = isEvent && selectedBatch
+    ? selectedBatch.price_cents
+    : product.price_cents;
   
   const getDisplayAmount = useCallback((): number => {
     let baseAmount = 0;
