@@ -1,3 +1,5 @@
+// src/components/products/BatchModal.tsx
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,14 +18,15 @@ interface BatchModalProps {
   onSave: (batchData: any) => void;
   batch?: any;
   basePrice: number;
-  isFirstBatch: boolean;
+  isFirstBatch: boolean; // Esta prop não é mais necessária para a lógica de bloqueio, mas mantemos para consistência
 }
 
 export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstBatch }: BatchModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     total_quantity: 100,
-    price_cents: basePrice,
+    price_cents: 0,
+    price_display: "0,00", // <<< CORREÇÃO 2: Adicionado estado para o valor formatado
     auto_advance_to_next: false,
     min_quantity_per_purchase: 1,
     max_quantity_per_purchase: null as number | null,
@@ -33,12 +36,33 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
     useSaleEndDate: false,
   });
 
+  // <<< CORREÇÃO 2: Funções de formatação de moeda reutilizadas >>>
+  const formatCurrency = (value: string) => {
+    if (!value) return '';
+    const numbers = value.replace(/\D/g, '');
+    if (numbers === '') return '0,00';
+    const amount = parseFloat(numbers) / 100;
+    return amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const handlePriceChange = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    setFormData(prev => ({ 
+      ...prev, 
+      price_display: formatCurrency(value),
+      price_cents: parseInt(numbers) || 0 
+    }));
+  };
+  // <<< FIM DA CORREÇÃO 2 >>>
+
   useEffect(() => {
     if (batch) {
+      // Se estamos editando um lote, carregamos seus dados
       setFormData({
         name: batch.name,
         total_quantity: batch.total_quantity,
         price_cents: batch.price_cents,
+        price_display: (batch.price_cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
         auto_advance_to_next: batch.auto_advance_to_next,
         min_quantity_per_purchase: batch.min_quantity_per_purchase || 1,
         max_quantity_per_purchase: batch.max_quantity_per_purchase,
@@ -48,12 +72,22 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
         useSaleEndDate: !!batch.sale_end_date,
       });
     } else {
-      setFormData(prev => ({
-        ...prev,
-        price_cents: isFirstBatch ? basePrice : prev.price_cents,
-      }));
+      // Se estamos criando um novo lote, resetamos para o padrão
+      setFormData({
+        name: "",
+        total_quantity: 100,
+        price_cents: 0,
+        price_display: "0,00",
+        auto_advance_to_next: false,
+        min_quantity_per_purchase: 1,
+        max_quantity_per_purchase: null,
+        sale_end_date: null,
+        useMinQuantity: false,
+        useMaxQuantity: false,
+        useSaleEndDate: false,
+      });
     }
-  }, [batch, basePrice, isFirstBatch]);
+  }, [batch, isOpen]); // Roda quando o modal abre ou o lote a ser editado muda
 
   const handleSubmit = () => {
     const dataToSave = {
@@ -97,23 +131,21 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
             />
           </div>
 
+          {/* <<< CORREÇÃO 1 e 2: CAMPO DE PREÇO CORRIGIDO >>> */}
           <div>
             <Label htmlFor="price">Preço por Ingresso (R$) *</Label>
-            <Input
-              id="price"
-              type="number"
-              step="0.01"
-              min="0"
-              value={(formData.price_cents / 100).toFixed(2)}
-              onChange={(e) => setFormData(prev => ({ ...prev, price_cents: Math.round(parseFloat(e.target.value) * 100) || 0 }))}
-              disabled={isFirstBatch && !batch}
-            />
-            {isFirstBatch && !batch && (
-              <p className="text-sm text-muted-foreground mt-1">
-                O primeiro lote deve ter o mesmo valor do produto
-              </p>
-            )}
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">R$</span>
+              <Input 
+                id="price" 
+                placeholder="0,00"
+                value={formData.price_display} 
+                onChange={(e) => handlePriceChange(e.target.value)} 
+                className="pl-10 text-lg font-semibold" 
+              />
+            </div>
           </div>
+          {/* <<< FIM DAS CORREÇÕES 1 e 2 >>> */}
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
