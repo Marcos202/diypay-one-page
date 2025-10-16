@@ -16,6 +16,7 @@ import OrderBumpCheckout from "./OrderBumpCheckout";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
+import { Ticket } from "lucide-react";
 
 interface Product {
   id: string;
@@ -548,48 +549,24 @@ export const CheckoutForm = ({
         <CardContent className="px-4 sm:px-8 pb-6 pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
-              {/* Batch Selection Section - Only for events with multiple batches */}
-              {product.product_type === 'event' && availableBatches && availableBatches.length > 1 && (
-                <div className="bg-gradient-to-r from-primary/5 to-primary/10 border-2 border-primary/20 rounded-lg p-4 sm:p-5 shadow-sm mb-4">
-                  <Label htmlFor="batch-select" className="text-base font-semibold mb-2 block">
-                    Selecione o Lote de Ingressos
-                  </Label>
-                  <Select
-                    value={selectedBatch?.id || ''}
-                    onValueChange={(batchId) => {
-                      const batch = availableBatches.find(b => b.id === batchId);
-                      if (batch) onBatchChange?.(batch);
-                    }}
-                  >
-                    <SelectTrigger id="batch-select" className="bg-white">
-                      <SelectValue placeholder="Escolha um lote" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableBatches.map((batch) => {
-                        const available = batch.total_quantity - batch.sold_quantity;
-                        const isAvailable = available > 0;
-                        
-                        return (
-                          <SelectItem 
-                            key={batch.id} 
-                            value={batch.id}
-                            disabled={!isAvailable}
-                          >
-                            {batch.name} - R$ {(batch.price_cents / 100).toFixed(2).replace('.', ',')} 
-                            {isAvailable 
-                              ? ` (${available} ${available === 1 ? 'ingresso disponível' : 'ingressos disponíveis'})`
-                              : ' (ESGOTADO)'
-                            }
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  {selectedBatch && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      <strong>{selectedBatch.name}</strong> - {selectedBatch.total_quantity - selectedBatch.sold_quantity} ingressos restantes
+              {/* Batch Info for Events - Display Only */}
+              {product.product_type === 'event' && selectedBatch && (
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Ticket className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Ingressos</h3>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-base font-medium text-gray-800">
+                      {selectedBatch.name}
                     </p>
-                  )}
+                    <p className="text-sm text-gray-600">
+                      R$ {(selectedBatch.price_cents / 100).toFixed(2).replace('.', ',')} por ingresso
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {selectedBatch.total_quantity - selectedBatch.sold_quantity} ingressos disponíveis
+                    </p>
+                  </div>
                 </div>
               )}
 

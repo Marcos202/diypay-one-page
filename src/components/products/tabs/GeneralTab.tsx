@@ -148,11 +148,14 @@ const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoadin
         </div>
       </div>
 
-      {isEvent && mode === 'edit' && productId && (
-        <BatchManagementSection 
-          productId={productId}
-          basePrice={convertPriceToCents(formData.price)}
-        />
+      {/* Batch Management Section - Only for events */}
+      {isEvent && (
+        <div className="mt-6">
+          <BatchManagementSection 
+            productId={productId}
+            basePrice={convertPriceToCents(formData.price)}
+          />
+        </div>
       )}
       
       <div className="flex items-center justify-between p-4 border rounded-lg">

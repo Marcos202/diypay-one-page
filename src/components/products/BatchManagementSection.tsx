@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { ConfirmationModal } from "@/components/core/ConfirmationModal";
 
 interface BatchManagementSectionProps {
-  productId: string;
+  productId: string | undefined;
   basePrice: number;
 }
 
@@ -29,6 +29,7 @@ export function BatchManagementSection({ productId, basePrice }: BatchManagement
       if (error) throw error;
       return data.batches || [];
     },
+    enabled: !!productId,
   });
 
   const createBatchMutation = useMutation({
@@ -126,6 +127,33 @@ export function BatchManagementSection({ productId, basePrice }: BatchManagement
   };
 
   const canAddMoreBatches = !batches || batches.length < 10;
+
+  // Show informative message if no productId (during creation)
+  if (!productId) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-lg font-medium">Lotes</h3>
+          <p className="text-sm text-muted-foreground">
+            Configure diferentes lotes com preços e quantidades variadas (máximo 10 lotes)
+          </p>
+        </div>
+        <Card className="p-8 text-center bg-blue-50 border-blue-200">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+              <Plus className="w-6 h-6 text-blue-600" />
+            </div>
+            <p className="text-base font-medium text-gray-900">
+              Para configurar lotes, você precisa salvar o produto primeiro
+            </p>
+            <p className="text-sm text-gray-600">
+              Após salvar, você poderá criar e gerenciar lotes aqui.
+            </p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
