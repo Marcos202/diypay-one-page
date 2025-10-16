@@ -245,9 +245,7 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
       toast.error('Forma de Entrega do Conteúdo é obrigatória');
       return;
     }
-    // Não validar preço se for doação ou se usar lotes
-    const isUsingBatches = formData.use_batches && formData.product_type === 'event';
-    if (formData.product_type !== 'donation' && !isUsingBatches && convertPriceToCents(formData.price) <= 0) {
+    if (formData.product_type !== 'donation' && convertPriceToCents(formData.price) <= 0) {
         toast.error('O valor do produto deve ser maior que zero.');
         return;
     }
