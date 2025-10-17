@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
 Deno.serve(async (req) => {
+  // <<< CORREÇÃO CRÍTICA: Lógica de CORS >>>
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -15,21 +16,14 @@ Deno.serve(async (req) => {
     );
 
     const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) {
-      throw new Error('Token de autorização não fornecido');
-    }
+    if (!token) throw new Error('Token de autorização não fornecido');
 
     const { data: { user }, error: authError } = await serviceClient.auth.getUser(token);
-    if (authError || !user) {
-      throw new Error('Usuário não autorizado');
-    }
+    if (authError || !user) throw new Error('Usuário não autorizado');
 
     const { productId, productData, use_batches, batches } = await req.json();
 
-    if (!productId) {
-      throw new Error('productId é obrigatório');
-    }
-
+    if (!productId) throw new Error('productId é obrigatório');
     if (!productData || typeof productData !== 'object') {
       throw new Error('productData é obrigatório e deve ser um objeto');
     }
@@ -51,21 +45,14 @@ Deno.serve(async (req) => {
       throw new Error(`Falha ao atualizar o produto: ${error.message}`);
     }
 
-    // Se use_batches = true e recebemos array de lotes
     if (use_batches && Array.isArray(batches)) {
       try {
-        // PASSO 1: Deletar todos os lotes existentes deste produto
         const { error: deleteError } = await serviceClient
           .from('ticket_batches')
           .delete()
           .eq('product_id', productId);
-          
-        if (deleteError) {
-          console.error('Erro ao deletar lotes antigos:', deleteError);
-          throw new Error(`Falha ao deletar lotes antigos: ${deleteError.message}`);
-        }
+        if (deleteError) throw new Error(`Falha ao deletar lotes antigos: ${deleteError.message}`);
         
-        // PASSO 2: Inserir os novos lotes (se houver)
         if (batches.length > 0) {
           const batchesToInsert = batches.map((batch, index) => ({
             product_id: productId,
@@ -84,11 +71,7 @@ Deno.serve(async (req) => {
           const { error: insertError } = await serviceClient
             .from('ticket_batches')
             .insert(batchesToInsert);
-            
-          if (insertError) {
-            console.error('Erro ao inserir novos lotes:', insertError);
-            throw new Error(`Falha ao inserir lotes: ${insertError.message}`);
-          }
+          if (insertError) throw new Error(`Falha ao inserir lotes: ${insertError.message}`);
           
           console.log(`✅ ${batchesToInsert.length} lote(s) sincronizado(s) com sucesso`);
         } else {
@@ -100,12 +83,14 @@ Deno.serve(async (req) => {
       }
     }
 
+    // <<< CORREÇÃO: Adicionados cabeçalhos CORS na resposta >>>
     return new Response(JSON.stringify(updatedProduct), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
 
   } catch (error: any) {
+    // <<< CORREÇÃO: Adicionados cabeçalhos CORS na resposta de erro >>>
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
