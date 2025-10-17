@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
       throw new Error('Usuário não autorizado');
     }
 
-    const { productId, productData } = await req.json();
+    const { productId, productData, use_batches, batches } = await req.json();
 
     if (!productId) {
       throw new Error('productId é obrigatório');
@@ -38,7 +38,8 @@ Deno.serve(async (req) => {
       .from('products')
       .update({
         ...productData,
-        delivery_type: productData.delivery_type || undefined
+        delivery_type: productData.delivery_type || undefined,
+        use_batches: use_batches ?? productData.use_batches ?? false
       })
       .eq('id', productId)
       .eq('producer_id', user.id)
@@ -48,6 +49,55 @@ Deno.serve(async (req) => {
     if (error) {
       console.error('Erro ao atualizar produto:', error);
       throw new Error(`Falha ao atualizar o produto: ${error.message}`);
+    }
+
+    // Se use_batches = true e recebemos array de lotes
+    if (use_batches && Array.isArray(batches)) {
+      try {
+        // PASSO 1: Deletar todos os lotes existentes deste produto
+        const { error: deleteError } = await serviceClient
+          .from('ticket_batches')
+          .delete()
+          .eq('product_id', productId);
+          
+        if (deleteError) {
+          console.error('Erro ao deletar lotes antigos:', deleteError);
+          throw new Error(`Falha ao deletar lotes antigos: ${deleteError.message}`);
+        }
+        
+        // PASSO 2: Inserir os novos lotes (se houver)
+        if (batches.length > 0) {
+          const batchesToInsert = batches.map((batch, index) => ({
+            product_id: productId,
+            name: batch.name,
+            total_quantity: batch.total_quantity,
+            price_cents: batch.price_cents,
+            auto_advance_to_next: batch.auto_advance_to_next ?? false,
+            min_quantity_per_purchase: batch.min_quantity_per_purchase || 1,
+            max_quantity_per_purchase: batch.max_quantity_per_purchase || null,
+            sale_end_date: batch.sale_end_date || null,
+            display_order: index,
+            sold_quantity: batch.sold_quantity || 0,
+            is_active: batch.is_active ?? true
+          }));
+          
+          const { error: insertError } = await serviceClient
+            .from('ticket_batches')
+            .insert(batchesToInsert);
+            
+          if (insertError) {
+            console.error('Erro ao inserir novos lotes:', insertError);
+            throw new Error(`Falha ao inserir lotes: ${insertError.message}`);
+          }
+          
+          console.log(`✅ ${batchesToInsert.length} lote(s) sincronizado(s) com sucesso`);
+        } else {
+          console.log('✅ Lotes removidos (array vazio recebido)');
+        }
+      } catch (batchError) {
+        console.error('Erro no processamento de lotes:', batchError);
+        throw batchError;
+      }
     }
 
     return new Response(JSON.stringify(updatedProduct), {

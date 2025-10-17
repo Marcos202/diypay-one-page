@@ -42,6 +42,7 @@ interface ProductFormData {
   producer_assumes_installments: boolean;
   delivery_type: string;
   use_batches?: boolean;
+  batches?: any[];
 }
 
 interface ProductFormProps {
@@ -123,6 +124,30 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     }
   }, [product, mode]);
 
+  // Carregar lotes existentes no modo de edição
+  useEffect(() => {
+    const loadExistingBatches = async () => {
+      if (mode === 'edit' && productId && formData.use_batches) {
+        try {
+          const { data, error } = await supabase
+            .from('ticket_batches')
+            .select('*')
+            .eq('product_id', productId)
+            .order('display_order', { ascending: true });
+          
+          if (error) throw error;
+          if (data) {
+            setLocalBatches(data);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar lotes:', error);
+        }
+      }
+    };
+    
+    loadExistingBatches();
+  }, [mode, productId, formData.use_batches]);
+
   const generateSlug = (name: string) => {
     const baseSlug = name
       .toLowerCase()
@@ -171,13 +196,16 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         require_email_confirmation: Boolean(data.require_email_confirmation),
         producer_assumes_installments: Boolean(data.producer_assumes_installments),
         delivery_type: data.delivery_type,
+        use_batches: data.use_batches ?? false,
       };
 
       if (mode === 'create') {
         const { data: result, error } = await supabase.functions.invoke('create-product', {
           body: { 
             ...productDataForApi, 
-            checkout_link_slug: generateSlug(data.name) 
+            checkout_link_slug: generateSlug(data.name),
+            use_batches: data.use_batches,
+            batches: data.batches || []
           }
         });
         if (error) throw error;
@@ -186,7 +214,9 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         const { data: result, error } = await supabase.functions.invoke('update-product', {
           body: { 
             productId, 
-            productData: productDataForApi 
+            productData: productDataForApi,
+            use_batches: data.use_batches,
+            batches: data.batches || []
           }
         });
         if (error) throw error;
@@ -248,15 +278,43 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
       toast.error('Forma de Entrega do Conteúdo é obrigatória');
       return;
     }
+
+    // Preparar payload base
+    let dataToSave = { ...formData };
     
-    // Nova lógica de validação de preço
+    // Determinar se está usando sistema de lotes
     const isUsingBatches = formData.use_batches && formData.product_type === 'event';
-    if (formData.product_type !== 'donation' && !isUsingBatches && convertPriceToCents(formData.price) <= 0) {
+    
+    // Obter lista de lotes relevante
+    const batchesToSave = localBatches;
+    
+    // Se está usando lotes, definir preço do produto pelo primeiro lote
+    if (isUsingBatches && batchesToSave.length > 0) {
+      const firstBatch = batchesToSave.reduce((prev, curr) => 
+        (prev.display_order ?? 0) < (curr.display_order ?? 0) ? prev : curr
+      );
+      dataToSave.price = (firstBatch.price_cents / 100).toLocaleString('pt-BR', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      });
+    }
+    
+    // Validação de preço: só obrigatório se NÃO for doação e NÃO estiver usando lotes
+    if (formData.product_type !== 'donation' && !isUsingBatches) {
+      if (convertPriceToCents(dataToSave.price) <= 0) {
         toast.error('O valor do produto deve ser maior que zero.');
         return;
+      }
     }
+    
+    // Construir payload completo
+    const payload: any = {
+      ...dataToSave,
+      use_batches: isUsingBatches,
+      batches: isUsingBatches ? batchesToSave : []
+    };
 
-    saveProductMutation.mutate(formData);
+    saveProductMutation.mutate(payload);
   };
   // <<< FIM DA CORREÇÃO 3 >>>
 

@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     if (authError || !user) throw new Error('Usuário não autorizado');
 
     const requestBody = await req.json();
-    const { delivery_type, checkout_link_slug, ...productData } = requestBody;
+    const { delivery_type, checkout_link_slug, use_batches, batches, ...productData } = requestBody;
 
     // Validações básicas
     if (!productData.name || typeof productData.name !== 'string') {
@@ -52,7 +52,8 @@ Deno.serve(async (req) => {
       producer_assumes_installments: productData.producer_assumes_installments ?? false,
       producer_id: user.id,
       checkout_link_slug: checkout_link_slug || `product-${Date.now()}`,
-      delivery_type: delivery_type || 'external_access'
+      delivery_type: delivery_type || 'external_access',
+      use_batches: use_batches ?? false
     };
 
     // 1. Criar o Produto
@@ -105,6 +106,42 @@ Deno.serve(async (req) => {
         await serviceClient.from('products').delete().eq('id', newProduct.id);
         // Lança o erro original para o frontend saber o que aconteceu.
         throw membersAreaError;
+      }
+    }
+
+    // Se use_batches = true e temos lotes para salvar
+    if (use_batches && Array.isArray(batches) && batches.length > 0) {
+      try {
+        // Preparar lotes para inserção
+        const batchesToInsert = batches.map((batch, index) => ({
+          product_id: newProduct.id,
+          name: batch.name,
+          total_quantity: batch.total_quantity,
+          price_cents: batch.price_cents,
+          auto_advance_to_next: batch.auto_advance_to_next ?? false,
+          min_quantity_per_purchase: batch.min_quantity_per_purchase || 1,
+          max_quantity_per_purchase: batch.max_quantity_per_purchase || null,
+          sale_end_date: batch.sale_end_date || null,
+          display_order: index,
+          sold_quantity: 0,
+          is_active: true
+        }));
+        
+        const { error: batchesError } = await serviceClient
+          .from('ticket_batches')
+          .insert(batchesToInsert);
+          
+        if (batchesError) {
+          console.error('Erro ao criar lotes:', batchesError);
+          // Reverter criação do produto se os lotes falharem
+          await serviceClient.from('products').delete().eq('id', newProduct.id);
+          throw new Error(`Falha ao criar lotes: ${batchesError.message}`);
+        }
+        
+        console.log(`✅ ${batchesToInsert.length} lote(s) criado(s) com sucesso`);
+      } catch (batchError) {
+        console.error('Erro no processamento de lotes:', batchError);
+        throw batchError;
       }
     }
     

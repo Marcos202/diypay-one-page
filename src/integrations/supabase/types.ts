@@ -661,9 +661,13 @@ export type Database = {
           product_type: string
           require_email_confirmation: boolean
           show_order_summary: boolean
+          special_offer_discount_percent: number | null
+          special_offer_enabled: boolean
+          special_offer_title: string | null
           subscription_frequency: string | null
           type: string | null
           updated_at: string
+          use_batches: boolean | null
           vertical_cover_image_url: string | null
           vertical_cover_url: string | null
         }
@@ -690,9 +694,13 @@ export type Database = {
           product_type?: string
           require_email_confirmation?: boolean
           show_order_summary?: boolean
+          special_offer_discount_percent?: number | null
+          special_offer_enabled?: boolean
+          special_offer_title?: string | null
           subscription_frequency?: string | null
           type?: string | null
           updated_at?: string
+          use_batches?: boolean | null
           vertical_cover_image_url?: string | null
           vertical_cover_url?: string | null
         }
@@ -719,9 +727,13 @@ export type Database = {
           product_type?: string
           require_email_confirmation?: boolean
           show_order_summary?: boolean
+          special_offer_discount_percent?: number | null
+          special_offer_enabled?: boolean
+          special_offer_title?: string | null
           subscription_frequency?: string | null
           type?: string | null
           updated_at?: string
+          use_batches?: boolean | null
           vertical_cover_image_url?: string | null
           vertical_cover_url?: string | null
         }
@@ -843,6 +855,7 @@ export type Database = {
           installments_chosen: number | null
           iugu_charge_id: string | null
           iugu_subscription_id: string | null
+          normal_tickets_quantity: number | null
           order_bump_items: Json | null
           original_product_price_cents: number | null
           paid_at: string | null
@@ -853,6 +866,7 @@ export type Database = {
           product_id: string | null
           release_date: string | null
           security_reserve_cents: number | null
+          special_tickets_quantity: number | null
           status: string
           updated_at: string
         }
@@ -876,6 +890,7 @@ export type Database = {
           installments_chosen?: number | null
           iugu_charge_id?: string | null
           iugu_subscription_id?: string | null
+          normal_tickets_quantity?: number | null
           order_bump_items?: Json | null
           original_product_price_cents?: number | null
           paid_at?: string | null
@@ -886,6 +901,7 @@ export type Database = {
           product_id?: string | null
           release_date?: string | null
           security_reserve_cents?: number | null
+          special_tickets_quantity?: number | null
           status?: string
           updated_at?: string
         }
@@ -909,6 +925,7 @@ export type Database = {
           installments_chosen?: number | null
           iugu_charge_id?: string | null
           iugu_subscription_id?: string | null
+          normal_tickets_quantity?: number | null
           order_bump_items?: Json | null
           original_product_price_cents?: number | null
           paid_at?: string | null
@@ -919,6 +936,7 @@ export type Database = {
           product_id?: string | null
           release_date?: string | null
           security_reserve_cents?: number | null
+          special_tickets_quantity?: number | null
           status?: string
           updated_at?: string
         }
