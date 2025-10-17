@@ -1,9 +1,10 @@
-// Conteúdo completo e corrigido para supabase/functions/create-product/index.ts
+// supabase/functions/create-product/index.ts
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
 Deno.serve(async (req) => {
+  // <<< CORREÇÃO CRÍTICA: Lógica de CORS para requisições PREFLIGHT >>>
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -23,7 +24,6 @@ Deno.serve(async (req) => {
     const requestBody = await req.json();
     const { delivery_type, checkout_link_slug, use_batches, batches, ...productData } = requestBody;
 
-    // Validações básicas
     if (!productData.name || typeof productData.name !== 'string') {
       throw new Error('Nome do produto é obrigatório');
     }
@@ -56,7 +56,6 @@ Deno.serve(async (req) => {
       use_batches: use_batches ?? false
     };
 
-    // 1. Criar o Produto
     const { data: newProduct, error: productError } = await serviceClient
       .from('products')
       .insert(insertData)
@@ -68,25 +67,20 @@ Deno.serve(async (req) => {
       throw new Error(`Erro ao criar produto: ${productError.message}`);
     }
 
-    // Se o delivery_type for 'members_area', criar a estrutura do espaço
     if (delivery_type === 'members_area') {
       try {
-        // ### CORREÇÃO APLICADA AQUI ###
-        // Adicionamos 'product_id: newProduct.id' para ligar o space ao produto.
         const { data: newSpace, error: spaceError } = await serviceClient
           .from('spaces')
           .insert({ 
             producer_id: user.id, 
             name: newProduct.name, 
             slug: newProduct.checkout_link_slug,
-            product_id: newProduct.id // A LIGAÇÃO QUE FALTAVA
+            product_id: newProduct.id
           })
           .select('id')
           .single();
-
         if (spaceError) throw spaceError;
 
-        // O resto da criação da estrutura...
         const { data: newContainer, error: containerError } = await serviceClient.from('space_containers').insert({ space_id: newSpace.id, title: 'Sejam bem-vindos', display_order: 0 }).select('id').single();
         if (containerError) throw containerError;
         const { error: spError } = await serviceClient.from('space_products').insert({ space_id: newSpace.id, product_id: newProduct.id, product_type: 'principal', container_id: newContainer.id });
@@ -99,20 +93,15 @@ Deno.serve(async (req) => {
         if (lessonError) throw lessonError;
         const { error: enrollmentError } = await serviceClient.from('enrollments').insert({ user_id: user.id, product_id: newProduct.id, cohort_id: newCohort.id });
         if (enrollmentError) console.error(`Falha ao auto-matricular produtor: ${enrollmentError.message}`);
-
       } catch (membersAreaError) {
-        // Se a criação da área de membros falhar, desfaz a criação do produto para não deixar lixo.
         console.error('Erro ao criar estrutura de members_area. Revertendo criação do produto...', membersAreaError);
         await serviceClient.from('products').delete().eq('id', newProduct.id);
-        // Lança o erro original para o frontend saber o que aconteceu.
         throw membersAreaError;
       }
     }
 
-    // Se use_batches = true e temos lotes para salvar
     if (use_batches && Array.isArray(batches) && batches.length > 0) {
       try {
-        // Preparar lotes para inserção
         const batchesToInsert = batches.map((batch, index) => ({
           product_id: newProduct.id,
           name: batch.name,
@@ -133,7 +122,6 @@ Deno.serve(async (req) => {
           
         if (batchesError) {
           console.error('Erro ao criar lotes:', batchesError);
-          // Reverter criação do produto se os lotes falharem
           await serviceClient.from('products').delete().eq('id', newProduct.id);
           throw new Error(`Falha ao criar lotes: ${batchesError.message}`);
         }
@@ -145,8 +133,16 @@ Deno.serve(async (req) => {
       }
     }
     
-    return new Response(JSON.stringify(newProduct), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 201 });
+    // <<< CORREÇÃO: Adicionados cabeçalhos CORS na resposta >>>
+    return new Response(JSON.stringify(newProduct), { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+        status: 201 
+    });
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // <<< CORREÇÃO: Adicionados cabeçalhos CORS na resposta de erro >>>
+    return new Response(JSON.stringify({ error: error.message }), { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    });
   }
 });
