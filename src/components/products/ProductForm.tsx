@@ -129,19 +129,22 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     const loadExistingBatches = async () => {
       if (mode === 'edit' && productId && formData.use_batches) {
         try {
-          const { data, error } = await supabase
-            .from('ticket_batches')
-            .select('*')
-            .eq('product_id', productId)
-            .order('display_order', { ascending: true });
+          // <<< CORREÇÃO: Usar a Edge Function correta para buscar lotes >>>
+          const { data, error } = await supabase.functions.invoke('ticket-batches-handler', {
+            method: 'GET',
+            body: { product_id: productId }
+          });
           
           if (error) throw error;
-          if (data) {
-            setLocalBatches(data);
+          if (data && data.batches) {
+            setLocalBatches(data.batches);
           }
         } catch (error) {
           console.error('Erro ao carregar lotes:', error);
         }
+      } else if (mode === 'create') {
+        // Limpa os lotes locais ao mudar de modo para evitar contaminação
+        setLocalBatches([]);
       }
     };
     
@@ -170,58 +173,53 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
   };
 
   const saveProductMutation = useMutation({
-    mutationFn: async (data: ProductFormData) => {
-      const priceInCents = data.product_type === 'donation' 
+    mutationFn: async (payload: any) => { // <<< CORREÇÃO: Recebe o payload completo
+      const priceInCents = payload.product_type === 'donation' 
         ? 0 
-        : convertPriceToCents(data.price);
+        : convertPriceToCents(payload.price);
 
       const productDataForApi = {
-        name: data.name.trim(),
-        description: data.description?.trim() || null,
-        cover_image_url: data.cover_image_url?.trim() || null,
-        vertical_cover_image_url: data.vertical_cover_image_url?.trim() || null,
+        name: payload.name.trim(),
+        description: payload.description?.trim() || null,
+        cover_image_url: payload.cover_image_url?.trim() || null,
+        vertical_cover_image_url: payload.vertical_cover_image_url?.trim() || null,
         price_cents: priceInCents,
-        file_url_or_access_info: data.file_url_or_access_info?.trim() || null,
-        max_installments_allowed: Number(data.max_installments_allowed) || 1,
-        is_active: Boolean(data.is_active),
-        product_type: data.product_type,
-        subscription_frequency: data.product_type === 'subscription' ? data.subscription_frequency : null,
-        allowed_payment_methods: Array.isArray(data.allowed_payment_methods) ? data.allowed_payment_methods : [],
-        show_order_summary: Boolean(data.show_order_summary),
-        donation_title: data.donation_title?.trim() || null,
-        donation_description: data.donation_description?.trim() || null,
-        checkout_image_url: data.checkout_image_url?.trim() || null,
-        checkout_background_color: data.checkout_background_color || '#F3F4F6',
-        is_email_optional: Boolean(data.is_email_optional),
-        require_email_confirmation: Boolean(data.require_email_confirmation),
-        producer_assumes_installments: Boolean(data.producer_assumes_installments),
-        delivery_type: data.delivery_type,
-        use_batches: data.use_batches ?? false,
+        file_url_or_access_info: payload.file_url_or_access_info?.trim() || null,
+        max_installments_allowed: Number(payload.max_installments_allowed) || 1,
+        is_active: Boolean(payload.is_active),
+        product_type: payload.product_type,
+        subscription_frequency: payload.product_type === 'subscription' ? payload.subscription_frequency : null,
+        allowed_payment_methods: Array.isArray(payload.allowed_payment_methods) ? payload.allowed_payment_methods : [],
+        show_order_summary: Boolean(payload.show_order_summary),
+        donation_title: payload.donation_title?.trim() || null,
+        donation_description: payload.donation_description?.trim() || null,
+        checkout_image_url: payload.checkout_image_url?.trim() || null,
+        checkout_background_color: payload.checkout_background_color || '#F3F4F6',
+        is_email_optional: Boolean(payload.is_email_optional),
+        require_email_confirmation: Boolean(payload.require_email_confirmation),
+        producer_assumes_installments: Boolean(payload.producer_assumes_installments),
+        delivery_type: payload.delivery_type,
+        use_batches: payload.use_batches ?? false,
       };
-
-      if (mode === 'create') {
-        const { data: result, error } = await supabase.functions.invoke('create-product', {
-          body: { 
+      
+      // <<< CORREÇÃO: Lógica de envio unificada >>>
+      const functionName = mode === 'create' ? 'create-product' : 'update-product';
+      const bodyPayload = mode === 'create'
+        ? { 
             ...productDataForApi, 
-            checkout_link_slug: generateSlug(data.name),
-            use_batches: data.use_batches,
-            batches: data.batches || []
+            checkout_link_slug: generateSlug(payload.name),
+            batches: payload.batches || [] // Envia os lotes
           }
-        });
-        if (error) throw error;
-        return result;
-      } else {
-        const { data: result, error } = await supabase.functions.invoke('update-product', {
-          body: { 
+        : { 
             productId, 
             productData: productDataForApi,
-            use_batches: data.use_batches,
-            batches: data.batches || []
-          }
-        });
-        if (error) throw error;
-        return result;
-      }
+            use_batches: payload.use_batches, // Envia o estado do switch
+            batches: payload.batches || []      // Envia os lotes
+          };
+
+      const { data: result, error } = await supabase.functions.invoke(functionName, { body: bodyPayload });
+      if (error) throw error;
+      return result;
     },
     onSuccess: (result) => {
       toast.success(mode === 'create' ? 'Produto criado com sucesso!' : 'Produto atualizado com sucesso!');
@@ -266,10 +264,9 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // <<< CORREÇÃO 3: ERRO AO SALVAR PRODUTO COM LOTES >>>
-  // A lógica de validação foi ajustada para ignorar a verificação do preço principal
-  // quando a opção "use_batches" está ativa para um evento.
+  // <<< CORREÇÃO COMPLETA DO HANDLESUBMIT >>>
   const handleSubmit = () => {
+    // Validações básicas
     if (!formData.name.trim()) { 
       toast.error('Nome do produto é obrigatório'); 
       return; 
@@ -279,44 +276,39 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
       return;
     }
 
-    // Preparar payload base
     let dataToSave = { ...formData };
     
-    // Determinar se está usando sistema de lotes
-    const isUsingBatches = formData.use_batches && formData.product_type === 'event';
+    const isUsingBatches = dataToSave.use_batches && dataToSave.product_type === 'event';
     
-    // Obter lista de lotes relevante
-    const batchesToSave = localBatches;
-    
-    // Se está usando lotes, definir preço do produto pelo primeiro lote
-    if (isUsingBatches && batchesToSave.length > 0) {
-      const firstBatch = batchesToSave.reduce((prev, curr) => 
-        (prev.display_order ?? 0) < (curr.display_order ?? 0) ? prev : curr
-      );
+    // Se estiver usando lotes, o preço do produto é o preço do primeiro lote
+    if (isUsingBatches && localBatches.length > 0) {
+      // Ordena para garantir que estamos pegando o primeiro lote real
+      const sortedBatches = [...localBatches].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+      const firstBatch = sortedBatches[0];
       dataToSave.price = (firstBatch.price_cents / 100).toLocaleString('pt-BR', { 
         minimumFractionDigits: 2, 
         maximumFractionDigits: 2 
       });
     }
     
-    // Validação de preço: só obrigatório se NÃO for doação e NÃO estiver usando lotes
-    if (formData.product_type !== 'donation' && !isUsingBatches) {
+    // Validação de preço: só é obrigatório se NÃO for doação e NÃO estiver usando lotes
+    if (dataToSave.product_type !== 'donation' && !isUsingBatches) {
       if (convertPriceToCents(dataToSave.price) <= 0) {
         toast.error('O valor do produto deve ser maior que zero.');
         return;
       }
     }
     
-    // Construir payload completo
-    const payload: any = {
+    // Construir o payload final que será enviado para o backend
+    const payload = {
       ...dataToSave,
-      use_batches: isUsingBatches,
-      batches: isUsingBatches ? batchesToSave : []
+      // Garante que o backend receba a lista de lotes que está na UI
+      batches: isUsingBatches ? localBatches : [],
     };
 
     saveProductMutation.mutate(payload);
   };
-  // <<< FIM DA CORREÇÃO 3 >>>
+  // <<< FIM DA CORREÇÃO >>>
 
   const handleDelete = () => {
     setShowDeleteConfirmation(true);
