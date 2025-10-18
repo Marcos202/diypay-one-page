@@ -75,7 +75,6 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     producer_assumes_installments: false, delivery_type: '', use_batches: false
   });
   
-  // <<< CORREÇÃO: `localBatches` é a ÚNICA fonte da verdade para a UI. >>>
   const [localBatches, setLocalBatches] = useState<any[]>([]);
 
   useEffect(() => {
@@ -83,7 +82,6 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     if (tabFromUrl) setActiveTab(tabFromUrl);
   }, [searchParams]);
 
-  // Query para buscar os dados do produto principal
   const { data: product, isLoading: isProductLoading } = useQuery({
     queryKey: ['product', productId],
     queryFn: async () => {
@@ -95,7 +93,6 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     enabled: mode === 'edit' && !!productId
   });
 
-  // <<< CORREÇÃO: Query separada e robusta para buscar os lotes do banco >>>
   const { data: dbBatches, isLoading: areBatchesLoading } = useQuery({
     queryKey: ['ticket-batches', productId],
     queryFn: async () => {
@@ -110,7 +107,6 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     enabled: mode === 'edit' && !!productId && formData.use_batches,
   });
 
-  // Efeito para popular o formulário com dados do produto carregado
   useEffect(() => {
     if (product && mode === 'edit') {
       setFormData({
@@ -137,12 +133,10 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         use_batches: (product as any).use_batches ?? false
       });
     } else if (mode === 'create') {
-      // Limpa os lotes ao voltar para a tela de criação
       setLocalBatches([]);
     }
   }, [product, mode]);
   
-  // <<< CORREÇÃO: Efeito para sincronizar os lotes do DB com o estado local da UI >>>
   useEffect(() => {
     if (dbBatches) {
       setLocalBatches(dbBatches);
@@ -214,7 +208,7 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
       toast.success(mode === 'create' ? 'Produto criado com sucesso!' : 'Produto atualizado com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
-      queryClient.invalidateQueries({ queryKey: ['ticket-batches', productId] }); // Invalida o cache dos lotes
+      queryClient.invalidateQueries({ queryKey: ['ticket-batches', productId] });
       if(mode === 'create') navigate('/products');
     },
     onError: (error: any) => {
@@ -243,7 +237,6 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
   
-  // <<< CORREÇÃO COMPLETA DO HANDLESUBMIT >>>
   const handleSubmit = () => {
     if (!formData.name.trim() || !formData.delivery_type) {
       toast.error('Nome do produto e Forma de Entrega são obrigatórios.');
@@ -265,13 +258,34 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     }
     
     const payload = {
-      ...dataToSave,
+      productData: {
+        name: dataToSave.name.trim(),
+        description: dataToSave.description?.trim() || null,
+        cover_image_url: dataToSave.cover_image_url?.trim() || null,
+        vertical_cover_image_url: dataToSave.vertical_cover_image_url?.trim() || null,
+        price_cents: convertPriceToCents(dataToSave.price),
+        file_url_or_access_info: dataToSave.file_url_or_access_info?.trim() || null,
+        max_installments_allowed: Number(dataToSave.max_installments_allowed) || 1,
+        is_active: Boolean(dataToSave.is_active),
+        product_type: dataToSave.product_type,
+        subscription_frequency: dataToSave.product_type === 'subscription' ? dataToSave.subscription_frequency : null,
+        allowed_payment_methods: Array.isArray(dataToSave.allowed_payment_methods) ? dataToSave.allowed_payment_methods : [],
+        show_order_summary: Boolean(dataToSave.show_order_summary),
+        donation_title: dataToSave.donation_title?.trim() || null,
+        donation_description: dataToSave.donation_description?.trim() || null,
+        checkout_image_url: dataToSave.checkout_image_url?.trim() || null,
+        checkout_background_color: dataToSave.checkout_background_color || '#F3F4F6',
+        is_email_optional: Boolean(dataToSave.is_email_optional),
+        require_email_confirmation: Boolean(dataToSave.require_email_confirmation),
+        producer_assumes_installments: Boolean(dataToSave.producer_assumes_installments),
+        delivery_type: dataToSave.delivery_type,
+        use_batches: isUsingBatches,
+      },
       batches: isUsingBatches ? localBatches : [],
     };
 
     saveProductMutation.mutate(payload);
   };
-  // <<< FIM DA CORREÇÃO >>>
 
   const handleDelete = () => setShowDeleteConfirmation(true);
   const confirmDelete = () => {
@@ -286,7 +300,7 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
   const shouldShowTicketsTab = isEventProduct;
   const shouldShowSubscriptionsTab = isSubscriptionProduct && mode === 'edit';
 
-  if (mode === 'edit' && isProductLoading) { // Apenas o loading do produto principal
+  if (mode === 'edit' && isProductLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
