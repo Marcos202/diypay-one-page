@@ -31,7 +31,7 @@ export function BatchManagementSection({ basePrice, batches, onBatchesChange, mo
           : b
       );
       onBatchesChange(updatedBatches);
-      toast({ title: "Lote atualizado localmente!" });
+      toast({ title: "Lote atualizado!" });
     } else {
       // Adicionar novo lote
       const newBatch = {
@@ -41,7 +41,7 @@ export function BatchManagementSection({ basePrice, batches, onBatchesChange, mo
         display_order: batches.length,
       };
       onBatchesChange([...batches, newBatch]);
-      toast({ title: "Lote adicionado localmente!" });
+      toast({ title: "Lote criado!" });
     }
     setIsModalOpen(false);
     setSelectedBatch(null);
@@ -61,22 +61,17 @@ export function BatchManagementSection({ basePrice, batches, onBatchesChange, mo
       const updatedBatches = batches.filter(b => {
         const idMatch = b.id && b.id === batchToDelete;
         const tempIdMatch = b.temp_id && b.temp_id === batchToDelete;
+        // Mantém o lote se NENHUMA das condições de match for verdadeira
         return !idMatch && !tempIdMatch;
       });
       onBatchesChange(updatedBatches);
       setBatchToDelete(null);
-      toast({ title: "Lote removido localmente!" });
+      toast({ title: "Lote removido!" });
     }
   };
 
   const canAddMoreBatches = batches.length < 10;
   
-  // <<< CORREÇÃO: Lógica de placeholder para modo 'create' >>>
-  if (mode === 'create') {
-    // No modo de criação, a seção de gerenciamento já é exibida,
-    // pois os lotes são gerenciados no estado local.
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
