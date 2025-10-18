@@ -77,6 +77,13 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
   
   const [localBatches, setLocalBatches] = useState<any[]>([]);
 
+  console.log('🔧 ProductForm RENDERIZADO', {
+    mode,
+    productId,
+    hasLocalBatches: localBatches?.length,
+    formData_use_batches: formData.use_batches
+  });
+
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab');
     if (tabFromUrl) setActiveTab(tabFromUrl);
@@ -88,6 +95,11 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
       if (!productId) return null;
       const { data, error } = await supabase.from('products').select('*').eq('id', productId).single();
       if (error) throw error;
+      console.log('✅ Produto carregado:', {
+        id: data?.id,
+        name: data?.name,
+        use_batches: (data as any)?.use_batches
+      });
       return data;
     },
     enabled: mode === 'edit' && !!productId
@@ -100,6 +112,10 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
       const functionName = `ticket-batches-handler?product_id=${productId}`;
       const { data, error } = await supabase.functions.invoke(functionName, { method: 'GET' });
       if (error) throw new Error(error.message);
+      console.log('✅ Lotes carregados:', {
+        count: data?.batches?.length,
+        batches: data?.batches
+      });
       return data.batches || [];
     },
     enabled: mode === 'edit' && !!productId && formData.use_batches,
@@ -131,6 +147,10 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         delivery_type: (product as any).delivery_type || '',
         use_batches: (product as any).use_batches ?? false
       }));
+      console.log('📝 formData atualizado com produto:', {
+        product_id: product.id,
+        use_batches: (product as any).use_batches
+      });
     } else if (mode === 'create') {
       setLocalBatches([]);
     }
@@ -139,6 +159,10 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
   useEffect(() => {
     if (dbBatches) {
       setLocalBatches(dbBatches);
+      console.log('📦 localBatches atualizado:', {
+        count: dbBatches.length,
+        batches: dbBatches
+      });
     }
   }, [dbBatches]);
 
@@ -261,18 +285,31 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
   };
   
   const isLoading = isProductLoading || (mode === 'edit' && formData.use_batches && areBatchesLoading);
-  
+
   const isEventProduct = formData.product_type === 'event';
   const isSubscriptionProduct = formData.product_type === 'subscription';
   const shouldShowTicketsTab = isEventProduct;
   const shouldShowSubscriptionsTab = isSubscriptionProduct && mode === 'edit';
 
-  if (mode === 'edit' && isProductLoading) {
+  // Guard: Bloquear renderização até produto estar carregado
+  if (mode === 'edit' && (isProductLoading || !product)) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="mt-2 text-muted-foreground">Carregando produto...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Guard: Bloquear se produto usa lotes mas ainda estão carregando
+  if (mode === 'edit' && formData.use_batches && areBatchesLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Carregando lotes do evento...</p>
         </div>
       </div>
     );

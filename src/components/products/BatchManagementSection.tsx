@@ -22,10 +22,19 @@ export function BatchManagementSection({ basePrice, batches, onBatchesChange, mo
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
   const [batchToDelete, setBatchToDelete] = useState<string | null>(null);
   
+  // Guard: Garantir que batches é sempre um array
+  const safeBatches = Array.isArray(batches) ? batches : [];
+
+  console.log('🎫 BatchManagementSection renderizado:', {
+    mode,
+    batchCount: safeBatches.length,
+    isLoading
+  });
+  
   const handleSave = (batchData: any) => {
     if (selectedBatch) {
       // Atualizar lote existente
-      const updatedBatches = batches.map(b => 
+      const updatedBatches = safeBatches.map(b => 
         (b.id && b.id === selectedBatch.id) || (b.temp_id && b.temp_id === selectedBatch.temp_id)
           ? { ...b, ...batchData } 
           : b
@@ -38,9 +47,9 @@ export function BatchManagementSection({ basePrice, batches, onBatchesChange, mo
         ...batchData,
         temp_id: `temp_${Date.now()}`,
         sold_quantity: 0,
-        display_order: batches.length,
+        display_order: safeBatches.length,
       };
-      onBatchesChange([...batches, newBatch]);
+      onBatchesChange([...safeBatches, newBatch]);
       toast({ title: "Lote criado!" });
     }
     setIsModalOpen(false);
@@ -58,7 +67,7 @@ export function BatchManagementSection({ basePrice, batches, onBatchesChange, mo
 
   const confirmDelete = () => {
     if (batchToDelete) {
-      const updatedBatches = batches.filter(b => {
+      const updatedBatches = safeBatches.filter(b => {
         const idMatch = b.id && b.id === batchToDelete;
         const tempIdMatch = b.temp_id && b.temp_id === batchToDelete;
         // Mantém o lote se NENHUMA das condições de match for verdadeira
@@ -70,7 +79,7 @@ export function BatchManagementSection({ basePrice, batches, onBatchesChange, mo
     }
   };
 
-  const canAddMoreBatches = batches.length < 10;
+  const canAddMoreBatches = safeBatches.length < 10;
   
   return (
     <div className="space-y-4">
@@ -97,7 +106,7 @@ export function BatchManagementSection({ basePrice, batches, onBatchesChange, mo
         <Card className="p-4">
           <p className="text-center text-muted-foreground">Carregando lotes...</p>
         </Card>
-      ) : batches.length > 0 ? (
+      ) : safeBatches.length > 0 ? (
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -110,7 +119,7 @@ export function BatchManagementSection({ basePrice, batches, onBatchesChange, mo
                 </tr>
               </thead>
               <tbody>
-                {batches.map((batch: any) => (
+                {safeBatches.map((batch: any) => (
                   <tr key={batch.id || batch.temp_id} className="border-b last:border-0">
                     <td className="p-4">{batch.name}</td>
                     <td className="p-4">{batch.sold_quantity || 0} / {batch.total_quantity}</td>
@@ -150,7 +159,7 @@ export function BatchManagementSection({ basePrice, batches, onBatchesChange, mo
         onSave={handleSave}
         batch={selectedBatch}
         basePrice={basePrice}
-        isFirstBatch={batches.length === 0 && !selectedBatch}
+        isFirstBatch={safeBatches.length === 0 && !selectedBatch}
       />
 
       <ConfirmationModal

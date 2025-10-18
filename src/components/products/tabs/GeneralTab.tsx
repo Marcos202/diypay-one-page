@@ -30,6 +30,14 @@ const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoadin
   
   const useBatches = formData.use_batches ?? false;
 
+  // Guard: Prevenir renderização com props inválidas
+  if (isEvent && useBatches && (!localBatches || !onLocalBatchesChange)) {
+    console.warn('⚠️ BatchManagementSection: Props inválidas detectadas', {
+      localBatches: !!localBatches,
+      onLocalBatchesChange: !!onLocalBatchesChange
+    });
+  }
+
   const convertPriceToCents = (price: string): number => {
     const numbers = price.replace(/\D/g, '');
     return parseInt(numbers) || 0;
@@ -173,15 +181,15 @@ const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoadin
         </div>
       </div>
 
-      {/* Batch Management Section - Only for events with batches enabled */}
-      {isEvent && useBatches && (
+        {/* Batch Management Section - Only for events with batches enabled */}
+        {isEvent && useBatches && localBatches && onLocalBatchesChange && (
         <div className="mt-6">
           <BatchManagementSection 
-            productId={productId}
             basePrice={convertPriceToCents(formData.price)}
-            localBatches={localBatches}
-            onLocalBatchesChange={onLocalBatchesChange}
+            batches={localBatches}
+            onBatchesChange={onLocalBatchesChange}
             mode={mode}
+            isLoading={isLoading}
           />
         </div>
       )}
