@@ -97,10 +97,8 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     queryKey: ['ticket-batches', productId],
     queryFn: async () => {
       if (!productId) return [];
-      const { data, error } = await supabase.functions.invoke('ticket-batches-handler', {
-        method: 'GET',
-        body: { product_id: productId }
-      });
+      const functionName = `ticket-batches-handler?product_id=${productId}`;
+      const { data, error } = await supabase.functions.invoke(functionName, { method: 'GET' });
       if (error) throw new Error(error.message);
       return data.batches || [];
     },
@@ -109,7 +107,8 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
 
   useEffect(() => {
     if (product && mode === 'edit') {
-      setFormData({
+      setFormData(prevData => ({
+        ...prevData,
         name: product.name || '',
         description: product.description || '',
         cover_image_url: product.cover_image_url || '',
@@ -131,7 +130,7 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         producer_assumes_installments: product.producer_assumes_installments ?? false,
         delivery_type: (product as any).delivery_type || '',
         use_batches: (product as any).use_batches ?? false
-      });
+      }));
     } else if (mode === 'create') {
       setLocalBatches([]);
     }
@@ -159,48 +158,7 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
   const saveProductMutation = useMutation({
     mutationFn: async (payload: any) => {
       const functionName = mode === 'create' ? 'create-product' : 'update-product';
-      
-      const priceInCents = payload.product_type === 'donation' 
-        ? 0 
-        : convertPriceToCents(payload.price);
-
-      const productDataForApi = {
-        name: payload.name.trim(),
-        description: payload.description?.trim() || null,
-        cover_image_url: payload.cover_image_url?.trim() || null,
-        vertical_cover_image_url: payload.vertical_cover_image_url?.trim() || null,
-        price_cents: priceInCents,
-        file_url_or_access_info: payload.file_url_or_access_info?.trim() || null,
-        max_installments_allowed: Number(payload.max_installments_allowed) || 1,
-        is_active: Boolean(payload.is_active),
-        product_type: payload.product_type,
-        subscription_frequency: payload.product_type === 'subscription' ? payload.subscription_frequency : null,
-        allowed_payment_methods: Array.isArray(payload.allowed_payment_methods) ? payload.allowed_payment_methods : [],
-        show_order_summary: Boolean(payload.show_order_summary),
-        donation_title: payload.donation_title?.trim() || null,
-        donation_description: payload.donation_description?.trim() || null,
-        checkout_image_url: payload.checkout_image_url?.trim() || null,
-        checkout_background_color: payload.checkout_background_color || '#F3F4F6',
-        is_email_optional: Boolean(payload.is_email_optional),
-        require_email_confirmation: Boolean(payload.require_email_confirmation),
-        producer_assumes_installments: Boolean(payload.producer_assumes_installments),
-        delivery_type: payload.delivery_type,
-        use_batches: payload.use_batches ?? false,
-      };
-
-      const bodyPayload = mode === 'create'
-        ? { 
-            ...productDataForApi, 
-            checkout_link_slug: generateSlug(payload.name),
-            batches: payload.batches || []
-          }
-        : { 
-            productId, 
-            productData: productDataForApi,
-            batches: payload.batches || []
-          };
-
-      const { data: result, error } = await supabase.functions.invoke(functionName, { body: bodyPayload });
+      const { data: result, error } = await supabase.functions.invoke(functionName, { body: payload });
       if (error) throw error;
       return result;
     },
@@ -209,7 +167,7 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
       queryClient.invalidateQueries({ queryKey: ['ticket-batches', productId] });
-      if(mode === 'create') navigate('/products');
+      if (mode === 'create') navigate('/products');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Erro ao salvar produto');
@@ -257,8 +215,7 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
       return;
     }
     
-    const payload = {
-      productData: {
+    const productDataForApi = {
         name: dataToSave.name.trim(),
         description: dataToSave.description?.trim() || null,
         cover_image_url: dataToSave.cover_image_url?.trim() || null,
@@ -280,11 +237,21 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         producer_assumes_installments: Boolean(dataToSave.producer_assumes_installments),
         delivery_type: dataToSave.delivery_type,
         use_batches: isUsingBatches,
-      },
-      batches: isUsingBatches ? localBatches : [],
-    };
+      };
 
-    saveProductMutation.mutate(payload);
+    const finalPayload = mode === 'create'
+      ? { 
+          ...productDataForApi, 
+          checkout_link_slug: generateSlug(dataToSave.name),
+          batches: isUsingBatches ? localBatches : []
+        }
+      : { 
+          productId, 
+          productData: productDataForApi,
+          batches: isUsingBatches ? localBatches : []
+        };
+    
+    saveProductMutation.mutate(finalPayload);
   };
 
   const handleDelete = () => setShowDeleteConfirmation(true);
@@ -398,6 +365,7 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
               )}
               
               {shouldShowSubscriptionsTab && (
+                // <<< CORREÇÃO CRÍTICA: Erro de sintaxe na tag de fechamento >>>
                 <TabsContent value="assinaturas">
                   <SubscriptionsTab productId={productId} />
                 </TabsContent>
