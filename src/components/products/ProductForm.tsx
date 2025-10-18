@@ -42,7 +42,6 @@ interface ProductFormData {
   producer_assumes_installments: boolean;
   delivery_type: string;
   use_batches?: boolean;
-  batches?: any[];
 }
 
 interface ProductFormProps {
@@ -76,6 +75,7 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     producer_assumes_installments: false, delivery_type: '', use_batches: false
   });
   
+  // <<< CORREÇÃO: `localBatches` é a ÚNICA fonte da verdade para a UI. >>>
   const [localBatches, setLocalBatches] = useState<any[]>([]);
 
   useEffect(() => {
@@ -83,7 +83,8 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     if (tabFromUrl) setActiveTab(tabFromUrl);
   }, [searchParams]);
 
-  const { data: product, isLoading } = useQuery({
+  // Query para buscar os dados do produto principal
+  const { data: product, isLoading: isProductLoading } = useQuery({
     queryKey: ['product', productId],
     queryFn: async () => {
       if (!productId) return null;
@@ -94,6 +95,22 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     enabled: mode === 'edit' && !!productId
   });
 
+  // <<< CORREÇÃO: Query separada e robusta para buscar os lotes do banco >>>
+  const { data: dbBatches, isLoading: areBatchesLoading } = useQuery({
+    queryKey: ['ticket-batches', productId],
+    queryFn: async () => {
+      if (!productId) return [];
+      const { data, error } = await supabase.functions.invoke('ticket-batches-handler', {
+        method: 'GET',
+        body: { product_id: productId }
+      });
+      if (error) throw new Error(error.message);
+      return data.batches || [];
+    },
+    enabled: mode === 'edit' && !!productId && formData.use_batches,
+  });
+
+  // Efeito para popular o formulário com dados do produto carregado
   useEffect(() => {
     if (product && mode === 'edit') {
       setFormData({
@@ -101,15 +118,13 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         description: product.description || '',
         cover_image_url: product.cover_image_url || '',
         vertical_cover_image_url: product.vertical_cover_image_url || '',
-        price: product.price_cents ? (product.price_cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00',
+        price: product.price_cents ? (product.price_cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00',
         file_url_or_access_info: product.file_url_or_access_info || '',
         max_installments_allowed: product.max_installments_allowed || 1,
         is_active: product.is_active ?? true,
         product_type: product.product_type || 'single_payment',
         subscription_frequency: product.subscription_frequency || '',
-        allowed_payment_methods: Array.isArray(product.allowed_payment_methods) 
-          ? product.allowed_payment_methods.map(method => String(method)) 
-          : getDefaultPaymentMethods(product.product_type || 'single_payment'),
+        allowed_payment_methods: Array.isArray(product.allowed_payment_methods) ? product.allowed_payment_methods.map(String) : getDefaultPaymentMethods(product.product_type),
         show_order_summary: product.show_order_summary ?? true,
         donation_title: product.donation_title || '',
         donation_description: product.donation_description || '',
@@ -121,59 +136,36 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         delivery_type: (product as any).delivery_type || '',
         use_batches: (product as any).use_batches ?? false
       });
+    } else if (mode === 'create') {
+      // Limpa os lotes ao voltar para a tela de criação
+      setLocalBatches([]);
     }
   }, [product, mode]);
-
-  // Carregar lotes existentes no modo de edição
+  
+  // <<< CORREÇÃO: Efeito para sincronizar os lotes do DB com o estado local da UI >>>
   useEffect(() => {
-    const loadExistingBatches = async () => {
-      if (mode === 'edit' && productId && formData.use_batches) {
-        try {
-          // <<< CORREÇÃO: Usar a Edge Function correta para buscar lotes >>>
-          const { data, error } = await supabase.functions.invoke('ticket-batches-handler', {
-            method: 'GET',
-            body: { product_id: productId }
-          });
-          
-          if (error) throw error;
-          if (data && data.batches) {
-            setLocalBatches(data.batches);
-          }
-        } catch (error) {
-          console.error('Erro ao carregar lotes:', error);
-        }
-      } else if (mode === 'create') {
-        // Limpa os lotes locais ao mudar de modo para evitar contaminação
-        setLocalBatches([]);
-      }
-    };
-    
-    loadExistingBatches();
-  }, [mode, productId, formData.use_batches]);
+    if (dbBatches) {
+      setLocalBatches(dbBatches);
+    }
+  }, [dbBatches]);
 
   const generateSlug = (name: string) => {
-    const baseSlug = name
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s-]/g, '')
-      .trim()
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-');
+    const baseSlug = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-');
     const timestamp = Date.now().toString().slice(-6);
     return `${baseSlug}-${timestamp}`;
   };
 
   const convertPriceToCents = (priceString: string): number => {
-    if (!priceString || priceString.trim() === '') return 0;
+    if (!priceString) return 0;
     const normalizedPrice = priceString.replace(/\./g, '').replace(',', '.');
     const priceFloat = parseFloat(normalizedPrice);
-    if (isNaN(priceFloat)) return 0;
-    return Math.round(priceFloat * 100);
+    return isNaN(priceFloat) ? 0 : Math.round(priceFloat * 100);
   };
 
   const saveProductMutation = useMutation({
-    mutationFn: async (payload: any) => { // <<< CORREÇÃO: Recebe o payload completo
+    mutationFn: async (payload: any) => {
+      const functionName = mode === 'create' ? 'create-product' : 'update-product';
+      
       const priceInCents = payload.product_type === 'donation' 
         ? 0 
         : convertPriceToCents(payload.price);
@@ -201,108 +193,79 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         delivery_type: payload.delivery_type,
         use_batches: payload.use_batches ?? false,
       };
-      
-      // <<< CORREÇÃO: Lógica de envio unificada >>>
-      const functionName = mode === 'create' ? 'create-product' : 'update-product';
+
       const bodyPayload = mode === 'create'
         ? { 
             ...productDataForApi, 
             checkout_link_slug: generateSlug(payload.name),
-            batches: payload.batches || [] // Envia os lotes
+            batches: payload.batches || []
           }
         : { 
             productId, 
             productData: productDataForApi,
-            use_batches: payload.use_batches, // Envia o estado do switch
-            batches: payload.batches || []      // Envia os lotes
+            batches: payload.batches || []
           };
 
       const { data: result, error } = await supabase.functions.invoke(functionName, { body: bodyPayload });
       if (error) throw error;
       return result;
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       toast.success(mode === 'create' ? 'Produto criado com sucesso!' : 'Produto atualizado com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
-      navigate('/products');
+      queryClient.invalidateQueries({ queryKey: ['ticket-batches', productId] }); // Invalida o cache dos lotes
+      if(mode === 'create') navigate('/products');
     },
     onError: (error: any) => {
-      let errorMessage = 'Erro ao salvar produto';
-      if (error?.context?.error?.message) errorMessage = error.context.error.message;
-      else if (error?.message) errorMessage = error.message;
-      toast.error(errorMessage);
+      toast.error(error.message || 'Erro ao salvar produto');
     }
   });
 
   const deleteProductMutation = useMutation({
     mutationFn: async () => {
-      if (!productId) throw new Error("ID do produto não encontrado para exclusão.");
-      const { data, error } = await supabase.functions.invoke('delete-product', {
-        body: { productId }
-      });
+      if (!productId) throw new Error("ID do produto não encontrado.");
+      const { data, error } = await supabase.functions.invoke('delete-product', { body: { productId } });
       if (error) throw error;
       return data;
     },
-    onSuccess: (result) => {
-      const spacesDeleted = result?.deleted_spaces || 0;
-      const imagesDeleted = result?.deleted_images || 0;
-      toast.success(`Produto excluído completamente! ${spacesDeleted} área(s) de membros e ${imagesDeleted} imagem(ns) removidas.`);
+    onSuccess: () => {
+      toast.success(`Produto excluído com sucesso!`);
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['producer-spaces'] });
       navigate('/products');
     },
     onError: (error: any) => {
-      let errorMessage = 'Erro ao excluir produto';
-      if (error?.context?.error?.message) errorMessage = error.context.error.message;
-      else if (error?.message) errorMessage = error.message;
-      toast.error(errorMessage);
+      toast.error(error.message || 'Erro ao excluir produto');
     }
   });
 
   const handleInputChange = (field: keyof ProductFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
-
+  
   // <<< CORREÇÃO COMPLETA DO HANDLESUBMIT >>>
   const handleSubmit = () => {
-    // Validações básicas
-    if (!formData.name.trim()) { 
-      toast.error('Nome do produto é obrigatório'); 
-      return; 
-    }
-    if (!formData.delivery_type) {
-      toast.error('Forma de Entrega do Conteúdo é obrigatória');
+    if (!formData.name.trim() || !formData.delivery_type) {
+      toast.error('Nome do produto e Forma de Entrega são obrigatórios.');
       return;
     }
 
     let dataToSave = { ...formData };
-    
     const isUsingBatches = dataToSave.use_batches && dataToSave.product_type === 'event';
     
-    // Se estiver usando lotes, o preço do produto é o preço do primeiro lote
     if (isUsingBatches && localBatches.length > 0) {
-      // Ordena para garantir que estamos pegando o primeiro lote real
-      const sortedBatches = [...localBatches].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+      const sortedBatches = [...localBatches].sort((a, b) => (a.display_order ?? Infinity) - (b.display_order ?? Infinity));
       const firstBatch = sortedBatches[0];
-      dataToSave.price = (firstBatch.price_cents / 100).toLocaleString('pt-BR', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-      });
+      dataToSave.price = (firstBatch.price_cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     }
     
-    // Validação de preço: só é obrigatório se NÃO for doação e NÃO estiver usando lotes
-    if (dataToSave.product_type !== 'donation' && !isUsingBatches) {
-      if (convertPriceToCents(dataToSave.price) <= 0) {
-        toast.error('O valor do produto deve ser maior que zero.');
-        return;
-      }
+    if (dataToSave.product_type !== 'donation' && !isUsingBatches && convertPriceToCents(dataToSave.price) <= 0) {
+      toast.error('O valor do produto deve ser maior que zero.');
+      return;
     }
     
-    // Construir o payload final que será enviado para o backend
     const payload = {
       ...dataToSave,
-      // Garante que o backend receba a lista de lotes que está na UI
       batches: isUsingBatches ? localBatches : [],
     };
 
@@ -310,21 +273,20 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
   };
   // <<< FIM DA CORREÇÃO >>>
 
-  const handleDelete = () => {
-    setShowDeleteConfirmation(true);
-  };
-
+  const handleDelete = () => setShowDeleteConfirmation(true);
   const confirmDelete = () => {
     setShowDeleteConfirmation(false);
     deleteProductMutation.mutate();
   };
-
+  
+  const isLoading = isProductLoading || (mode === 'edit' && formData.use_batches && areBatchesLoading);
+  
   const isEventProduct = formData.product_type === 'event';
   const isSubscriptionProduct = formData.product_type === 'subscription';
   const shouldShowTicketsTab = isEventProduct;
   const shouldShowSubscriptionsTab = isSubscriptionProduct && mode === 'edit';
 
-  if (mode === 'edit' && isLoading) {
+  if (mode === 'edit' && isProductLoading) { // Apenas o loading do produto principal
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
