@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 interface BatchModalProps {
   isOpen: boolean;
@@ -26,7 +27,7 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
     name: "",
     total_quantity: 100,
     price_cents: 0,
-    price_display: "0,00", // <<< CORREÇÃO 2: Adicionado estado para o valor formatado
+    price_display: "0,00",
     auto_advance_to_next: false,
     min_quantity_per_purchase: 1,
     max_quantity_per_purchase: null as number | null,
@@ -35,6 +36,7 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
     useMaxQuantity: false,
     useSaleEndDate: false,
   });
+  const [priceError, setPriceError] = useState<string>("");
 
   // <<< CORREÇÃO 2: Funções de formatação de moeda reutilizadas >>>
   const formatCurrency = (value: string) => {
@@ -47,11 +49,20 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
 
   const handlePriceChange = (value: string) => {
     const numbers = value.replace(/\D/g, '');
+    const priceCents = parseInt(numbers) || 0;
+    
     setFormData(prev => ({ 
       ...prev, 
       price_display: formatCurrency(value),
-      price_cents: parseInt(numbers) || 0 
+      price_cents: priceCents
     }));
+    
+    // CORREÇÃO 1: Validação de preço mínimo R$ 5,00 (bloqueia zero também)
+    if (priceCents < 500) {
+      setPriceError("O valor mínimo por ingresso é R$ 5,00");
+    } else {
+      setPriceError("");
+    }
   };
   // <<< FIM DA CORREÇÃO 2 >>>
 
@@ -90,6 +101,23 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
   }, [batch, isOpen]); // Roda quando o modal abre ou o lote a ser editado muda
 
   const handleSubmit = () => {
+    // CORREÇÃO 4: Validação de data futura
+    if (formData.useSaleEndDate && formData.sale_end_date) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selectedDate = new Date(formData.sale_end_date);
+      selectedDate.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < today) {
+        toast({
+          title: "Data inválida",
+          description: "A data de término das vendas não pode ser anterior à data atual",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
     const dataToSave = {
       name: formData.name,
       total_quantity: formData.total_quantity,
@@ -131,21 +159,25 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
             />
           </div>
 
-          {/* <<< CORREÇÃO 1 e 2: CAMPO DE PREÇO CORRIGIDO >>> */}
           <div>
             <Label htmlFor="price">Preço por Ingresso (R$) *</Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">R$</span>
               <Input 
                 id="price" 
-                placeholder="0,00"
+                placeholder="5,00"
                 value={formData.price_display} 
                 onChange={(e) => handlePriceChange(e.target.value)} 
-                className="pl-10 text-lg font-semibold" 
+                className={cn(
+                  "pl-10 text-lg font-semibold",
+                  priceError && "border-red-500 focus-visible:ring-red-500"
+                )}
               />
             </div>
+            {priceError && (
+              <p className="text-sm text-red-500 mt-1">{priceError}</p>
+            )}
           </div>
-          {/* <<< FIM DAS CORREÇÕES 1 e 2 >>> */}
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
@@ -169,34 +201,25 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
               />
             </div>
             {formData.useMinQuantity && (
-              <Input
-                type="number"
-                min="1"
-                max={formData.total_quantity}
-                value={formData.min_quantity_per_purchase}
-                onChange={(e) => setFormData(prev => ({ ...prev, min_quantity_per_purchase: parseInt(e.target.value) || 1 }))}
-              />
+              <div className="space-y-2">
+                <Input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={formData.min_quantity_per_purchase}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 1;
+                    const clamped = Math.min(Math.max(value, 1), 10);
+                    setFormData(prev => ({ ...prev, min_quantity_per_purchase: clamped }));
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Limite máximo: 10 ingressos (conforme capacidade do sistema)
+                </p>
+              </div>
             )}
           </div>
 
-          <div className="space-y-4 border-t pt-4">
-            <div className="flex items-center justify-between">
-              <Label>Quantidade máxima de ingressos</Label>
-              <Switch
-                checked={formData.useMaxQuantity}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, useMaxQuantity: checked }))}
-              />
-            </div>
-            {formData.useMaxQuantity && (
-              <Input
-                type="number"
-                min="1"
-                max={formData.total_quantity}
-                value={formData.max_quantity_per_purchase || ""}
-                onChange={(e) => setFormData(prev => ({ ...prev, max_quantity_per_purchase: parseInt(e.target.value) || null }))}
-              />
-            )}
-          </div>
 
           <div className="space-y-4 border-t pt-4">
             <div className="flex items-center justify-between">
@@ -224,7 +247,31 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
                   <Calendar
                     mode="single"
                     selected={formData.sale_end_date || undefined}
-                    onSelect={(date) => setFormData(prev => ({ ...prev, sale_end_date: date || null }))}
+                    onSelect={(date) => {
+                      if (date) {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const selectedDate = new Date(date);
+                        selectedDate.setHours(0, 0, 0, 0);
+                        
+                        if (selectedDate < today) {
+                          toast({
+                            title: "Data inválida",
+                            description: "Não é possível selecionar uma data anterior à data atual",
+                            variant: "destructive"
+                          });
+                          return;
+                        }
+                      }
+                      setFormData(prev => ({ ...prev, sale_end_date: date || null }));
+                    }}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const checkDate = new Date(date);
+                      checkDate.setHours(0, 0, 0, 0);
+                      return checkDate < today;
+                    }}
                     initialFocus
                     className="pointer-events-auto"
                   />
@@ -238,7 +285,15 @@ export function BatchModal({ isOpen, onClose, onSave, batch, basePrice, isFirstB
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={!formData.name || !formData.total_quantity}>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={
+              !formData.name || 
+              !formData.total_quantity || 
+              formData.price_cents < 500 || 
+              !!priceError
+            }
+          >
             {batch ? "Atualizar" : "Criar Lote"}
           </Button>
         </div>

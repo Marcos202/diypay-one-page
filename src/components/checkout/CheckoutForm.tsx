@@ -40,6 +40,9 @@ interface TicketBatch {
   sold_quantity: number;
   is_active: boolean;
   display_order: number;
+  auto_advance_to_next?: boolean;
+  min_quantity_per_purchase?: number;
+  sale_end_date?: string | null;
 }
 
 interface CheckoutFormProps {

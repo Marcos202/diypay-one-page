@@ -1,12 +1,14 @@
 // src/components/products/BatchManagementSection.tsx
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { BatchModal } from "./BatchModal";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { ConfirmationModal } from "@/components/core/ConfirmationModal";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface BatchManagementSectionProps {
   basePrice: number;
@@ -16,19 +18,72 @@ interface BatchManagementSectionProps {
   isLoading?: boolean;
 }
 
-// <<< CORREÇÃO: Componente agora é "burro". Ele apenas recebe os lotes e emite eventos de mudança. >>>
 export function BatchManagementSection({ basePrice, batches, onBatchesChange, mode = 'edit', isLoading = false }: BatchManagementSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
   const [batchToDelete, setBatchToDelete] = useState<string | null>(null);
+  const [liveBatches, setLiveBatches] = useState<any[]>([]);
   
-  // Guard: Garantir que batches é sempre um array
   const safeBatches = Array.isArray(batches) ? batches : [];
 
   console.log('🎫 BatchManagementSection renderizado:', {
     mode,
     batchCount: safeBatches.length,
     isLoading
+  });
+  
+  // CORREÇÃO 3: Supabase Realtime para atualização em tempo real
+  useEffect(() => {
+    const batchIds = safeBatches.filter(b => b.id).map(b => b.id);
+    
+    if (batchIds.length === 0) {
+      setLiveBatches([]);
+      return;
+    }
+
+    const channel = supabase
+      .channel('ticket_batches_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'ticket_batches',
+          filter: `id=in.(${batchIds.join(',')})`,
+        },
+        (payload) => {
+          console.log('🔄 Batch atualizado em tempo real:', payload.new);
+          setLiveBatches(prev => {
+            const updated = prev.filter(b => b.id !== payload.new.id);
+            return [...updated, payload.new];
+          });
+        }
+      )
+      .subscribe();
+
+    // Fetch inicial
+    const fetchInitialData = async () => {
+      const { data, error } = await supabase
+        .from('ticket_batches')
+        .select('id, sold_quantity, total_quantity')
+        .in('id', batchIds);
+      
+      if (!error && data) {
+        setLiveBatches(data);
+      }
+    };
+
+    fetchInitialData();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [safeBatches.map(b => b.id).join(',')]);
+  
+  // Mesclar dados ao vivo com lotes locais
+  const enrichedBatches = safeBatches.map(batch => {
+    const liveData = liveBatches.find(lb => lb.id === batch.id);
+    return liveData ? { ...batch, sold_quantity: liveData.sold_quantity } : batch;
   });
   
   const handleSave = (batchData: any) => {
@@ -119,23 +174,52 @@ export function BatchManagementSection({ basePrice, batches, onBatchesChange, mo
                 </tr>
               </thead>
               <tbody>
-                {safeBatches.map((batch: any) => (
-                  <tr key={batch.id || batch.temp_id} className="border-b last:border-0">
-                    <td className="p-4">{batch.name}</td>
-                    <td className="p-4">{batch.sold_quantity || 0} / {batch.total_quantity}</td>
-                    <td className="p-4">R$ {(batch.price_cents / 100).toFixed(2).replace('.', ',')}</td>
-                    <td className="p-4">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(batch)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(batch.id || batch.temp_id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {enrichedBatches.map((batch: any) => {
+                  const isSoldOut = batch.sold_quantity >= batch.total_quantity;
+                  const percentSold = Math.round((batch.sold_quantity / batch.total_quantity) * 100);
+                  
+                  return (
+                    <tr key={batch.id || batch.temp_id} className="border-b last:border-0">
+                      <td className="p-4">{batch.name}</td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <span className={cn(
+                            "font-medium",
+                            isSoldOut && "text-red-600"
+                          )}>
+                            {batch.sold_quantity || 0} / {batch.total_quantity}
+                          </span>
+                          {percentSold === 100 && (
+                            <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-medium">
+                              ESGOTADO
+                            </span>
+                          )}
+                          {percentSold >= 90 && percentSold < 100 && (
+                            <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded font-medium">
+                              ÚLTIMOS INGRESSOS
+                            </span>
+                          )}
+                          {percentSold >= 70 && percentSold < 90 && (
+                            <span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-0.5 rounded font-medium">
+                              VENDENDO RÁPIDO
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4">R$ {(batch.price_cents / 100).toFixed(2).replace('.', ',')}</td>
+                      <td className="p-4">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(batch)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(batch.id || batch.temp_id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

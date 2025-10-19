@@ -17,6 +17,9 @@ interface TicketBatch {
   sold_quantity: number;
   is_active: boolean;
   display_order: number;
+  auto_advance_to_next: boolean;
+  min_quantity_per_purchase: number;
+  sale_end_date: string | null;
 }
 
 const Checkout = () => {
@@ -115,18 +118,115 @@ const Checkout = () => {
     setSelectedOrderBumps(selectedOrderBumps.filter(i => i.id !== item.id));
   };
 
-  // Auto-selecionar primeiro lote disponível
-  useEffect(() => {
-    if (ticketBatches && ticketBatches.length > 0 && !selectedBatch) {
-      const availableBatch = ticketBatches.find(
-        (batch) => batch.sold_quantity < batch.total_quantity
-      );
-      if (availableBatch) {
-        setSelectedBatch(availableBatch);
-        console.log('[CHECKOUT] Auto-selected batch:', availableBatch);
+  // CORREÇÃO 2 e 5: Redirecionamento automático e tratamento de ingressos órfãos
+  const isBatchAvailable = (batch: TicketBatch): boolean => {
+    // Verificar quantidade
+    if (batch.sold_quantity >= batch.total_quantity) {
+      return false;
+    }
+    
+    // Verificar data de expiração
+    if (batch.sale_end_date) {
+      const endDate = new Date(batch.sale_end_date);
+      const today = new Date();
+      endDate.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+      if (endDate < today) {
+        return false;
       }
     }
-  }, [ticketBatches, selectedBatch]);
+    
+    return true;
+  };
+
+  const getNextAvailableBatch = (currentBatch: TicketBatch): TicketBatch | null => {
+    // Só redireciona se auto_advance estiver ativo
+    if (!currentBatch.auto_advance_to_next) {
+      return null;
+    }
+
+    return ticketBatches?.find((batch) => 
+      batch.display_order > currentBatch.display_order && 
+      isBatchAvailable(batch)
+    ) || null;
+  };
+
+  // Auto-selecionar e redirecionar lotes
+  useEffect(() => {
+    if (!ticketBatches || ticketBatches.length === 0) return;
+    
+    // Se já há lote selecionado, verificar se ainda está disponível
+    if (selectedBatch) {
+      const isStillAvailable = isBatchAvailable(selectedBatch);
+      
+      if (!isStillAvailable) {
+        // Buscar próximo lote disponível
+        const nextBatch = getNextAvailableBatch(selectedBatch);
+        
+        if (nextBatch) {
+          setSelectedBatch(nextBatch);
+          toast({
+            title: "Lote esgotado",
+            description: "O lote anterior se esgotou. Você foi redirecionado para o próximo lote disponível.",
+            duration: 5000,
+          });
+          console.log('[CHECKOUT] Auto-redirected to next batch:', nextBatch);
+        } else {
+          toast({
+            title: "Ingressos esgotados",
+            description: "Não há mais ingressos disponíveis para este evento.",
+            variant: "destructive",
+          });
+          navigate('/');
+        }
+      }
+      
+      // CORREÇÃO 5: Tratar ingressos órfãos (disponível < mínimo)
+      const available = selectedBatch.total_quantity - selectedBatch.sold_quantity;
+      const minimum = selectedBatch.min_quantity_per_purchase || 1;
+      
+      if (available < minimum && available > 0) {
+        if (selectedBatch.auto_advance_to_next) {
+          const nextBatch = getNextAvailableBatch(selectedBatch);
+          if (nextBatch) {
+            setSelectedBatch(nextBatch);
+            toast({
+              title: "Lote quase esgotado",
+              description: `Restam apenas ${available} ingressos, mas o mínimo é ${minimum}. Você foi redirecionado.`,
+            });
+          }
+        } else {
+          // Permitir comprar o que resta, ajustando quantidade
+          setEventQuantity(available);
+          toast({
+            title: "Últimos ingressos",
+            description: `Restam apenas ${available} ingressos (menor que o mínimo de ${minimum}).`,
+          });
+        }
+      }
+      
+      return;
+    }
+    
+    // Primeira seleção: buscar primeiro lote disponível
+    const availableBatch = ticketBatches.find(isBatchAvailable);
+    
+    if (availableBatch) {
+      setSelectedBatch(availableBatch);
+      // Pré-selecionar quantidade mínima
+      if (availableBatch.min_quantity_per_purchase > 1) {
+        setEventQuantity(availableBatch.min_quantity_per_purchase);
+      }
+      console.log('[CHECKOUT] Auto-selected batch:', availableBatch);
+    } else {
+      toast({
+        title: "Ingressos esgotados",
+        description: "Não há mais ingressos disponíveis para este evento.",
+        variant: "destructive",
+      });
+      navigate('/');
+    }
+  }, [ticketBatches, selectedBatch, navigate]);
 
   // Inicializar tracking quando o produto carregar
   useEffect(() => {
@@ -255,7 +355,7 @@ const Checkout = () => {
                   onOrderBumpDeselect={handleOrderBumpDeselect}
                   selectedBatch={selectedBatch}
                   availableBatches={ticketBatches}
-                  onBatchChange={setSelectedBatch}
+                  onBatchChange={(batch) => setSelectedBatch(batch as any)}
                 />
               </div>
             </div>
@@ -272,7 +372,7 @@ const Checkout = () => {
                 onOrderBumpDeselect={handleOrderBumpDeselect}
                 selectedBatch={selectedBatch}
                 availableBatches={ticketBatches}
-                onBatchChange={setSelectedBatch}
+                onBatchChange={(batch) => setSelectedBatch(batch as any)}
               />
             </div>
           )}
