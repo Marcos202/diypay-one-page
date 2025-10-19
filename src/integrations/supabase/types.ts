@@ -1112,7 +1112,6 @@ export type Database = {
           display_order: number
           id: string
           is_active: boolean
-          max_quantity_per_purchase: number | null
           min_quantity_per_purchase: number | null
           name: string
           price_cents: number
@@ -1128,7 +1127,6 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
-          max_quantity_per_purchase?: number | null
           min_quantity_per_purchase?: number | null
           name: string
           price_cents: number
@@ -1144,7 +1142,6 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
-          max_quantity_per_purchase?: number | null
           min_quantity_per_purchase?: number | null
           name?: string
           price_cents?: number
