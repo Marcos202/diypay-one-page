@@ -649,6 +649,9 @@ export type Database = {
           description: string | null
           donation_description: string | null
           donation_title: string | null
+          event_address: string | null
+          event_date: string | null
+          event_description: string | null
           file_url_or_access_info: string | null
           id: string
           is_active: boolean | null
@@ -682,6 +685,9 @@ export type Database = {
           description?: string | null
           donation_description?: string | null
           donation_title?: string | null
+          event_address?: string | null
+          event_date?: string | null
+          event_description?: string | null
           file_url_or_access_info?: string | null
           id?: string
           is_active?: boolean | null
@@ -715,6 +721,9 @@ export type Database = {
           description?: string | null
           donation_description?: string | null
           donation_title?: string | null
+          event_address?: string | null
+          event_date?: string | null
+          event_description?: string | null
           file_url_or_access_info?: string | null
           id?: string
           is_active?: boolean | null
@@ -1402,10 +1411,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      backfill_webhook_delivery_jobs: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      backfill_webhook_delivery_jobs: { Args: never; Returns: Json }
       calculate_producer_balances_simple: {
         Args: { p_producer_id: string }
         Returns: Json
@@ -1441,6 +1447,12 @@ export type Database = {
           updated_at: string
           webhook_endpoint_id: string
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "webhook_delivery_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_producer_financial_report: {
         Args: {
@@ -1450,10 +1462,7 @@ export type Database = {
         }
         Returns: Json
       }
-      get_space_hub_details: {
-        Args: { space_id_input: string }
-        Returns: Json
-      }
+      get_space_hub_details: { Args: { space_id_input: string }; Returns: Json }
       get_students_with_progress: {
         Args: { p_product_id: string }
         Returns: Json
@@ -1465,14 +1474,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      recover_missing_transaction_events: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      is_admin: { Args: never; Returns: boolean }
+      recover_missing_transaction_events: { Args: never; Returns: Json }
       set_active_cohort_for_space: {
         Args: { p_cohort_id_to_activate: string; p_space_id: string }
         Returns: undefined

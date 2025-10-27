@@ -33,7 +33,11 @@ Deno.serve(async (req) => {
       .update({
         ...productData,
         delivery_type: productData.delivery_type || undefined,
-        use_batches: use_batches ?? productData.use_batches ?? false
+        use_batches: use_batches ?? productData.use_batches ?? false,
+        // Suporte para campos de evento
+        event_date: productData.event_date !== undefined ? productData.event_date : undefined,
+        event_address: productData.event_address !== undefined ? productData.event_address : undefined,
+        event_description: productData.event_description !== undefined ? productData.event_description : undefined,
       })
       .eq('id', productId)
       .eq('producer_id', user.id)

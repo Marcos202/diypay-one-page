@@ -329,6 +329,7 @@ const PaymentConfirmation = () => {
   const isBankSlip = sale.payment_method_used === 'bank_slip';
   const isCreditCard = sale.payment_method_used === 'credit_card';
   const isPaid = sale.status === 'paid';
+  const isEvent = (sale.products as any)?.product_type === 'event';
 
   const statusDisplay = getStatusDisplay(sale.status);
 
@@ -378,6 +379,26 @@ const PaymentConfirmation = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Event Ticket Access - Show when paid */}
+        {isPaid && isEvent && (
+          <Card className="mb-6 border-green-500">
+            <CardContent className="pt-6 text-center">
+              <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
+              <h3 className="text-xl font-bold mb-2">Seus Ingressos Estão Prontos!</h3>
+              <p className="text-gray-600 mb-6">
+                Clique no botão abaixo para visualizar e baixar seus ingressos do evento.
+              </p>
+              <Button 
+                onClick={() => navigate(`/ticket/${saleId}`)}
+                className="w-full max-w-sm"
+                size="lg"
+              >
+                Ver Meus Ingressos
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Conteúdo específico por método de pagamento */}
         {!isPaid && (

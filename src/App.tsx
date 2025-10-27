@@ -77,6 +77,7 @@ const App = () => {
               <Route path="/register" element={<Register />} />
               <Route path="/checkout/:slug" element={<Checkout />} />
               <Route path="/payment-confirmation/:saleId" element={<PaymentConfirmation />} />
+              <Route path="/ticket/:saleId" element={<LazyRoute Component={lazy(() => import("./pages/TicketViewPage"))} />} />
               <Route path="/p/:slug" element={<PublicPage />} />
 
               {/* Producer Routes - Core pages loaded directly for performance */}
@@ -90,6 +91,7 @@ const App = () => {
               
               <Route path="/spaces/edit/:spaceId" element={<ProtectedRoute requiredView="producer"><LazyRoute Component={EditSpacePage} /></ProtectedRoute>} />
               <Route path="/personalize/edit/:spaceId" element={<ProtectedRoute requiredView="producer"><PersonalizeSpacePage /></ProtectedRoute>} />
+              <Route path="/events/personalize/:productId" element={<ProtectedRoute requiredView="producer"><LazyRoute Component={lazy(() => import("./pages/EventPersonalizePage"))} /></ProtectedRoute>} />
               <Route path="/producer/subscriptions" element={<ProtectedRoute requiredView="producer"><ProducerSubscriptionsPage /></ProtectedRoute>} />
               <Route path="/tickets" element={<ProtectedRoute requiredView="producer"><TicketsPage /></ProtectedRoute>} />
               <Route path="/financials" element={<ProtectedRoute requiredView="producer"><ProducerFinancialsPage /></ProtectedRoute>} />

@@ -107,8 +107,14 @@ export default function MyCoursesPage() {
                          <Progress value={course.progress} className="h-2 mb-2" />
                       )}
                       <Button asChild className="w-full" variant={course.type === 'external' ? 'secondary' : 'default'}>
-                        <Link to={course.space_id ? `/members/spaces/${course.space_id}` : '/members/courses/' + course.id}>
-                          {course.type === 'external' ? 'Acessar' : 'Começar'}
+                        <Link to={
+                          course.product_type === 'event' 
+                            ? `/ticket/${course.sale_id}` 
+                            : course.space_id 
+                              ? `/members/spaces/${course.space_id}` 
+                              : '/members/courses/' + course.id
+                        }>
+                          {course.product_type === 'event' ? 'Ver Ingressos' : course.type === 'external' ? 'Acessar' : 'Começar'}
                           {course.type === 'external' && <PlayCircle className="ml-2 h-4 w-4" />}
                         </Link>
                       </Button>

@@ -54,12 +54,21 @@ Deno.serve(async (req) => {
 
     console.log('[DEBUG] Buscando dados da venda:', saleId);
 
-    // Buscar dados da venda com informações do produto
+    // Buscar dados da venda com informações do produto (incluindo campos de evento)
     const { data: sale, error } = await supabase
       .from('sales')
       .select(`
         *,
-        products!inner(name, price_cents)
+        products!inner(
+          id,
+          name,
+          price_cents,
+          product_type,
+          cover_image_url,
+          event_date,
+          event_address,
+          event_description
+        )
       `)
       .eq('id', saleId)
       .single();
@@ -115,6 +124,7 @@ Deno.serve(async (req) => {
           gateway_identifier: sale.gateway_identifier,
           created_at: sale.created_at,
           paid_at: sale.paid_at,
+          event_attendees: sale.event_attendees || [],
           products: sale.products,
         },
       }),
