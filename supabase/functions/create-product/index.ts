@@ -105,12 +105,11 @@ Deno.serve(async (req) => {
         const batchesToInsert = batches.map((batch, index) => ({
           product_id: newProduct.id,
           name: batch.name,
-          total_quantity: batch.total_quantity,
-          price_cents: batch.price_cents,
-          auto_advance_to_next: batch.auto_advance_to_next ?? false,
-          min_quantity_per_purchase: batch.min_quantity_per_purchase || 1,
-          max_quantity_per_purchase: batch.max_quantity_per_purchase || null,
-          sale_end_date: batch.sale_end_date || null,
+            total_quantity: batch.total_quantity,
+            price_cents: batch.price_cents,
+            auto_advance_to_next: batch.auto_advance_to_next ?? false,
+            min_quantity_per_purchase: batch.min_quantity_per_purchase || 1,
+            sale_end_date: batch.sale_end_date || null,
           display_order: index,
           sold_quantity: 0,
           is_active: true
