@@ -22,6 +22,15 @@ Deno.serve(async (req) => {
     if (authError || !user) throw new Error('Usuário não autorizado');
 
     const { productId, productData, use_batches, batches } = await req.json();
+    
+    // LOGS DE DIAGNÓSTICO
+    console.log('📥 Payload recebido:', {
+      productId,
+      use_batches,
+      has_batches: Array.isArray(batches),
+      batches_count: batches?.length || 0,
+      product_type: productData?.product_type
+    });
 
     if (!productId) throw new Error('productId é obrigatório');
     if (!productData || typeof productData !== 'object') {
@@ -50,6 +59,11 @@ Deno.serve(async (req) => {
     }
 
     if (use_batches && Array.isArray(batches)) {
+      console.log('🎫 Processando lotes:', {
+        use_batches,
+        batches_length: batches.length,
+        batches_preview: batches.slice(0, 2)
+      });
       try {
         const { error: deleteError } = await serviceClient
           .from('ticket_batches')
@@ -80,8 +94,14 @@ Deno.serve(async (req) => {
         } else {
           console.log('✅ Lotes removidos (array vazio recebido)');
         }
-      } catch (batchError) {
-        console.error('Erro no processamento de lotes:', batchError);
+      } catch (batchError: any) {
+        console.error('❌ ERRO CRÍTICO no processamento de lotes:', {
+          error_message: batchError.message,
+          error_details: batchError.details,
+          error_hint: batchError.hint,
+          error_code: batchError.code,
+          full_error: JSON.stringify(batchError, null, 2)
+        });
         throw batchError;
       }
     }

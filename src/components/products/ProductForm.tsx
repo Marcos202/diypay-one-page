@@ -272,8 +272,30 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
       : { 
           productId, 
           productData: productDataForApi,
+          use_batches: isUsingBatches,
           batches: isUsingBatches ? localBatches : []
         };
+    
+    // Validação de batches antes de enviar
+    if (isUsingBatches) {
+      console.log('🔍 Validando batches antes de enviar:', {
+        batches_count: localBatches.length,
+        batches_preview: localBatches.slice(0, 2)
+      });
+      
+      const hasInvalidBatch = localBatches.some(batch => 
+        !batch.name || 
+        !batch.total_quantity || 
+        batch.total_quantity <= 0 ||
+        !batch.price_cents ||
+        batch.price_cents < 0
+      );
+      
+      if (hasInvalidBatch) {
+        toast.error('Um ou mais lotes possuem dados inválidos. Verifique e tente novamente.');
+        return;
+      }
+    }
     
     saveProductMutation.mutate(finalPayload);
   };
