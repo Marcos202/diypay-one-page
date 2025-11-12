@@ -74,6 +74,22 @@ Deno.serve(async (req) => {
 
     console.log('✅ User authenticated:', user.id);
 
+    // Buscar perfil completo do usuário da tabela profiles
+    const { data: userProfile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.warn('⚠️ Erro ao buscar perfil do usuário:', profileError.message);
+    }
+
+    console.log('👤 Perfil do usuário carregado:', { 
+      full_name: userProfile?.full_name,
+      fallback: user.email?.split('@')[0] 
+    });
+
     // Parse request body with error handling
     let requestBody;
     try {
@@ -178,7 +194,7 @@ Deno.serve(async (req) => {
           saldoDisponivel: 0,
           saldoPendente: 0,
           products: [],
-          userName: user.user_metadata?.full_name || user.email
+          userName: userProfile?.full_name || user.email?.split('@')[0] || 'Produtor'
         }),
         { 
           status: 200, 
@@ -325,7 +341,7 @@ Deno.serve(async (req) => {
       saldoDisponivel,
       saldoPendente,
       products: products.map(p => ({ id: p.id, name: p.name })),
-      userName: user.user_metadata?.full_name || user.email
+      userName: userProfile?.full_name || user.email?.split('@')[0] || 'Produtor'
     };
 
     console.log('✅ Dashboard data prepared successfully:', {
