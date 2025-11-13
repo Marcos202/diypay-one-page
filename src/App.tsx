@@ -5,7 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
+import HomeRedirect from "@/components/HomeRedirect";
+// import Index from "./pages/Index"; // Removido - não será mais usado
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import CompleteProducerProfile from "./pages/CompleteProducerProfile";
@@ -72,7 +73,7 @@ const App = () => {
           <AuthProvider>
             <Routes>
               {/* Public Routes */}
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<HomeRedirect />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/checkout/:slug" element={<Checkout />} />
