@@ -37,6 +37,13 @@ Deno.serve(async (req) => {
       throw new Error('productData é obrigatório e deve ser um objeto');
     }
 
+    console.log('📅 Campos de evento recebidos:', {
+      event_date: productData.event_date,
+      event_address: productData.event_address,
+      event_description: productData.event_description,
+      product_type: productData.product_type
+    });
+
     const { data: updatedProduct, error } = await serviceClient
       .from('products')
       .update({
@@ -44,9 +51,9 @@ Deno.serve(async (req) => {
         delivery_type: productData.delivery_type || undefined,
         use_batches: use_batches ?? productData.use_batches ?? false,
         // Suporte para campos de evento
-        event_date: productData.event_date !== undefined ? productData.event_date : undefined,
-        event_address: productData.event_address !== undefined ? productData.event_address : undefined,
-        event_description: productData.event_description !== undefined ? productData.event_description : undefined,
+        event_date: productData.event_date || null,
+        event_address: productData.event_address || null,
+        event_description: productData.event_description || null,
       })
       .eq('id', productId)
       .eq('producer_id', user.id)

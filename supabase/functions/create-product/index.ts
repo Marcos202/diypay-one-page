@@ -53,8 +53,18 @@ Deno.serve(async (req) => {
       producer_id: user.id,
       checkout_link_slug: checkout_link_slug || `product-${Date.now()}`,
       delivery_type: delivery_type || 'external_access',
-      use_batches: use_batches ?? false
+      use_batches: use_batches ?? false,
+      event_date: productData.event_date || null,
+      event_address: productData.event_address || null,
+      event_description: productData.event_description || null,
     };
+
+    console.log('📅 Criando produto com campos de evento:', {
+      event_date: insertData.event_date,
+      event_address: insertData.event_address,
+      event_description: insertData.event_description,
+      product_type: insertData.product_type
+    });
 
     const { data: newProduct, error: productError } = await serviceClient
       .from('products')

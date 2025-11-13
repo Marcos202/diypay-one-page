@@ -286,6 +286,15 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         }),
       };
 
+    // Log de debug para campos de evento
+    console.log('📤 Payload de evento sendo enviado:', {
+      product_type: dataToSave.product_type,
+      event_date: dataToSave.event_date,
+      event_address: dataToSave.event_address,
+      event_description: dataToSave.event_description,
+      is_event: dataToSave.product_type === 'event'
+    });
+
     const finalPayload = mode === 'create'
       ? { 
           ...productDataForApi, 
