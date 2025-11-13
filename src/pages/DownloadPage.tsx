@@ -1,45 +1,61 @@
 import { useState } from 'react';
 import { usePWA } from '@/hooks/usePWA';
+import { usePlatformDetection } from '@/hooks/usePlatformDetection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle2, Download } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle2, Download, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { InstructionsDialog } from '@/components/InstructionsDialog';
+import { getPlatformName } from '@/components/PlatformInstructions';
 
 const DownloadPage = () => {
   const { canInstall, isInstalled, isPWA, installPWA } = usePWA();
+  const platform = usePlatformDetection();
   const [installing, setInstalling] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState<'windows' | 'android' | 'ios'>('windows');
 
-  const handleInstall = async () => {
-    setInstalling(true);
-    
-    const success = await installPWA();
-    
-    if (success) {
-      toast.success('App instalado com sucesso!', {
-        description: 'O DiyPay foi adicionado à sua tela inicial.'
-      });
+  const handlePlatformInstall = async (platformId: 'windows' | 'android' | 'ios') => {
+    const isCurrentPlatform = platformId === platform.os;
+    const canAutoInstall = isCurrentPlatform && platform.supportsPWA && canInstall;
+
+    if (canAutoInstall) {
+      setInstalling(true);
+      const success = await installPWA();
+      
+      if (success) {
+        toast.success('App instalado com sucesso!', {
+          description: 'O DiyPay foi adicionado à sua tela inicial.'
+        });
+      } else {
+        toast.error('Erro ao instalar', {
+          description: 'Tente novamente ou use o menu do navegador.'
+        });
+      }
+      setInstalling(false);
     } else {
-      toast.info('Instalação não disponível', {
-        description: 'Use o menu do navegador para instalar o app.'
-      });
+      setSelectedPlatform(platformId);
+      setShowInstructions(true);
     }
-    
-    setInstalling(false);
   };
 
   const platforms = [
     {
+      id: 'windows' as const,
       name: 'Windows',
       icon: '/icons/windows.png',
       description: 'Instale no seu PC'
     },
     {
+      id: 'android' as const,
       name: 'Android',
       icon: '/icons/android.png',
       description: 'Instale no seu celular'
     },
     {
-      name: 'Apple',
+      id: 'ios' as const,
+      name: 'iPhone/iPad',
       icon: '/icons/ios.png',
       description: 'Instale no iPhone/iPad'
     }
@@ -92,64 +108,99 @@ const DownloadPage = () => {
             Instale nosso app e acesse uma plataforma de vendas online rápida, moderna e de alta performance.
           </p>
 
-          {/* Main Install Button */}
-          {isInstalled ? (
-            <div className="inline-flex items-center gap-2 px-6 py-3 bg-green-100 text-green-700 rounded-lg">
+          {isInstalled && (
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-green-100 text-green-700 rounded-lg mb-8">
               <CheckCircle2 className="w-5 h-5" />
               <span className="font-medium">App já instalado</span>
-            </div>
-          ) : canInstall ? (
-            <Button
-              onClick={handleInstall}
-              disabled={installing}
-              size="lg"
-              className="px-8 py-6 text-lg font-semibold bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
-            >
-              {installing ? (
-                <>Instalando...</>
-              ) : (
-                <>
-                  <Download className="w-5 h-5 mr-2" />
-                  Instalar Agora
-                </>
-              )}
-            </Button>
-          ) : (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
-              <p className="text-sm text-yellow-800">
-                Para instalar, use o menu do seu navegador e selecione "Instalar app" ou "Adicionar à tela inicial"
-              </p>
             </div>
           )}
         </div>
 
         {/* Platform Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
-          {platforms.map((platform) => (
-            <Card key={platform.name} className="hover:shadow-lg transition-shadow">
-              <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 mx-auto">
-                  <img src={platform.icon} alt={platform.name} className="w-12 h-12" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground text-center mb-2">
-                  {platform.name}
-                </h3>
-                <p className="text-muted-foreground text-center">
-                  {platform.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+          {platforms.map((platformItem) => {
+            const isCurrentPlatform = platformItem.id === platform.os;
+            const canAutoInstall = isCurrentPlatform && platform.supportsPWA && canInstall && !isInstalled;
+
+            return (
+              <Card 
+                key={platformItem.id}
+                className={`cursor-pointer hover:shadow-xl transition-all ${
+                  isCurrentPlatform ? 'ring-2 ring-primary shadow-lg' : ''
+                } ${installing ? 'opacity-50 pointer-events-none' : ''}`}
+                onClick={() => !installing && handlePlatformInstall(platformItem.id)}
+              >
+                <CardContent className="pt-6 space-y-4">
+                  <div className="w-16 h-16 bg-background rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                    <img 
+                      src={platformItem.icon} 
+                      alt={platformItem.name} 
+                      className="w-12 h-12" 
+                    />
+                  </div>
+                  
+                  <div className="text-center space-y-2">
+                    <div className="flex items-center justify-center gap-2">
+                      <h3 className="text-xl font-bold text-foreground">
+                        {platformItem.name}
+                      </h3>
+                      {isCurrentPlatform && (
+                        <Badge variant="secondary" className="text-xs">
+                          Seu dispositivo
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground text-sm">
+                      {platformItem.description}
+                    </p>
+                  </div>
+
+                  <Button 
+                    className="w-full"
+                    variant={canAutoInstall ? "default" : "outline"}
+                    disabled={installing}
+                  >
+                    {installing && canAutoInstall ? (
+                      <>Instalando...</>
+                    ) : canAutoInstall ? (
+                      <>
+                        <Download className="w-4 h-4" />
+                        Instalar Agora
+                      </>
+                    ) : (
+                      <>
+                        <Info className="w-4 h-4" />
+                        Ver Instruções
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Instructions */}
-        <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>
+        <div className="mt-8 text-center space-y-2">
+          <p className="text-sm text-muted-foreground">
             O app funciona em todos os navegadores modernos. 
             Tamanho: ~5MB • Última atualização: {new Date().toLocaleDateString('pt-BR')}
           </p>
+          {platform.os !== 'unknown' && (
+            <p className="text-xs text-muted-foreground">
+              Detectamos: {getPlatformName(platform.os)} • {platform.browser}
+            </p>
+          )}
         </div>
       </div>
+
+      {/* Instructions Dialog */}
+      <InstructionsDialog
+        open={showInstructions}
+        onOpenChange={setShowInstructions}
+        platform={selectedPlatform}
+        browser={platform.browser}
+      />
     </div>
   );
 };
