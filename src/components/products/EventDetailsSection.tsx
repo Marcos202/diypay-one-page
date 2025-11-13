@@ -21,10 +21,10 @@ const EventDetailsSection = ({
   onDescriptionChange
 }: EventDetailsSectionProps) => {
   return (
-    <div className="space-y-6 p-6 border-2 border-primary/20 rounded-lg bg-primary/5">
+    <div className="space-y-6 p-6 border rounded-lg bg-card">
       <div className="flex items-center gap-2">
-        <Calendar className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold text-foreground">Data e Local do Evento</h3>
+        <Calendar className="h-5 w-5 text-muted-foreground" />
+        <h3 className="text-lg font-semibold">Data e Local do Evento</h3>
       </div>
 
       <div className="space-y-2">
@@ -56,16 +56,6 @@ const EventDetailsSection = ({
         </div>
         <p className="text-xs text-muted-foreground">
           Digite o endereço completo onde o evento acontecerá
-        </p>
-      </div>
-
-      <div className="rounded-lg border-2 border-dashed border-border bg-muted/50 p-8 flex flex-col items-center justify-center min-h-[200px]">
-        <MapPin className="h-12 w-12 text-muted-foreground mb-3" />
-        <p className="text-sm text-muted-foreground text-center">
-          Mapa ilustrativo do local do evento
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          O endereço será exibido nos ingressos
         </p>
       </div>
 
