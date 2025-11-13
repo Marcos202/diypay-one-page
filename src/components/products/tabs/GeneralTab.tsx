@@ -10,6 +10,7 @@ import { ProductVerticalCoverUpload } from "../ProductVerticalCoverUpload";
 import { ImageFormatGuide } from "../ImageFormatGuide";
 import DeliveryTypeSection from "../DeliveryTypeSection";
 import { BatchManagementSection } from "../BatchManagementSection";
+import EventDetailsSection from "../EventDetailsSection";
 
 interface GeneralTabProps {
   formData: any;
@@ -140,6 +141,17 @@ const GeneralTab = ({ formData, onInputChange, userId, mode = 'create', isLoadin
         mode={mode}
         isLoading={isLoading}
       />
+
+      {isEvent && (
+        <EventDetailsSection
+          eventDate={formData.event_date}
+          eventAddress={formData.event_address}
+          eventDescription={formData.event_description}
+          onDateChange={(date) => onInputChange('event_date', date)}
+          onAddressChange={(address) => onInputChange('event_address', address)}
+          onDescriptionChange={(description) => onInputChange('event_description', description)}
+        />
+      )}
 
       {/* Switch de Vender por Lotes - apenas para eventos */}
       {isEvent && (

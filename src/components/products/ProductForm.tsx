@@ -42,6 +42,9 @@ interface ProductFormData {
   producer_assumes_installments: boolean;
   delivery_type: string;
   use_batches?: boolean;
+  event_date: string | null;
+  event_address: string;
+  event_description: string;
 }
 
 interface ProductFormProps {
@@ -72,7 +75,8 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
     subscription_frequency: '', allowed_payment_methods: getDefaultPaymentMethods(productTypeFromUrl),
     show_order_summary: true, donation_title: '', donation_description: '', checkout_image_url: '',
     checkout_background_color: '#F3F4F6', is_email_optional: false, require_email_confirmation: true,
-    producer_assumes_installments: false, delivery_type: '', use_batches: false
+    producer_assumes_installments: false, delivery_type: '', use_batches: false,
+    event_date: null, event_address: '', event_description: ''
   });
   
   const [localBatches, setLocalBatches] = useState<any[]>([]);
@@ -145,7 +149,10 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         require_email_confirmation: product.require_email_confirmation ?? true,
         producer_assumes_installments: product.producer_assumes_installments ?? false,
         delivery_type: (product as any).delivery_type || '',
-        use_batches: (product as any).use_batches ?? false
+        use_batches: (product as any).use_batches ?? false,
+        event_date: (product as any).event_date || null,
+        event_address: (product as any).event_address || '',
+        event_description: (product as any).event_description || ''
       }));
       console.log('📝 formData atualizado com produto:', {
         product_id: product.id,
@@ -225,6 +232,17 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
       return;
     }
 
+    if (formData.product_type === 'event') {
+      if (!formData.event_date) {
+        toast.error('A data do evento é obrigatória para eventos presenciais.');
+        return;
+      }
+      if (!formData.event_address?.trim()) {
+        toast.error('O endereço do evento é obrigatório para eventos presenciais.');
+        return;
+      }
+    }
+
     let dataToSave = { ...formData };
     const isUsingBatches = dataToSave.use_batches && dataToSave.product_type === 'event';
     
@@ -261,6 +279,11 @@ const ProductForm = ({ productId, mode }: ProductFormProps) => {
         producer_assumes_installments: Boolean(dataToSave.producer_assumes_installments),
         delivery_type: dataToSave.delivery_type,
         use_batches: isUsingBatches,
+        ...(dataToSave.product_type === 'event' && {
+          event_date: dataToSave.event_date ? new Date(dataToSave.event_date).toISOString() : null,
+          event_address: dataToSave.event_address?.trim() || null,
+          event_description: dataToSave.event_description?.trim() || null,
+        }),
       };
 
     const finalPayload = mode === 'create'
