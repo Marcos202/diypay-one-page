@@ -181,7 +181,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (event === 'SIGNED_OUT' || !newSession) {
             clearAuthState();
             // Lista de rotas públicas que não devem ser redirecionadas para login
-            const publicRoutes = ['/', '/login', '/register'];
+            const publicRoutes = ['/', '/login', '/register', '/download'];
             const isPublicRoute = publicRoutes.includes(location.pathname) ||
               location.pathname.startsWith('/checkout/') ||
               location.pathname.startsWith('/payment-confirmation/') ||
