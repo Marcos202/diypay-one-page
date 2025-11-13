@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { usePWA } from '@/hooks/usePWA';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle2, Download, Smartphone, Monitor, Apple } from 'lucide-react';
+import { CheckCircle2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 const DownloadPage = () => {
@@ -30,20 +30,17 @@ const DownloadPage = () => {
   const platforms = [
     {
       name: 'Windows',
-      icon: Monitor,
-      color: 'from-blue-500 to-blue-600',
+      icon: '/icons/windows.png',
       description: 'Instale no seu PC'
     },
     {
       name: 'Android',
-      icon: Smartphone,
-      color: 'from-green-500 to-green-600',
+      icon: '/icons/android.png',
       description: 'Instale no seu celular'
     },
     {
       name: 'Apple',
-      icon: Apple,
-      color: 'from-gray-700 to-gray-900',
+      icon: '/icons/ios.png',
       description: 'Instale no iPhone/iPad'
     }
   ];
@@ -72,7 +69,6 @@ const DownloadPage = () => {
       <div className="bg-background border-b">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center gap-3">
           <img src="/logo-diypay.png" alt="DiyPay" className="h-8" />
-          <span className="text-xl font-bold text-foreground">DiyPay</span>
         </div>
       </div>
 
@@ -89,11 +85,11 @@ const DownloadPage = () => {
           </div>
           
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Baixe o DiyPay
+            DiyPay
           </h1>
           
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Instale nosso app e tenha acesso rápido à melhor plataforma de vendas online
+            Instale nosso app e acesse uma plataforma de vendas online rápida, moderna e de alta performance.
           </p>
 
           {/* Main Install Button */}
@@ -129,91 +125,22 @@ const DownloadPage = () => {
 
         {/* Platform Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
-          {platforms.map((platform) => {
-            const Icon = platform.icon;
-            return (
-              <Card key={platform.name} className="hover:shadow-lg transition-shadow">
-                <CardContent className="pt-6">
-                  <div className={`w-16 h-16 bg-gradient-to-br ${platform.color} rounded-2xl flex items-center justify-center mb-4 mx-auto`}>
-                    <Icon className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-foreground text-center mb-2">
-                    {platform.name}
-                  </h3>
-                  <p className="text-muted-foreground text-center">
-                    {platform.description}
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {platforms.map((platform) => (
+            <Card key={platform.name} className="hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 mx-auto">
+                  <img src={platform.icon} alt={platform.name} className="w-12 h-12" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground text-center mb-2">
+                  {platform.name}
+                </h3>
+                <p className="text-muted-foreground text-center">
+                  {platform.description}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-
-        {/* Features Section */}
-        <Card>
-          <CardContent className="pt-6">
-            <h2 className="text-2xl font-bold text-foreground mb-6 text-center">
-              Por que instalar o app?
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="flex gap-3">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <CheckCircle2 className="w-6 h-6 text-purple-600" />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground mb-1">Acesso Rápido</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Abra o app diretamente da sua tela inicial
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <CheckCircle2 className="w-6 h-6 text-purple-600" />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground mb-1">Modo Offline</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Continue trabalhando mesmo sem internet
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <CheckCircle2 className="w-6 h-6 text-purple-600" />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground mb-1">Notificações</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Receba alertas sobre vendas e atualizações
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <CheckCircle2 className="w-6 h-6 text-purple-600" />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground mb-1">Experiência Nativa</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Interface otimizada como um app real
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Instructions */}
         <div className="mt-8 text-center text-sm text-muted-foreground">
