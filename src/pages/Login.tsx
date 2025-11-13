@@ -26,11 +26,11 @@ const Login = () => {
   // Redirect if already logged in
   if (user && profile) {
     const roleRedirects = {
-      'producer': '/producer-dashboard',
-      'admin': '/admin-dashboard',
-      'user': '/member-area'
+      'producer': '/dashboard',
+      'admin': '/admin',
+      'user': '/members'
     };
-    navigate(roleRedirects[profile.role], { replace: true });
+    navigate(roleRedirects[profile.role] || '/dashboard', { replace: true });
     return null;
   }
 
