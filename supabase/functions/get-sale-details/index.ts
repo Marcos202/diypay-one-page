@@ -74,6 +74,16 @@ Deno.serve(async (req) => {
       .single();
 
     console.log('[DEBUG] Resultado da busca:', { sale, error });
+    
+    // Debug dos dados do evento
+    if (sale) {
+      console.log('[DEBUG] Dados do evento:', {
+        event_date: sale.products?.event_date,
+        event_address: sale.products?.event_address,
+        event_description: sale.products?.event_description,
+        product_type: sale.products?.product_type
+      });
+    }
 
     if (error) {
       console.error('[ERRO] Erro ao buscar venda:', error);

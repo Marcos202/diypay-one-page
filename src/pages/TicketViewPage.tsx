@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Download, MapPin, Calendar, User } from "lucide-react";
 import QRCode from "react-qr-code";
 import { toast } from "@/hooks/use-toast";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface AttendeeData {
   name: string;
@@ -96,11 +98,153 @@ const TicketViewPage = () => {
     });
   };
 
-  const handleDownloadTickets = () => {
-    toast({
-      title: "Em desenvolvimento",
-      description: "Download de ingressos em PDF será implementado em breve.",
-    });
+  const handleDownloadTickets = async () => {
+    if (!sale || attendees.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Nenhum ingresso disponível para download",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      toast({
+        title: "Gerando PDF...",
+        description: "Aguarde enquanto preparamos seus ingressos",
+      });
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Para cada ingresso, criar uma página
+      for (let i = 0; i < attendees.length; i++) {
+        const attendee = attendees[i];
+        
+        if (i > 0) {
+          pdf.addPage();
+        }
+
+        // Título do evento
+        pdf.setFontSize(20);
+        pdf.setFont('helvetica', 'bold');
+        const eventTitle = pdf.splitTextToSize(sale.products.name, 170);
+        pdf.text(eventTitle, 105, 20, { align: 'center' });
+
+        // ID do Ticket - Header laranja
+        pdf.setFillColor(249, 115, 22); // orange-500
+        pdf.rect(20, 35, 170, 18, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(10);
+        pdf.text('ID do Ticket', 25, 42);
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(
+          attendee.ticket_id || `TKT-${saleId?.slice(0, 8).toUpperCase()}-${i + 1}`,
+          105,
+          49,
+          { align: 'center' }
+        );
+        
+        // Número do ingresso no canto direito do header
+        pdf.setFontSize(10);
+        pdf.text('Ingresso', 185, 42, { align: 'right' });
+        pdf.setFontSize(18);
+        pdf.text(`#${i + 1}`, 185, 49, { align: 'right' });
+
+        // Reset cor do texto
+        pdf.setTextColor(0, 0, 0);
+        let yPos = 65;
+
+        // Informações do Evento
+        if (sale.products.event_date) {
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('Data e Horário:', 20, yPos);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(10);
+          pdf.text(formatDate(sale.products.event_date), 20, yPos + 5);
+          yPos += 15;
+        }
+
+        if (sale.products.event_address) {
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('Local:', 20, yPos);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(10);
+          const addressLines = pdf.splitTextToSize(sale.products.event_address, 170);
+          pdf.text(addressLines, 20, yPos + 5);
+          yPos += 10 + (addressLines.length * 5);
+        }
+
+        // QR Code
+        const qrElement = document.getElementById(`qr-code-${i}`);
+        if (qrElement) {
+          try {
+            const canvas = await html2canvas(qrElement, {
+              backgroundColor: '#ffffff',
+              scale: 2
+            });
+            const qrImage = canvas.toDataURL('image/png');
+            pdf.addImage(qrImage, 'PNG', 65, yPos + 10, 70, 70);
+            yPos += 85;
+          } catch (err) {
+            console.error('Erro ao capturar QR Code:', err);
+          }
+        }
+
+        // Informações do Comprador
+        yPos += 10;
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text('NOME DO COMPRADOR', 20, yPos);
+        pdf.setFontSize(11);
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(attendee.name, 20, yPos + 5);
+
+        yPos += 15;
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 100, 100);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('E-MAIL', 20, yPos);
+        pdf.setFontSize(10);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(attendee.email, 20, yPos + 5);
+
+        // Instruções no rodapé
+        yPos = 260;
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Instruções', 20, yPos);
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('• Apresente este QR Code na entrada do evento', 20, yPos + 5);
+        pdf.text('• Cada ingresso possui um QR Code único', 20, yPos + 10);
+        pdf.text('• O check-in será confirmado automaticamente ao escanear', 20, yPos + 15);
+      }
+
+      // Salvar PDF
+      const fileName = `ingressos_${sale.products.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.pdf`;
+      pdf.save(fileName);
+
+      toast({
+        title: "PDF gerado com sucesso!",
+        description: `${attendees.length} ingresso(s) baixado(s)`,
+      });
+
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Não foi possível gerar o PDF dos ingressos",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -160,26 +304,32 @@ const TicketViewPage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {sale.products.event_description && (
-              <p className="text-gray-600">{sale.products.event_description}</p>
+              <p className="text-muted-foreground mb-4">{sale.products.event_description}</p>
             )}
             
-            <div className="flex items-start gap-3 text-gray-700">
-              <Calendar className="w-5 h-5 mt-0.5 flex-shrink-0" />
+            {/* Data e Horário - SEMPRE visível */}
+            <div className="flex items-start gap-3">
+              <Calendar className="w-5 h-5 mt-0.5 flex-shrink-0 text-primary" />
               <div>
-                <p className="font-medium">Data e Horário</p>
-                <p className="text-sm">{formatDate(sale.products.event_date)}</p>
+                <p className="font-semibold text-foreground">Data e Horário</p>
+                <p className="text-sm text-muted-foreground">
+                  {sale.products.event_date 
+                    ? formatDate(sale.products.event_date)
+                    : "Data a ser definida"}
+                </p>
               </div>
             </div>
 
-            {sale.products.event_address && (
-              <div className="flex items-start gap-3 text-gray-700">
-                <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium">Local</p>
-                  <p className="text-sm whitespace-pre-line">{sale.products.event_address}</p>
-                </div>
+            {/* Endereço - Com fallback visual */}
+            <div className="flex items-start gap-3">
+              <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0 text-primary" />
+              <div>
+                <p className="font-semibold text-foreground">Local</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-line">
+                  {sale.products.event_address || "Endereço a ser definido"}
+                </p>
               </div>
-            )}
+            </div>
 
             <div className="pt-4 border-t">
               <Button onClick={handleDownloadTickets} variant="outline" className="w-full">
@@ -221,8 +371,11 @@ const TicketViewPage = () => {
 
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row items-center gap-6">
-                    {/* QR Code */}
-                    <div className="flex-shrink-0 bg-white p-4 rounded-lg border-2 border-gray-200">
+                    {/* QR Code com ID para captura pelo PDF */}
+                    <div 
+                      id={`qr-code-${index}`}
+                      className="flex-shrink-0 bg-white p-4 rounded-lg border-2 border-gray-200"
+                    >
                       <QRCode
                         value={generateQRContent(attendee, index)}
                         size={180}
