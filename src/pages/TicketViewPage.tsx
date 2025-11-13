@@ -12,6 +12,7 @@ interface AttendeeData {
   name: string;
   email: string;
   id?: string;
+  ticket_id?: string;
 }
 
 interface SaleData {
@@ -201,7 +202,23 @@ const TicketViewPage = () => {
             </Card>
           ) : (
             attendees.map((attendee, index) => (
-              <Card key={index}>
+              <Card key={index} className="overflow-hidden">
+                {/* Header laranja com Ticket ID */}
+                <div className="bg-orange-500 text-white px-6 py-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium opacity-90">ID do Ticket</p>
+                      <p className="text-lg font-bold tracking-wider">
+                        {attendee.ticket_id || `TKT-${saleId?.slice(0, 8).toUpperCase()}-${index + 1}`}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-medium opacity-90">Ingresso</p>
+                      <p className="text-2xl font-bold">#{index + 1}</p>
+                    </div>
+                  </div>
+                </div>
+
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row items-center gap-6">
                     {/* QR Code */}
@@ -214,14 +231,22 @@ const TicketViewPage = () => {
                     </div>
 
                     {/* Attendee Info */}
-                    <div className="flex-1 text-center md:text-left">
-                      <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                        <User className="w-5 h-5 text-gray-600" />
-                        <h3 className="text-xl font-bold text-gray-900">{attendee.name}</h3>
+                    <div className="flex-1 space-y-3">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                          Nome do Comprador
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <User className="w-5 h-5 text-muted-foreground" />
+                          <h3 className="text-xl font-bold text-foreground">{attendee.name}</h3>
+                        </div>
                       </div>
-                      <p className="text-gray-600 mb-4">{attendee.email}</p>
-                      <div className="inline-block px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                        Ingresso #{index + 1}
+
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                          E-mail
+                        </p>
+                        <p className="text-base text-foreground">{attendee.email}</p>
                       </div>
                     </div>
                   </div>

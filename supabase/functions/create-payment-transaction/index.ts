@@ -5,6 +5,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Função para gerar ID único de ticket no formato KZQ-ZVFRT-613
+const generateTicketId = (): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const part1 = Array.from({ length: 3 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  const part2 = Array.from({ length: 5 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  const part3 = Array.from({ length: 3 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return `${part1}-${part2}-${part3}`;
+}
+
 Deno.serve(async (req) => {
   // INSTRUMENTAÇÃO DIAGNÓSTICA: Gerar ID único de execução
   const executionId = crypto.randomUUID();
@@ -512,6 +521,12 @@ Deno.serve(async (req) => {
     });
 
     // --- Inserir a Venda no Nosso Banco de Dados ---
+    // Adicionar ticket_id único para cada attendee
+    const attendeesWithTicketIds = attendees?.map((attendee: any) => ({
+      ...attendee,
+      ticket_id: generateTicketId()
+    })) || [];
+
     const saleData = {
       product_id,
       buyer_profile_id: resolvedBuyerProfileId,
@@ -529,7 +544,7 @@ Deno.serve(async (req) => {
       status: 'pending_payment',
       platform_fee_cents: 0, // Será calculado posteriormente
       producer_share_cents: 0, // Será calculado posteriormente
-      event_attendees: attendees,
+      event_attendees: attendeesWithTicketIds,
       original_product_price_cents: original_product_price_cents || (donation_amount_cents ? donation_amount_cents : product.price_cents * (quantity || 1)),
       order_bump_items: order_bump_items ? JSON.stringify(order_bump_items) : null,
     };
