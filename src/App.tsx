@@ -4,10 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { PWAProvider } from "@/contexts/PWAContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import HomeRedirect from "@/components/HomeRedirect";
 // import Index from "./pages/Index"; // Removido - não será mais usado
 import Login from "./pages/Login";
+import DownloadPage from "./pages/DownloadPage";
 import Register from "./pages/Register";
 import CompleteProducerProfile from "./pages/CompleteProducerProfile";
 // Import core pages directly for better performance
@@ -76,6 +78,7 @@ const App = () => {
               <Route path="/" element={<HomeRedirect />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/download" element={<DownloadPage />} />
               <Route path="/checkout/:slug" element={<Checkout />} />
               <Route path="/payment-confirmation/:saleId" element={<PaymentConfirmation />} />
               <Route path="/ticket/:saleId" element={<LazyRoute Component={lazy(() => import("./pages/TicketViewPage"))} />} />
