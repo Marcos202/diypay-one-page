@@ -141,10 +141,10 @@ const ProducerSubscriptionsPage = () => {
       <div className="mb-8">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Todas as Assinaturas</h1>
-            <p className="text-gray-600 mt-2">Gerencie todas as assinaturas dos seus produtos</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Todas as Assinaturas</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-2">Gerencie todas as assinaturas dos seus produtos</p>
           </div>
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
             <Download className="h-4 w-4" />
             Exportar
           </Button>
@@ -186,29 +186,29 @@ const ProducerSubscriptionsPage = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-6">
-                <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col gap-4 items-start sm:items-center sm:flex-row sm:justify-between mb-6">
+                <div className="relative flex-1 w-full max-w-md">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     placeholder="Buscar por cliente ou produto..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 w-full"
                   />
         </div>
-        <Button variant="outline" className="flex items-center gap-2">
+        <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
           <Filter className="h-4 w-4" />
           Filtros
         </Button>
       </div>
 
       {/* Status Filter Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-6">
         <Button
           variant={statusFilter === 'all' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setStatusFilter('all')}
-          className={statusFilter === 'all' ? 'bg-primary text-primary-foreground' : ''}
+          className={`flex-1 sm:flex-initial ${statusFilter === 'all' ? 'bg-primary text-primary-foreground' : ''}`}
         >
           Todas ({stats.totalSubscriptions})
         </Button>
@@ -216,7 +216,7 @@ const ProducerSubscriptionsPage = () => {
           variant={statusFilter === 'active' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setStatusFilter('active')}
-          className={statusFilter === 'active' ? 'bg-primary text-primary-foreground' : ''}
+          className={`flex-1 sm:flex-initial ${statusFilter === 'active' ? 'bg-primary text-primary-foreground' : ''}`}
         >
           Ativas ({stats.totalActive})
         </Button>
@@ -224,7 +224,7 @@ const ProducerSubscriptionsPage = () => {
           variant={statusFilter === 'canceled' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setStatusFilter('canceled')}
-          className={statusFilter === 'canceled' ? 'bg-primary text-primary-foreground' : ''}
+          className={`flex-1 sm:flex-initial ${statusFilter === 'canceled' ? 'bg-primary text-primary-foreground' : ''}`}
         >
           Canceladas ({stats.totalSubscriptions - stats.totalActive})
         </Button>
@@ -232,14 +232,15 @@ const ProducerSubscriptionsPage = () => {
 
       {/* Subscriptions Table */}
       <Card>
+        <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Data de Início</TableHead>
+                      <TableHead className="hidden md:table-cell">Data de Início</TableHead>
                       <TableHead>Produto</TableHead>
-                      <TableHead>Cliente</TableHead>
+                      <TableHead className="hidden sm:table-cell">Cliente</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Próxima Cobrança</TableHead>
+                      <TableHead className="hidden lg:table-cell">Próxima Cobrança</TableHead>
                       <TableHead className="text-right">Valor Líquido</TableHead>
                       <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
@@ -254,23 +255,23 @@ const ProducerSubscriptionsPage = () => {
                     ) : (
                       filteredSubscriptions.map((subscription: any) => (
                         <TableRow key={subscription.id}>
-                          <TableCell>{formatDate(subscription.created_at)}</TableCell>
+                          <TableCell className="hidden md:table-cell text-sm">{formatDate(subscription.created_at)}</TableCell>
                           <TableCell>
-                            <div className="font-medium">{subscription.products.name}</div>
+                            <div className="font-medium text-sm">{subscription.products.name}</div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden sm:table-cell">
                             <div>
-                              <div className="font-medium">{subscription.profiles?.full_name || 'Nome não informado'}</div>
-                              <div className="text-sm text-gray-500">{subscription.buyer_email}</div>
+                              <div className="font-medium text-sm">{subscription.profiles?.full_name || 'Nome não informado'}</div>
+                              <div className="text-xs text-gray-500">{subscription.buyer_email}</div>
                             </div>
                           </TableCell>
                           <TableCell>{getStatusBadge(subscription.status)}</TableCell>
-                          <TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             <span className="text-sm text-gray-500">
                               {subscription.next_due_date ? formatDate(subscription.next_due_date) : 'N/A'}
                             </span>
                           </TableCell>
-                          <TableCell className="text-right font-medium">
+                          <TableCell className="text-right font-medium text-sm">
                             {formatCurrency(subscription.producer_share_cents)}
                           </TableCell>
                           <TableCell>
@@ -298,6 +299,7 @@ const ProducerSubscriptionsPage = () => {
                     )}
                   </TableBody>
         </Table>
+        </div>
       </Card>
 
       {/* Pagination */}
