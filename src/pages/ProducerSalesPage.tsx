@@ -200,9 +200,10 @@ const ProducerSalesPage = () => {
 
   return (
     <ProducerLayout>
+      <div className="space-y-4 md:space-y-6 lg:space-y-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Suas Vendas</h1>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Suas Vendas</h1>
           <p className="text-muted-foreground">
             Acompanhe o desempenho das suas vendas e analise seus resultados
           </p>
@@ -266,7 +267,7 @@ const ProducerSalesPage = () => {
                     placeholder="email@exemplo.com"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9"
+                    className="pl-9 w-full"
                   />
                 </div>
               </div>
@@ -275,7 +276,7 @@ const ProducerSalesPage = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Produto</label>
                 <Select value={productFilter} onValueChange={setProductFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Todos os produtos" />
                   </SelectTrigger>
                   <SelectContent>
@@ -293,7 +294,7 @@ const ProducerSalesPage = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Status</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Todos os status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -310,7 +311,7 @@ const ProducerSalesPage = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Método de Pagamento</label>
                 <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Todos os métodos" />
                   </SelectTrigger>
                   <SelectContent>
@@ -413,7 +414,36 @@ const ProducerSalesPage = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="rounded-md border overflow-x-auto">
+                {/* Versão Mobile - Cards */}
+                <div className="md:hidden space-y-3">
+                  {salesData.salesHistory.map((sale) => (
+                    <Card key={sale.id} className="p-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{sale.buyer_email}</p>
+                            <p className="text-xs text-muted-foreground truncate">{sale.products?.name || 'Produto não encontrado'}</p>
+                          </div>
+                          {getStatusBadge(sale.status)}
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2 text-sm pt-2 border-t">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Valor Líquido</p>
+                            <p className="font-medium text-accent">{formatCurrency(sale.producer_share_cents)}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Data</p>
+                            <p className="text-sm">{formatDate(sale.created_at)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Versão Desktop - Tabela */}
+                <div className="hidden md:block rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -463,8 +493,11 @@ const ProducerSalesPage = () => {
 
                 {/* Paginação */}
                 <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
-                  <p className="text-sm text-gray-700">
-                    Mostrando {Math.min((page - 1) * 12 + 1, salesData.kpis.totalVendas)} até {Math.min(page * 12, salesData.kpis.totalVendas)} de {salesData.kpis.totalVendas} vendas
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    <span className="hidden sm:inline">Mostrando </span>
+                    {Math.min((page - 1) * 12 + 1, salesData.kpis.totalVendas)} - {Math.min(page * 12, salesData.kpis.totalVendas)}
+                    <span className="hidden sm:inline"> de {salesData.kpis.totalVendas} vendas</span>
+                    <span className="sm:hidden">/{salesData.kpis.totalVendas}</span>
                   </p>
                   <div className="flex items-center gap-2">
                     <Button 
@@ -489,6 +522,7 @@ const ProducerSalesPage = () => {
             )}
           </CardContent>
         </Card>
+      </div>
     </ProducerLayout>
   )
 }

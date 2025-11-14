@@ -37,7 +37,7 @@ export function ProducerLayout({ children }: ProducerLayoutProps) {
         <SidebarInset>
           <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)' }}>
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b bg-white/80 backdrop-blur-sm">
+            <div className="flex items-center justify-between px-3 sm:px-4 md:px-6 py-3 md:py-4 border-b bg-white/80 backdrop-blur-sm">
               <SidebarTrigger />
               <div className="flex items-center gap-4 ml-auto">
                 <Button variant="ghost" size="icon" className="relative">
@@ -52,7 +52,7 @@ export function ProducerLayout({ children }: ProducerLayoutProps) {
                           {(financialData?.userName || profile?.full_name || 'P').charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm font-medium">{financialData?.userName || profile?.full_name}</span>
+                      <span className="hidden sm:inline text-sm font-medium">{financialData?.userName || profile?.full_name}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
@@ -81,7 +81,7 @@ export function ProducerLayout({ children }: ProducerLayoutProps) {
               </div>
             </div>
             
-            <div className="p-6">
+            <div className="p-3 sm:p-4 md:p-6">
               {children}
             </div>
           </div>
