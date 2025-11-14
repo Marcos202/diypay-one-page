@@ -77,10 +77,10 @@ export default function TicketsPage() {
           </p>
         </div>
 
-        <Card className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
+        <Card className="p-4 sm:p-6">
+          <div className="flex flex-col gap-4">
             <Select value={selectedEvent} onValueChange={setSelectedEvent}>
-              <SelectTrigger className="md:w-[200px]">
+              <SelectTrigger className="w-full md:w-[200px]">
                 <SelectValue placeholder="Todos os eventos" />
               </SelectTrigger>
               <SelectContent>
@@ -102,16 +102,16 @@ export default function TicketsPage() {
           </div>
         </Card>
 
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={() => setIsAddModalOpen(true)}>
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+          <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Adicionar Ingresso
           </Button>
-          <Button variant="outline" onClick={handleExport}>
+          <Button variant="outline" onClick={handleExport} className="w-full sm:w-auto">
             <Download className="h-4 w-4 mr-2" />
             Exportar CSV
           </Button>
-          <Button variant="outline" onClick={() => setIsScannerOpen(true)}>
+          <Button variant="outline" onClick={() => setIsScannerOpen(true)} className="w-full sm:w-auto">
             <QrCode className="h-4 w-4 mr-2" />
             Scanner
           </Button>

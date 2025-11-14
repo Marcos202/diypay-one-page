@@ -69,7 +69,7 @@ const SpaceContainerCarousel = ({ container }: { container: any }) => {
 
   return (
     <div key={container.id}>
-      <h2 className="text-2xl md:text-3xl font-bold mb-6">{container.title}</h2>
+      <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-4 md:mb-6">{container.title}</h2>
       <Carousel setApi={setApi} opts={{ align: "start", loop: false, dragFree: true }} className="w-full">
         <CarouselContent className="-ml-6">
           {container.space_products.map(({ product }: any) => {
@@ -167,17 +167,17 @@ const MembersHubPage = () => {
       <UserProfileHeader />
       <main className="flex-grow">
         <div 
-          className="relative w-full h-[60vh] bg-cover bg-center flex flex-col justify-end" 
+          className="relative w-full h-[40vh] sm:h-[50vh] md:h-[60vh] bg-cover bg-center flex flex-col justify-end" 
           style={{ backgroundImage: `url(${hubData?.banner_image_url})` }}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-          <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white drop-shadow-lg">
+          <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 pb-8 md:pb-12">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white drop-shadow-lg">
               {hubData?.name}
             </h1>
           </div>
         </div>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-12">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 lg:py-12 space-y-8 md:space-y-12">
           {hubData?.space_containers.map((container: any) => (
             <SpaceContainerCarousel key={container.id} container={container} />
           ))}

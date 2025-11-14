@@ -256,7 +256,7 @@ const ProducerSalesPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {/* Search */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Buscar por email</label>
@@ -385,7 +385,7 @@ const ProducerSalesPage = () => {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={clearFilters} variant="outline">
+              <Button onClick={clearFilters} variant="outline" className="w-full sm:w-auto">
                 Limpar Filtros
               </Button>
             </div>
@@ -413,29 +413,29 @@ const ProducerSalesPage = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="rounded-md border">
+                <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Comprador</TableHead>
                         <TableHead>Produto</TableHead>
-                        <TableHead>Valor Total</TableHead>
+                        <TableHead className="hidden md:table-cell">Valor Total</TableHead>
                         <TableHead>Valor Líquido</TableHead>
-                        <TableHead>Método</TableHead>
+                        <TableHead className="hidden lg:table-cell">Método</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Data</TableHead>
+                        <TableHead className="hidden md:table-cell">Data</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {salesData.salesHistory.map((sale) => (
                         <TableRow key={sale.id}>
-                          <TableCell className="font-medium">
+                          <TableCell className="font-medium text-sm">
                             {sale.buyer_email}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-sm">
                             {sale.products?.name || 'Produto não encontrado'}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell text-sm">
                             {formatCurrency(sale.amount_total_cents)}
                             {sale.installments_chosen > 1 && (
                               <span className="text-xs text-muted-foreground ml-1">
@@ -443,16 +443,16 @@ const ProducerSalesPage = () => {
                               </span>
                             )}
                           </TableCell>
-                          <TableCell className="font-medium text-accent">
+                          <TableCell className="font-medium text-accent text-sm">
                             {formatCurrency(sale.producer_share_cents)}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden lg:table-cell text-sm">
                             {getPaymentMethodLabel(sale.payment_method_used)}
                           </TableCell>
                           <TableCell>
                             {getStatusBadge(sale.status)}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell text-sm">
                             {formatDate(sale.created_at)}
                           </TableCell>
                         </TableRow>
@@ -462,11 +462,11 @@ const ProducerSalesPage = () => {
                 </div>
 
                 {/* Paginação */}
-                <div className="flex items-center justify-between mt-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
                   <p className="text-sm text-gray-700">
                     Mostrando {Math.min((page - 1) * 12 + 1, salesData.kpis.totalVendas)} até {Math.min(page * 12, salesData.kpis.totalVendas)} de {salesData.kpis.totalVendas} vendas
                   </p>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <Button 
                       variant="outline" 
                       size="sm" 

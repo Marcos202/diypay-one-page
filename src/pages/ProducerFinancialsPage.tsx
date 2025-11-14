@@ -284,9 +284,9 @@ const ProducerFinancialsPage = () => {
 
       <Tabs defaultValue="saques" className="w-full">
         <TabsList className="grid w-full grid-cols-3 bg-muted">
-          <TabsTrigger value="saques" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Saques</TabsTrigger>
-          <TabsTrigger value="dados-bancarios" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Dados Bancários</TabsTrigger>
-          <TabsTrigger value="taxas-prazos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Taxas e Prazos</TabsTrigger>
+          <TabsTrigger value="saques" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">Saques</TabsTrigger>
+          <TabsTrigger value="dados-bancarios" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">Dados Bancários</TabsTrigger>
+          <TabsTrigger value="taxas-prazos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">Taxas e Prazos</TabsTrigger>
         </TabsList>
 
                   {/* Aba Saques */}
@@ -306,14 +306,14 @@ const ProducerFinancialsPage = () => {
                 Valor liberado e disponível para saque
               </p>
               <div className="mt-4">
-                <Button 
-                  onClick={handleWithdrawRequest}
-                  disabled={!financialData?.availableBalance || financialData.availableBalance === 0}
-                  className="w-full bg-white hover:bg-white/90 text-[#4d0782]"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Solicitar Saque
-                </Button>
+                  <Button 
+                    onClick={handleWithdrawRequest}
+                    disabled={!financialData?.availableBalance || financialData.availableBalance === 0}
+                    className="w-full bg-white hover:bg-white/90 text-[#4d0782] text-sm sm:text-base"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Solicitar Saque
+                  </Button>
               </div>
             </CardContent>
           </Card>
@@ -347,30 +347,32 @@ const ProducerFinancialsPage = () => {
                       </CardHeader>
                       <CardContent>
                         {withdrawalHistory.length > 0 ? (
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Data</TableHead>
-                                <TableHead className="text-right">Valor</TableHead>
-                                <TableHead className="text-center">Status</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                               {withdrawalHistory.map((withdrawal) => (
-                                 <TableRow key={withdrawal.id}>
-                                   <TableCell className="font-medium">
-                                     {formatDate(withdrawal.requested_at)}
-                                   </TableCell>
-                                   <TableCell className="text-right">
-                                     {formatCurrency(withdrawal.amount_cents)}
-                                   </TableCell>
-                                   <TableCell className="text-center">
-                                     {getStatusBadge(withdrawal.status)}
-                                   </TableCell>
-                                 </TableRow>
-                               ))}
-                            </TableBody>
-                          </Table>
+                          <div className="overflow-x-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Data</TableHead>
+                                  <TableHead className="text-right">Valor</TableHead>
+                                  <TableHead className="text-center">Status</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                             <TableBody>
+                                {withdrawalHistory.map((withdrawal) => (
+                                  <TableRow key={withdrawal.id}>
+                                    <TableCell className="font-medium text-sm">
+                                      {formatDate(withdrawal.requested_at)}
+                                    </TableCell>
+                                    <TableCell className="text-right text-sm">
+                                      {formatCurrency(withdrawal.amount_cents)}
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                      {getStatusBadge(withdrawal.status)}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                             </TableBody>
+                            </Table>
+                          </div>
                         ) : (
                           <div className="text-center py-8 text-gray-500">
                             <p>Nenhum saque encontrado</p>

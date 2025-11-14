@@ -64,10 +64,10 @@ export function TicketsTable({ tickets, isLoading, onCheckInUpdate }: TicketsTab
         <TableHeader>
           <TableRow>
             <TableHead>Nome</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>CPF</TableHead>
+            <TableHead className="hidden sm:table-cell">Email</TableHead>
+            <TableHead className="hidden md:table-cell">CPF</TableHead>
             <TableHead>Evento</TableHead>
-            <TableHead>Lote</TableHead>
+            <TableHead className="hidden lg:table-cell">Lote</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
@@ -75,19 +75,20 @@ export function TicketsTable({ tickets, isLoading, onCheckInUpdate }: TicketsTab
         <TableBody>
           {tickets.map((ticket) => (
             <TableRow key={ticket.attendee_id}>
-              <TableCell className="font-medium">{ticket.name}</TableCell>
-              <TableCell>{ticket.email}</TableCell>
-              <TableCell>{ticket.cpf || '-'}</TableCell>
-              <TableCell>{ticket.event_name}</TableCell>
-              <TableCell>{ticket.batch_name || 'Sem lote'}</TableCell>
+              <TableCell className="font-medium text-sm">{ticket.name}</TableCell>
+              <TableCell className="hidden sm:table-cell text-sm">{ticket.email}</TableCell>
+              <TableCell className="hidden md:table-cell text-sm">{ticket.cpf || '-'}</TableCell>
+              <TableCell className="text-sm">{ticket.event_name}</TableCell>
+              <TableCell className="hidden lg:table-cell text-sm">{ticket.batch_name || 'Sem lote'}</TableCell>
               <TableCell>
                 {ticket.checked_in ? (
-                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">
                     <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Check-in realizado
+                    <span className="hidden sm:inline">Check-in realizado</span>
+                    <span className="sm:hidden">OK</span>
                   </Badge>
                 ) : (
-                  <Badge variant="secondary">
+                  <Badge variant="secondary" className="text-xs">
                     <XCircle className="h-3 w-3 mr-1" />
                     Pendente
                   </Badge>
@@ -99,12 +100,16 @@ export function TicketsTable({ tickets, isLoading, onCheckInUpdate }: TicketsTab
                   size="sm"
                   onClick={() => handleCheckIn(ticket.sale_id, ticket.attendee_id, ticket.checked_in)}
                   disabled={processingCheckIn === ticket.attendee_id}
+                  className="text-xs"
                 >
                   {processingCheckIn === ticket.attendee_id
-                    ? "Processando..."
+                    ? "..."
                     : ticket.checked_in
-                    ? "Desfazer Check-in"
-                    : "Fazer Check-in"}
+                    ? <span className="hidden sm:inline">Desfazer</span>
+                    : <span className="hidden sm:inline">Check-in</span>}
+                  {processingCheckIn !== ticket.attendee_id && (
+                    <span className="sm:hidden">{ticket.checked_in ? "↩" : "✓"}</span>
+                  )}
                 </Button>
               </TableCell>
             </TableRow>
