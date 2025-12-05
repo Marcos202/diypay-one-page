@@ -8,9 +8,9 @@ const EditProductPage = () => {
   
   return (
     <ProducerLayout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Editar Produto</h1>
-        <p className="text-muted-foreground mt-2">Altere as informações do produto</p>
+      <div className="mb-4 md:mb-6 lg:mb-8">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Editar Produto</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">Altere as informações do produto</p>
       </div>
       
       <ProductForm productId={id} mode="edit" />

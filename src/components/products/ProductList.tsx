@@ -102,9 +102,9 @@ const ProductList = ({ products, onCreateProduct }: ProductListProps) => {
 
   if (products.length === 0) {
     return (
-      <Card className="text-center py-12">
-        <CardContent className="pt-6">
-          <p className="text-muted-foreground mb-4">Você ainda não criou nenhum produto.</p>
+      <Card className="text-center py-8 sm:py-10 md:py-12">
+        <CardContent className="pt-4 sm:pt-6">
+          <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">Você ainda não criou nenhum produto.</p>
           <Button 
             onClick={onCreateProduct}
             className="bg-[#4d0782] hover:bg-[#4d0782]/90 text-white"
@@ -117,7 +117,7 @@ const ProductList = ({ products, onCreateProduct }: ProductListProps) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div className="hidden sm:block" /> {/* Spacer for alignment */}
         <Button 
@@ -128,15 +128,15 @@ const ProductList = ({ products, onCreateProduct }: ProductListProps) => {
         </Button>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 sm:gap-6">
         {products.map((product) => (
           <Card key={product.id} className="bg-white shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-5 md:p-6">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div className="flex-1 space-y-4">
                   {/* Header with title and badges */}
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <h3 className="text-xl font-semibold text-foreground">{product.name}</h3>
+                    <h3 className="text-base sm:text-lg md:text-xl font-semibold text-foreground">{product.name}</h3>
                     <div className="flex flex-wrap gap-2">
                       <Badge 
                         variant={product.is_active ? "default" : "secondary"}
@@ -155,19 +155,19 @@ const ProductList = ({ products, onCreateProduct }: ProductListProps) => {
                   </div>
 
                   {/* Price */}
-                  <p className="text-3xl font-bold text-[#810ad1]">
+                  <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#810ad1]">
                     {formatPrice(product.price_cents, product.product_type)}
                   </p>
 
                   {/* Product type */}
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Tipo: {product.type === 'digital_file' ? 'Arquivo Digital' : 'Outro'}
                   </p>
 
                   {/* Checkout link with copy functionality */}
                   {product.checkout_link_slug && (
-                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm text-muted-foreground flex-1 font-mono">
+                    <div className="flex items-center gap-2 p-2 sm:p-3 bg-muted/50 rounded-lg">
+                      <span className="text-xs sm:text-sm text-muted-foreground flex-1 font-mono truncate">
                         .../checkout/{truncateUrl(product.checkout_link_slug)}
                       </span>
                       <Button
