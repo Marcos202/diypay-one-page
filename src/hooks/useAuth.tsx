@@ -32,6 +32,7 @@ interface Profile {
   selfie_url: string | null;
   social_contract_url: string | null;
   notification_preferences: Record<string, boolean> | null;
+  avatar_url: string | null;
 }
 
 type ActiveView = 'producer' | 'student';
