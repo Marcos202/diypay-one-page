@@ -1,17 +1,18 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { ProducerLayout } from "@/components/ProducerLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Download, QrCode } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TicketsTable } from "@/components/tickets/TicketsTable";
 import { AddTicketModal } from "@/components/tickets/AddTicketModal";
 import { QRCodeScannerModal } from "@/components/tickets/QRCodeScannerModal";
 
 export default function TicketsPage() {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedEvent, setSelectedEvent] = useState<string>("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -67,8 +68,15 @@ export default function TicketsPage() {
     }
   };
 
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['all-tickets'] });
+    await queryClient.invalidateQueries({ queryKey: ['event-products'] });
+    await refetch();
+  }, [queryClient, refetch]);
+
   return (
-    <ProducerLayout>
+    <ProducerLayout onRefresh={handleRefresh}>
       <div className="space-y-4 md:space-y-6 w-full min-w-0 overflow-hidden">
         <div className="mb-4 md:mb-6">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Ingressos</h1>

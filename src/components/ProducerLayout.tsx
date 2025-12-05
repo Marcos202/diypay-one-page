@@ -8,12 +8,14 @@ import { Bell, LogOut, Repeat, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '@/hooks/useAuth';
 import { useProducerFinancialsStore } from '@/stores/producer-financials-store';
+import { PullToRefresh } from '@/components/PullToRefresh';
 
 interface ProducerLayoutProps {
   children: ReactNode;
+  onRefresh?: () => Promise<void>;
 }
 
-export function ProducerLayout({ children }: ProducerLayoutProps) {
+export function ProducerLayout({ children, onRefresh }: ProducerLayoutProps) {
   const { profile, signOut, toggleView } = useAuth();
   const navigate = useNavigate();
   const { financialData, fetchFinancialData } = useProducerFinancialsStore();
@@ -35,7 +37,7 @@ export function ProducerLayout({ children }: ProducerLayoutProps) {
       <div className="min-h-screen flex w-full">
         <ProducerSidebar />
         <SidebarInset>
-          <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)' }}>
+          <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)' }}>
             {/* Header */}
             <div className="flex items-center justify-between px-3 sm:px-4 md:px-6 py-3 md:py-4 border-b bg-white/80 backdrop-blur-sm">
               <SidebarTrigger />
@@ -81,9 +83,11 @@ export function ProducerLayout({ children }: ProducerLayoutProps) {
               </div>
             </div>
             
-            <div className="p-3 sm:p-4 md:p-6">
-              {children}
-            </div>
+            <PullToRefresh onRefresh={onRefresh}>
+              <div className="p-3 sm:p-4 md:p-6 flex-1">
+                {children}
+              </div>
+            </PullToRefresh>
           </div>
         </SidebarInset>
       </div>
