@@ -7,7 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface NavItem {
   icon: React.ReactNode;
@@ -22,6 +22,7 @@ interface UserProfile {
   name: string;
   email: string;
   initial: string;
+  avatarUrl?: string | null;
 }
 
 interface UserProfileMenuProps {
@@ -84,6 +85,9 @@ export function UserProfileMenu({
           )}
         >
           <Avatar className="w-9 h-9">
+            {user.avatarUrl && (
+              <AvatarImage src={user.avatarUrl} alt={user.name} className="object-cover" />
+            )}
             <AvatarFallback className="bg-primary/10 text-primary font-bold">
               {user.initial}
             </AvatarFallback>
@@ -112,6 +116,9 @@ export function UserProfileMenu({
                 className="flex items-center gap-3 p-4 border-b border-border"
               >
                 <Avatar className="w-11 h-11">
+                  {user.avatarUrl && (
+                    <AvatarImage src={user.avatarUrl} alt={user.name} className="object-cover" />
+                  )}
                   <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
                     {user.initial}
                   </AvatarFallback>

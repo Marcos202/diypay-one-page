@@ -117,6 +117,7 @@ const Header = () => {
                   name: displayName,
                   email: userEmail,
                   initial: userInitial,
+                  avatarUrl: profile?.avatar_url,
                 }}
                 navItems={getNavItems()}
                 onLogout={signOut}
