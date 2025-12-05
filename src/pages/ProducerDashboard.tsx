@@ -28,11 +28,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useAuth } from '@/hooks/useAuth';
 import { formatUserName } from '@/lib/utils';
 import { PWAConditional } from '@/components/PWAConditional';
+import { usePWAContext } from '@/contexts/PWAContext';
 
 const ProducerDashboard = () => {
   const { profile } = useAuth();
+  const { isPWA } = usePWAContext();
   const navigate = useNavigate();
-  const [dateFilter, setDateFilter] = useState("last_30_days");
+  const [dateFilter, setDateFilter] = useState(() => isPWA ? "last_30_days" : "this_year");
   const [productFilter, setProductFilter] = useState("all");
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const [dismissedWelcome, setDismissedWelcome] = useState(false);
@@ -254,11 +256,11 @@ const ProducerDashboard = () => {
                                   borderRadius: '8px',
                                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                                 }}
-                                cursor={{ fill: 'rgba(79, 209, 197, 0.1)' }}
+                                cursor={{ fill: 'rgba(139, 92, 246, 0.1)' }}
                               />
-                              <Bar 
+                              <Bar
                                 dataKey="total" 
-                                fill="#4FD1C5"
+                                fill="#8b5cf6"
                                 radius={[4, 4, 0, 0]}
                                 maxBarSize={50}
                               />
