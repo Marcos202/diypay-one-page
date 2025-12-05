@@ -72,8 +72,9 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AuthProvider>
-            <Routes>
+          <PWAProvider>
+            <AuthProvider>
+              <Routes>
               {/* Public Routes */}
               <Route path="/" element={<HomeRedirect />} />
               <Route path="/login" element={<Login />} />
@@ -125,8 +126,9 @@ const App = () => {
               </Route>
 
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
+              </Routes>
+            </AuthProvider>
+          </PWAProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
