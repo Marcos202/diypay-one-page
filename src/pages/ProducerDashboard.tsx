@@ -24,7 +24,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/hooks/useAuth';
 import { formatUserName } from '@/lib/utils';
 import { PWAConditional } from '@/components/PWAConditional';
@@ -220,42 +220,49 @@ const ProducerDashboard = () => {
                       <CardContent>
                         <div className="h-64 sm:h-80">
                           <ResponsiveContainer width="100%" height="100%">
-                            <LineChart 
+                            <BarChart 
                               data={data?.chartData || []}
-                              margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+                              margin={{ top: 10, right: 10, left: 10, bottom: 5 }}
+                              barCategoryGap="20%"
                             >
-                              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                              <CartesianGrid 
+                                strokeDasharray="3 3" 
+                                vertical={false} 
+                                stroke="#e5e7eb"
+                                opacity={0.5}
+                              />
                               <XAxis 
                                 dataKey="name" 
-                                className="text-sm text-slate-600"
-                                tick={{ fontSize: 10 }}
+                                tick={{ fontSize: 11, fill: '#64748b' }}
+                                tickLine={false}
+                                axisLine={false}
                                 tickMargin={8}
                               />
                               <YAxis 
-                                className="text-sm text-slate-600"
-                                tick={{ fontSize: 11 }}
+                                tick={{ fontSize: 11, fill: '#64748b' }}
                                 tickFormatter={(value) => `R$ ${value}`}
-                                width={65}
+                                tickLine={false}
+                                axisLine={false}
+                                width={70}
                               />
                               <Tooltip 
                                 formatter={(value) => [`R$ ${value}`, 'Vendas']}
-                                labelFormatter={(label) => `Data: ${label}`}
+                                labelFormatter={(label) => `${label}`}
                                 contentStyle={{
                                   backgroundColor: 'white',
                                   border: '1px solid #e2e8f0',
                                   borderRadius: '8px',
                                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                                 }}
+                                cursor={{ fill: 'rgba(79, 209, 197, 0.1)' }}
                               />
-                              <Line 
-                                type="monotone" 
+                              <Bar 
                                 dataKey="total" 
-                                stroke="#8b5cf6" 
-                                strokeWidth={3}
-                                dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
-                                activeDot={{ r: 6, fill: '#7c3aed' }}
+                                fill="#4FD1C5"
+                                radius={[4, 4, 0, 0]}
+                                maxBarSize={50}
                               />
-                            </LineChart>
+                            </BarChart>
                           </ResponsiveContainer>
                         </div>
                       </CardContent>
