@@ -224,7 +224,7 @@ const ProducerDashboard = () => {
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart 
                               data={data?.chartData || []}
-                              margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+                              margin={{ top: isPWA ? 5 : 20, right: 5, left: 0, bottom: 5 }}
                               barCategoryGap="15%"
                             >
                               <CartesianGrid 
@@ -241,11 +241,11 @@ const ProducerDashboard = () => {
                                 tickMargin={8}
                               />
                               <YAxis 
-                                tick={{ fontSize: 10, fill: '#64748b' }}
+                                tick={{ fontSize: isPWA ? 10 : 11, fill: '#64748b' }}
                                 tickFormatter={(value) => `R$ ${value}`}
                                 tickLine={false}
                                 axisLine={false}
-                                width={55}
+                                width={isPWA ? 55 : 70}
                               />
                               <Tooltip 
                                 formatter={(value) => [`R$ ${value}`, 'Vendas']}
