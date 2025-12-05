@@ -200,27 +200,27 @@ const ProducerSalesPage = () => {
 
   return (
     <ProducerLayout>
-      <div className="space-y-4 md:space-y-6 lg:space-y-8">
+      <div className="space-y-4 md:space-y-6 lg:space-y-8 w-full min-w-0 overflow-hidden">
         {/* Header */}
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Suas Vendas</h1>
-          <p className="text-muted-foreground">
+        <div className="mb-4 md:mb-6 lg:mb-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Suas Vendas</h1>
+          <p className="text-sm sm:text-base text-muted-foreground break-words">
             Acompanhe o desempenho das suas vendas e analise seus resultados
           </p>
         </div>
 
         {/* KPI Cards */}
-        <div className="grid gap-6 md:grid-cols-2 mb-6">
+        <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 mb-4 md:mb-6">
           {/* Valor Líquido Total */}
           <Card className="bg-gradient-to-br from-purple-600 to-purple-800 text-white border-0 shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-purple-100">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-4 md:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-purple-100">
                 Valor Líquido Total
               </CardTitle>
               <DollarSign className="h-4 w-4 text-purple-200" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
+              <div className="text-xl sm:text-2xl font-bold break-all">
                 {isLoading ? 'Carregando...' : formatCurrency(salesData?.kpis?.valorLiquidoTotal || 0)}
               </div>
               <p className="text-xs text-purple-100">
@@ -231,14 +231,14 @@ const ProducerSalesPage = () => {
 
           {/* Total de Vendas */}
           <Card className="bg-white border-0 shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-4 md:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-slate-600">
                 Total de Vendas
               </CardTitle>
-              <TrendingUp className="h-5 w-5 text-green-500" />
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-500">
+            <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-green-500">
                 {isLoading ? 'Carregando...' : (salesData?.kpis?.totalVendas || 0)}
               </div>
               <p className="text-xs text-slate-600">
@@ -249,18 +249,18 @@ const ProducerSalesPage = () => {
         </div>
 
         {/* Filters */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Filtrar Vendas</CardTitle>
-            <CardDescription>
+        <Card className="mb-4 md:mb-6">
+          <CardHeader className="p-3 sm:p-4 md:p-6 pb-2 sm:pb-3">
+            <CardTitle className="text-base sm:text-lg">Filtrar Vendas</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Use os filtros abaixo para encontrar vendas específicas
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-4 md:p-6 pt-0">
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {/* Search */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Buscar por email</label>
+              <div className="space-y-1 sm:space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Buscar por email</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -273,8 +273,8 @@ const ProducerSalesPage = () => {
               </div>
 
               {/* Product Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Produto</label>
+              <div className="space-y-1 sm:space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Produto</label>
                 <Select value={productFilter} onValueChange={setProductFilter}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Todos os produtos" />
@@ -291,8 +291,8 @@ const ProducerSalesPage = () => {
               </div>
 
               {/* Status Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
+              <div className="space-y-1 sm:space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Status</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Todos os status" />
@@ -308,8 +308,8 @@ const ProducerSalesPage = () => {
               </div>
 
               {/* Payment Method Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Método de Pagamento</label>
+              <div className="space-y-1 sm:space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Método de Pagamento</label>
                 <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Todos os métodos" />
@@ -324,8 +324,8 @@ const ProducerSalesPage = () => {
               </div>
 
               {/* Date Range */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Data Inicial</label>
+              <div className="space-y-1 sm:space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Data Inicial</label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -354,8 +354,8 @@ const ProducerSalesPage = () => {
                 </Popover>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Data Final</label>
+              <div className="space-y-1 sm:space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Data Final</label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -395,13 +395,13 @@ const ProducerSalesPage = () => {
 
         {/* Sales History Table */}
         <Card>
-          <CardHeader>
-            <CardTitle>Histórico de Vendas</CardTitle>
-            <CardDescription>
+          <CardHeader className="p-3 sm:p-4 md:p-6 pb-2 sm:pb-3">
+            <CardTitle className="text-base sm:text-lg">Histórico de Vendas</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Lista detalhada de todas as suas vendas
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
             {isLoading ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">Carregando vendas...</p>
@@ -415,9 +415,9 @@ const ProducerSalesPage = () => {
             ) : (
               <div className="space-y-4">
                 {/* Versão Mobile - Cards */}
-                <div className="md:hidden space-y-3">
+                <div className="md:hidden space-y-2 sm:space-y-3">
                   {salesData.salesHistory.map((sale) => (
-                    <Card key={sale.id} className="p-4">
+                    <Card key={sale.id} className="p-3 sm:p-4">
                       <div className="space-y-2">
                         <div className="flex justify-between items-start gap-2">
                           <div className="flex-1 min-w-0">
