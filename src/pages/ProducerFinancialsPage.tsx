@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ import {
   Shield,
   Calendar
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -70,6 +70,7 @@ interface WithdrawalHistory {
 const ProducerFinancialsPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [bankFormData, setBankFormData] = useState({
     bankName: "",
     bankAgency: "",
@@ -82,7 +83,7 @@ const ProducerFinancialsPage = () => {
   const [bankSuccess, setBankSuccess] = useState("");
   const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
 
-  const { data: financialData, isLoading, isError } = useQuery<FinancialData>({
+  const { data: financialData, isLoading, isError, refetch: refetchFinancials } = useQuery<FinancialData>({
     queryKey: ['producer-financials'],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('get-producer-financials');
@@ -96,7 +97,7 @@ const ProducerFinancialsPage = () => {
     }
   });
 
-  const { data: withdrawalHistory = [] } = useQuery<WithdrawalHistory[]>({
+  const { data: withdrawalHistory = [], refetch: refetchWithdrawals } = useQuery<WithdrawalHistory[]>({
     queryKey: ['withdrawal-history'],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('get-withdrawal-history');
@@ -199,6 +200,13 @@ const ProducerFinancialsPage = () => {
     setIsWithdrawalModalOpen(true);
   };
 
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['producer-financials'] });
+    await queryClient.invalidateQueries({ queryKey: ['withdrawal-history'] });
+    await Promise.all([refetchFinancials(), refetchWithdrawals()]);
+  }, [queryClient, refetchFinancials, refetchWithdrawals]);
+
   const handleBankFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -276,7 +284,7 @@ const ProducerFinancialsPage = () => {
   }
 
   return (
-    <ProducerLayout>
+    <ProducerLayout onRefresh={handleRefresh}>
       <div className="mb-4 md:mb-6 lg:mb-8">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Central Financeira</h1>
         <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Gerencie seus dados financeiros e bancários</p>

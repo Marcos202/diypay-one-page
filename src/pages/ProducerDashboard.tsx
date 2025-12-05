@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ProducerLayout } from "@/components/ProducerLayout";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
@@ -33,6 +33,7 @@ const ProducerDashboard = () => {
   const { profile } = useAuth();
   const { isPWA } = usePWAContext();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [dateFilter, setDateFilter] = useState(() => isPWA ? "last_30_days" : "this_year");
   const [productFilter, setProductFilter] = useState("all");
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
@@ -58,7 +59,7 @@ const ProducerDashboard = () => {
     sessionStorage.setItem('welcomePopupShown', 'true');
   };
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['producerDashboard', dateFilter, productFilter],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('get-producer-dashboard-v2', {
@@ -73,6 +74,12 @@ const ProducerDashboard = () => {
     staleTime: 30 * 1000, // 30 segundos para dados sempre frescos
     enabled: !!profile, // Só executa se profile existir
   });
+
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['producerDashboard'] });
+    await refetch();
+  }, [queryClient, refetch]);
 
   // Só mostra o conteúdo quando os dados estão prontos ou quando não há loading
   const showContent = !isLoading && data;
@@ -119,7 +126,7 @@ const ProducerDashboard = () => {
   };
 
   return (
-    <ProducerLayout>
+    <ProducerLayout onRefresh={handleRefresh}>
               {/* Welcome Message */}
               <div className="mb-8">
                 <h2 className="text-2xl font-semibold text-slate-900">

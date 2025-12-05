@@ -1,20 +1,21 @@
 import ProductList from "@/components/products/ProductList";
 import ProductTypeSelectionModal from "@/components/products/ProductTypeSelectionModal";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { ProducerLayout } from "@/components/ProducerLayout";
 import { Button } from "@/components/ui/button";
 import { PWAConditional } from "@/components/PWAConditional";
 
 const ProductsPage = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const { data: productsData, isLoading, error } = useQuery({
+  const { data: productsData, isLoading, error, refetch } = useQuery({
     queryKey: ['products', user?.id, currentPage],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -36,8 +37,14 @@ const ProductsPage = () => {
   const totalProducts = productsData?.totalProducts || 0;
   const hasMore = productsData?.hasMore || false;
 
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['products'] });
+    await refetch();
+  }, [queryClient, refetch]);
+
   return (
-    <ProducerLayout>
+    <ProducerLayout onRefresh={handleRefresh}>
 <div className="mb-4 md:mb-6 lg:mb-8">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Seus Produtos</h1>
         <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2 hidden md:block">Gerencie todos os seus produtos digitais</p>

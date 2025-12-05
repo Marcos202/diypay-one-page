@@ -12,12 +12,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatUserName } from "@/lib/utils";
+import { PullToRefresh } from '@/components/PullToRefresh';
 
 interface StudentLayoutProps {
   children: ReactNode;
+  onRefresh?: () => Promise<void>;
 }
 
-export function StudentLayout({ children }: StudentLayoutProps) {
+export function StudentLayout({ children, onRefresh }: StudentLayoutProps) {
   const { signOut, user, profile, toggleView } = useAuth();
   const navigate = useNavigate();
 
@@ -39,7 +41,7 @@ export function StudentLayout({ children }: StudentLayoutProps) {
   const userInitial = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b bg-violet-700 text-white sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-20 items-center justify-between">
@@ -90,9 +92,11 @@ export function StudentLayout({ children }: StudentLayoutProps) {
           </div>
         </div>
       </header>
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
+      <PullToRefresh onRefresh={onRefresh}>
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+          {children}
+        </main>
+      </PullToRefresh>
     </div>
   );
 }

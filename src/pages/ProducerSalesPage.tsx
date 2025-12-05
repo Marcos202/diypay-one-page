@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useState, useEffect, useCallback } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { CalendarIcon, Download, Search, TrendingUp, DollarSign } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -52,6 +52,7 @@ interface SalesData {
 const ProducerSalesPage = () => {
   const { session } = useAuth()
   const { toast } = useToast()
+  const queryClient = useQueryClient()
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('')
@@ -85,7 +86,7 @@ const ProducerSalesPage = () => {
   }, [session])
 
   // Fetch sales data with filters
-  const { data: salesData, isLoading, error } = useQuery<SalesData>({
+  const { data: salesData, isLoading, error, refetch } = useQuery<SalesData>({
     queryKey: ['producer-sales', { 
       searchTerm, 
       productFilter, 
@@ -177,6 +178,12 @@ const ProducerSalesPage = () => {
     setPage(1)
   }
 
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['producer-sales'] })
+    await refetch()
+  }, [queryClient, refetch])
+
   if (error) {
     return (
       <ProducerLayout>
@@ -199,7 +206,7 @@ const ProducerSalesPage = () => {
   }
 
   return (
-    <ProducerLayout>
+    <ProducerLayout onRefresh={handleRefresh}>
       <div className="space-y-4 md:space-y-6 lg:space-y-8 w-full min-w-0 overflow-hidden">
         {/* Header */}
         <div className="mb-4 md:mb-6 lg:mb-8">
