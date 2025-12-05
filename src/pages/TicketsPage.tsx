@@ -69,15 +69,15 @@ export default function TicketsPage() {
 
   return (
     <ProducerLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Ingressos</h1>
-          <p className="text-muted-foreground mt-2">
+      <div className="space-y-4 md:space-y-6 w-full min-w-0 overflow-hidden">
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Ingressos</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2 break-words">
             Gerencie todos os ingressos dos seus eventos
           </p>
         </div>
 
-        <Card className="p-4 sm:p-6">
+        <Card className="p-3 sm:p-4 md:p-6">
           <div className="flex flex-col gap-4">
             <Select value={selectedEvent} onValueChange={setSelectedEvent}>
               <SelectTrigger className="w-full md:w-[200px]">
@@ -103,34 +103,36 @@ export default function TicketsPage() {
         </Card>
 
         <div className="flex flex-col sm:flex-row flex-wrap gap-2">
-          <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto">
+          <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto text-sm">
             <Plus className="h-4 w-4 mr-2" />
-            Adicionar Ingresso
+            <span className="hidden sm:inline">Adicionar Ingresso</span>
+            <span className="sm:hidden">Adicionar</span>
           </Button>
-          <Button variant="outline" onClick={handleExport} className="w-full sm:w-auto">
+          <Button variant="outline" onClick={handleExport} className="w-full sm:w-auto text-sm">
             <Download className="h-4 w-4 mr-2" />
-            Exportar CSV
+            <span className="hidden sm:inline">Exportar CSV</span>
+            <span className="sm:hidden">Exportar</span>
           </Button>
-          <Button variant="outline" onClick={() => setIsScannerOpen(true)} className="w-full sm:w-auto">
+          <Button variant="outline" onClick={() => setIsScannerOpen(true)} className="w-full sm:w-auto text-sm">
             <QrCode className="h-4 w-4 mr-2" />
             Scanner
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <Card className="p-3 sm:p-4 md:p-6">
+            <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">
               Total de Ingressos
             </h3>
-            <p className="text-3xl font-bold mt-2">
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1 sm:mt-2">
               {ticketsData?.stats?.total || 0}
             </p>
           </Card>
-          <Card className="p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">
+          <Card className="p-3 sm:p-4 md:p-6">
+            <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">
               Check-ins Realizados
             </h3>
-            <p className="text-3xl font-bold mt-2">
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1 sm:mt-2">
               {ticketsData?.stats?.checkedIn || 0}
             </p>
           </Card>
