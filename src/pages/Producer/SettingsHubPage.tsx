@@ -27,24 +27,24 @@ export default function SettingsHubPage() {
 
   return (
     <ProducerLayout>
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold text-slate-900 mb-2">
+      <div className="mb-4 md:mb-6 lg:mb-8">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-slate-900 mb-1 sm:mb-2">
           Configurações
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {settingsItems.map((item) => (
           <Link key={item.title} to={item.link}>
             <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="p-3 bg-purple-100 rounded-full">
-                    <item.icon className="h-8 w-8 text-purple-600" />
+              <CardContent className="p-4 sm:p-5 md:p-6">
+                <div className="flex flex-col items-center text-center space-y-3 sm:space-y-4">
+                  <div className="p-2 sm:p-3 bg-purple-100 rounded-full">
+                    <item.icon className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg text-slate-900">{item.title}</h3>
-                    <p className="text-slate-600 text-sm">{item.description}</p>
+                    <h3 className="font-semibold text-base sm:text-lg text-slate-900">{item.title}</h3>
+                    <p className="text-slate-600 text-xs sm:text-sm">{item.description}</p>
                   </div>
                 </div>
               </CardContent>

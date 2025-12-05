@@ -305,12 +305,12 @@ const AccountPage = () => {
 
   return (
     <ProducerLayout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Minha Conta</h1>
+      <div className="mb-4 md:mb-6 lg:mb-8">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Minha Conta</h1>
       </div>
 
       {/* Layout de duas colunas para desktop, empilhado no mobile */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8 mb-4 md:mb-6 lg:mb-8">
         {/* Coluna Esquerda: Informações da Conta */}
         <Card>
           <CardHeader>
