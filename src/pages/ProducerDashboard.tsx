@@ -188,7 +188,7 @@ const ProducerDashboard = () => {
                     {/* Filters */}
                     <Card>
                       <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 mb-3">
                           <Calendar className="h-5 w-5" />
                           Desempenho de vendas
                         </CardTitle>
@@ -224,8 +224,8 @@ const ProducerDashboard = () => {
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart 
                               data={data?.chartData || []}
-                              margin={{ top: 10, right: 10, left: 10, bottom: 5 }}
-                              barCategoryGap="20%"
+                              margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+                              barCategoryGap="15%"
                             >
                               <CartesianGrid 
                                 strokeDasharray="3 3" 
@@ -241,11 +241,11 @@ const ProducerDashboard = () => {
                                 tickMargin={8}
                               />
                               <YAxis 
-                                tick={{ fontSize: 11, fill: '#64748b' }}
+                                tick={{ fontSize: 10, fill: '#64748b' }}
                                 tickFormatter={(value) => `R$ ${value}`}
                                 tickLine={false}
                                 axisLine={false}
-                                width={70}
+                                width={55}
                               />
                               <Tooltip 
                                 formatter={(value) => [`R$ ${value}`, 'Vendas']}
