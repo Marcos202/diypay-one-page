@@ -190,9 +190,9 @@ const ProducerDashboard = () => {
                           <Calendar className="h-5 w-5" />
                           Desempenho de vendas
                         </CardTitle>
-                        <div className="flex gap-4">
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                           <Select value={dateFilter} onValueChange={setDateFilter}>
-                            <SelectTrigger className="w-48">
+                            <SelectTrigger className="w-full sm:w-48">
                               <SelectValue placeholder="Período" />
                             </SelectTrigger>
                             <SelectContent>
@@ -203,7 +203,7 @@ const ProducerDashboard = () => {
                           </Select>
 
                           <Select value={productFilter} onValueChange={setProductFilter}>
-                            <SelectTrigger className="w-48">
+                            <SelectTrigger className="w-full sm:w-48">
                               <SelectValue placeholder="Produto" />
                             </SelectTrigger>
                             <SelectContent>
@@ -218,19 +218,24 @@ const ProducerDashboard = () => {
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="h-80">
+                        <div className="h-64 sm:h-80">
                           <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={data?.chartData || []}>
+                            <LineChart 
+                              data={data?.chartData || []}
+                              margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+                            >
                               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                               <XAxis 
                                 dataKey="name" 
                                 className="text-sm text-slate-600"
-                                tick={{ fontSize: 12 }}
+                                tick={{ fontSize: 10 }}
+                                tickMargin={8}
                               />
                               <YAxis 
                                 className="text-sm text-slate-600"
-                                tick={{ fontSize: 12 }}
+                                tick={{ fontSize: 11 }}
                                 tickFormatter={(value) => `R$ ${value}`}
+                                width={65}
                               />
                               <Tooltip 
                                 formatter={(value) => [`R$ ${value}`, 'Vendas']}
