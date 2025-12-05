@@ -8,7 +8,6 @@ interface Profile {
   id: string;
   email: string;
   full_name: string | null;
-  avatar_url: string | null;
   cpf_cnpj: string | null;
   phone: string | null;
   instagram_handle: string | null;
@@ -32,6 +31,7 @@ interface Profile {
   document_back_url: string | null;
   selfie_url: string | null;
   social_contract_url: string | null;
+  notification_preferences: Record<string, boolean> | null;
 }
 
 type ActiveView = 'producer' | 'student';

@@ -44,6 +44,7 @@ import SettingsHubPage from "./pages/Producer/SettingsHubPage";
 import AccountPage from "./pages/Producer/Settings/AccountPage";
 import WebhooksPage from "./pages/Producer/Settings/WebhooksPage";
 import APIPage from "./pages/Producer/Settings/APIPage";
+import NotificacoesPage from "./pages/NotificacoesPage";
 import PersonalizeSpacePage from "./pages/PersonalizeSpacePage";
 import MyCoursesPage from "./pages/MyCoursesPage";
 import CoursePlayerPage from "./pages/CoursePlayerPage";
@@ -104,6 +105,7 @@ const App = () => {
               <Route path="/settings/account" element={<ProtectedRoute requiredView="producer"><AccountPage /></ProtectedRoute>} />
               <Route path="/settings/webhooks" element={<ProtectedRoute requiredView="producer"><WebhooksPage /></ProtectedRoute>} />
               <Route path="/settings/api" element={<ProtectedRoute requiredView="producer"><APIPage /></ProtectedRoute>} />
+              <Route path="/notificacoes" element={<ProtectedRoute requiredView="producer"><NotificacoesPage /></ProtectedRoute>} />
 
               {/* Student Routes */}
               <Route path="/members" element={<ProtectedRoute requiredView="student"><MyCoursesPage /></ProtectedRoute>} />

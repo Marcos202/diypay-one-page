@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Settings, LogOut, Monitor, BookOpen } from 'lucide-react';
+import { Settings, LogOut, Monitor, BookOpen, Bell } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -51,6 +51,10 @@ export function UserProfileHeader() {
           <DropdownMenuItem onClick={() => navigate('/members/profile')}>
             <Settings className="mr-2 h-4 w-4" />
             Meu Perfil
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate('/notificacoes')}>
+            <Bell className="mr-2 h-4 w-4" />
+            Notificações
           </DropdownMenuItem>
           {isOnSpacesPage && (
             <DropdownMenuItem onClick={() => navigate('/members')}>
