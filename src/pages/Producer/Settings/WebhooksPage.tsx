@@ -227,73 +227,115 @@ export default function WebhooksPage() {
 
   return (
     <ProducerLayout>
-      <div className="flex items-center gap-4 mb-8">
-        <Link to="/settings"><Button variant="outline" size="icon"><ArrowLeft className="h-4 w-4" /></Button></Link>
-        <div>
-          <h2 className="text-2xl font-bold">Webhooks</h2>
-          <p className="text-muted-foreground">Gerencie as notificações para integrações externas.</p>
+      <div className="flex items-center gap-3 sm:gap-4 mb-4 md:mb-6 lg:mb-8">
+        <Link to="/settings"><Button variant="outline" size="icon" className="shrink-0"><ArrowLeft className="h-4 w-4" /></Button></Link>
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">Webhooks</h2>
+          <p className="text-sm sm:text-base text-muted-foreground truncate">Gerencie as notificações para integrações externas.</p>
         </div>
       </div>
       
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Endpoints Configurados</CardTitle>
-            <div className="flex gap-2">
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+            <CardTitle className="text-base sm:text-lg">Endpoints Configurados</CardTitle>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button 
                 variant="outline" 
                 onClick={() => manualTriggerMutation.mutate()}
                 disabled={manualTriggerMutation.isPending}
+                className="w-full sm:w-auto text-sm"
               >
                 {manualTriggerMutation.isPending ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Zap className="h-4 w-4 mr-2" />
                 )}
-                Processar Fila
+                <span className="hidden sm:inline">Processar Fila</span>
+                <span className="sm:hidden">Processar</span>
               </Button>
-              <Button onClick={() => openModal()}>
+              <Button onClick={() => openModal()} className="w-full sm:w-auto text-sm">
                 <Plus className="h-4 w-4 mr-2" />
-                Criar webhook
+                <span className="hidden sm:inline">Criar webhook</span>
+                <span className="sm:hidden">Criar</span>
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>NOME</TableHead>
-                <TableHead>PRODUTO</TableHead>
-                <TableHead>URL</TableHead>
-                <TableHead className="text-right">AÇÕES</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoadingWebhooks ? (
-                <TableRow><TableCell colSpan={4} className="text-center">Carregando...</TableCell></TableRow>
-              ) : webhooks && webhooks.length > 0 ? (
-                webhooks.map((webhook) => (
-                  <TableRow key={webhook.id}>
-                    <TableCell className="font-medium">{webhook.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{webhook.product_id ? productsMap.get(webhook.product_id) || 'Produto não encontrado' : 'Todos os produtos'}</TableCell>
-                    <TableCell className="text-muted-foreground max-w-xs truncate">{webhook.url}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openModal(webhook)}><Edit className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openTestModal(webhook)}><Send className="mr-2 h-4 w-4"/>Testar</DropdownMenuItem>
-                          <DropdownMenuItem><Eye className="mr-2 h-4 w-4"/>Ver logs</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-500" onClick={() => deleteMutation.mutate(webhook.id)} disabled={deleteMutation.isPending}><Trash2 className="mr-2 h-4 w-4"/>Excluir</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : ( <TableRow><TableCell colSpan={4} className="text-center py-8">Nenhum webhook configurado.</TableCell></TableRow> )}
-            </TableBody>
-          </Table>
+        <CardContent className="p-4 sm:p-6">
+          {/* Versão Mobile - Cards */}
+          <div className="md:hidden space-y-3">
+            {isLoadingWebhooks ? (
+              <div className="text-center py-6 text-muted-foreground text-sm">Carregando...</div>
+            ) : webhooks && webhooks.length > 0 ? (
+              webhooks.map((webhook: any) => (
+                <div key={webhook.id} className="p-3 sm:p-4 border rounded-lg bg-gray-50">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">{webhook.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{webhook.url}</p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="shrink-0 ml-2 h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openModal(webhook)}><Edit className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openTestModal(webhook)}><Send className="mr-2 h-4 w-4"/>Testar</DropdownMenuItem>
+                        <DropdownMenuItem><Eye className="mr-2 h-4 w-4"/>Ver logs</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-500" onClick={() => deleteMutation.mutate(webhook.id)} disabled={deleteMutation.isPending}><Trash2 className="mr-2 h-4 w-4"/>Excluir</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    <span className="font-medium">Produto:</span> {webhook.product_id ? productsMap.get(webhook.product_id) || 'Não encontrado' : 'Todos'}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-6 text-muted-foreground text-sm">Nenhum webhook configurado.</div>
+            )}
+          </div>
+
+          {/* Versão Desktop - Tabela */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>NOME</TableHead>
+                  <TableHead>PRODUTO</TableHead>
+                  <TableHead>URL</TableHead>
+                  <TableHead className="text-right">AÇÕES</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoadingWebhooks ? (
+                  <TableRow><TableCell colSpan={4} className="text-center">Carregando...</TableCell></TableRow>
+                ) : webhooks && webhooks.length > 0 ? (
+                  webhooks.map((webhook: any) => (
+                    <TableRow key={webhook.id}>
+                      <TableCell className="font-medium">{webhook.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{webhook.product_id ? productsMap.get(webhook.product_id) || 'Produto não encontrado' : 'Todos os produtos'}</TableCell>
+                      <TableCell className="text-muted-foreground max-w-xs truncate">{webhook.url}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openModal(webhook)}><Edit className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openTestModal(webhook)}><Send className="mr-2 h-4 w-4"/>Testar</DropdownMenuItem>
+                            <DropdownMenuItem><Eye className="mr-2 h-4 w-4"/>Ver logs</DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-500" onClick={() => deleteMutation.mutate(webhook.id)} disabled={deleteMutation.isPending}><Trash2 className="mr-2 h-4 w-4"/>Excluir</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : ( <TableRow><TableCell colSpan={4} className="text-center py-8">Nenhum webhook configurado.</TableCell></TableRow> )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

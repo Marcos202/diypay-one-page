@@ -24,23 +24,23 @@ export default function APIPage() {
 
   return (
     <ProducerLayout>
-      <div className="flex items-center gap-4 mb-8">
-        <Link to="/settings" className="text-slate-600 hover:text-slate-900">
+      <div className="flex items-center gap-3 sm:gap-4 mb-4 md:mb-6 lg:mb-8">
+        <Link to="/settings" className="text-slate-600 hover:text-slate-900 shrink-0">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h2 className="text-2xl font-semibold text-slate-900">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-slate-900">
           API
         </h2>
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-            <CardTitle>Chaves de API</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between items-start sm:items-center">
+            <CardTitle className="text-base sm:text-lg">Chaves de API</CardTitle>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input placeholder="Buscar chaves..." className="pl-10 w-full sm:w-60" />
+                <Input placeholder="Buscar chaves..." className="pl-10 w-full sm:w-60 text-sm" />
               </div>
               <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                 <DialogTrigger asChild>
@@ -84,24 +84,34 @@ export default function APIPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>NOME</TableHead>
-                <TableHead>API KEY</TableHead>
-                <TableHead>CRIADA EM</TableHead>
-                <TableHead>ÚLTIMO USO</TableHead>
-                <TableHead>AÇÕES</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  Nenhuma API Key criada ainda.
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          {/* Versão Mobile - Cards */}
+          <div className="md:hidden">
+            <div className="text-center py-6 text-muted-foreground text-sm">
+              Nenhuma API Key criada ainda.
+            </div>
+          </div>
+
+          {/* Versão Desktop - Tabela */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>NOME</TableHead>
+                  <TableHead>API KEY</TableHead>
+                  <TableHead>CRIADA EM</TableHead>
+                  <TableHead>ÚLTIMO USO</TableHead>
+                  <TableHead>AÇÕES</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    Nenhuma API Key criada ainda.
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </ProducerLayout>
