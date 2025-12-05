@@ -102,9 +102,14 @@ const Header = () => {
                       </Link>
                     </DropdownMenuItem>
                     {currentRole === 'producer' && (
-                      <DropdownMenuItem asChild>
-                        <Link to="/settings" className="flex items-center"><Settings className="mr-2 h-4 w-4" />Configurações</Link>
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link to="/notificacoes" className="flex items-center"><Bell className="mr-2 h-4 w-4" />Notificações</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/settings" className="flex items-center"><Settings className="mr-2 h-4 w-4" />Configurações</Link>
+                        </DropdownMenuItem>
+                      </>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut} className="text-red-600"><LogOut className="mr-2 h-4 w-4" />Sair</DropdownMenuItem>
@@ -133,7 +138,12 @@ const Header = () => {
                 ) : (
                   <>
                     <DropdownMenuItem asChild><Link to={getRoleDashboardLink(currentRole)}>Painel</Link></DropdownMenuItem>
-                    {currentRole === 'producer' && <DropdownMenuItem asChild><Link to="/settings">Configurações</Link></DropdownMenuItem>}
+                    {currentRole === 'producer' && (
+                      <>
+                        <DropdownMenuItem asChild><Link to="/notificacoes">Notificações</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link to="/settings">Configurações</Link></DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut} className="text-red-600">Sair</DropdownMenuItem>
                   </>

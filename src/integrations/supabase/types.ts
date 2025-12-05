@@ -772,6 +772,7 @@ export type Database = {
           id: string
           instagram_handle: string | null
           iugu_customer_id: string | null
+          notification_preferences: Json | null
           opening_date: string | null
           person_type: string | null
           phone: string | null
@@ -800,6 +801,7 @@ export type Database = {
           id: string
           instagram_handle?: string | null
           iugu_customer_id?: string | null
+          notification_preferences?: Json | null
           opening_date?: string | null
           person_type?: string | null
           phone?: string | null
@@ -828,6 +830,7 @@ export type Database = {
           id?: string
           instagram_handle?: string | null
           iugu_customer_id?: string | null
+          notification_preferences?: Json | null
           opening_date?: string | null
           person_type?: string | null
           phone?: string | null
