@@ -97,22 +97,36 @@ const Header = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuItem asChild>
+                      <Link to="/settings/account" className="flex items-center">
+                        <User className="mr-2 h-4 w-4" />
+                        Minha Conta
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/notificacoes" className="flex items-center">
+                        <Bell className="mr-2 h-4 w-4" />
+                        Notificações
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
                       <Link to={getRoleDashboardLink(currentRole)}>
                         Painel {profile?.role === 'producer' ? 'Produtor' : 'Membro'}
                       </Link>
                     </DropdownMenuItem>
                     {currentRole === 'producer' && (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link to="/notificacoes" className="flex items-center"><Bell className="mr-2 h-4 w-4" />Notificações</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/settings" className="flex items-center"><Settings className="mr-2 h-4 w-4" />Configurações</Link>
-                        </DropdownMenuItem>
-                      </>
+                      <DropdownMenuItem asChild>
+                        <Link to="/settings" className="flex items-center">
+                          <Settings className="mr-2 h-4 w-4" />
+                          Configurações
+                        </Link>
+                      </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={signOut} className="text-red-600"><LogOut className="mr-2 h-4 w-4" />Sair</DropdownMenuItem>
+                    <DropdownMenuItem onClick={signOut} className="text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sair
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -137,12 +151,27 @@ const Header = () => {
                   </>
                 ) : (
                   <>
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings/account" className="flex items-center">
+                        <User className="mr-2 h-4 w-4" />
+                        Minha Conta
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/notificacoes" className="flex items-center">
+                        <Bell className="mr-2 h-4 w-4" />
+                        Notificações
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem asChild><Link to={getRoleDashboardLink(currentRole)}>Painel</Link></DropdownMenuItem>
                     {currentRole === 'producer' && (
-                      <>
-                        <DropdownMenuItem asChild><Link to="/notificacoes">Notificações</Link></DropdownMenuItem>
-                        <DropdownMenuItem asChild><Link to="/settings">Configurações</Link></DropdownMenuItem>
-                      </>
+                      <DropdownMenuItem asChild>
+                        <Link to="/settings" className="flex items-center">
+                          <Settings className="mr-2 h-4 w-4" />
+                          Configurações
+                        </Link>
+                      </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut} className="text-red-600">Sair</DropdownMenuItem>

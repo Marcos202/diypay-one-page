@@ -28,7 +28,6 @@ import {
   RefreshCw,
   TrendingUp,
   Ticket,
-  Bell,
 } from 'lucide-react';
 
 const menuItems = [
@@ -66,11 +65,6 @@ const menuItems = [
     title: "Financeiro",
     url: "/financials",
     icon: CreditCard,
-  },
-  {
-    title: "Notificações",
-    url: "/notificacoes",
-    icon: Bell,
   },
   {
     title: "Configurações",
