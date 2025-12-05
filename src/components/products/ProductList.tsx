@@ -5,6 +5,7 @@ import { Pencil, Eye, MoreHorizontal, Ticket, RefreshCw, Copy, Check, Package, R
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { usePWAContext } from "@/contexts/PWAContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +30,7 @@ interface ProductListProps {
 
 const ProductList = ({ products, onCreateProduct }: ProductListProps) => {
   const { toast } = useToast();
+  const { isPWA } = usePWAContext();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const formatPrice = (priceCents: number, productType: string) => {
     if (productType === 'donation') {
@@ -104,13 +106,17 @@ const ProductList = ({ products, onCreateProduct }: ProductListProps) => {
     return (
       <Card className="text-center py-8 sm:py-10 md:py-12">
         <CardContent className="pt-4 sm:pt-6">
-          <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">Você ainda não criou nenhum produto.</p>
-          <Button 
-            onClick={onCreateProduct}
-            className="bg-[#4d0782] hover:bg-[#4d0782]/90 text-white"
-          >
-            Criar Primeiro Produto
-          </Button>
+          <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">
+            {isPWA ? 'Nenhum produto encontrado.' : 'Você ainda não criou nenhum produto.'}
+          </p>
+          {!isPWA && (
+            <Button 
+              onClick={onCreateProduct}
+              className="bg-[#4d0782] hover:bg-[#4d0782]/90 text-white"
+            >
+              Criar Primeiro Produto
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
@@ -118,15 +124,17 @@ const ProductList = ({ products, onCreateProduct }: ProductListProps) => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div className="hidden sm:block" /> {/* Spacer for alignment */}
-        <Button 
-          onClick={onCreateProduct}
-          className="bg-[#4d0782] hover:bg-[#4d0782]/90 text-white w-full sm:w-auto"
-        >
-          Criar Novo Produto
-        </Button>
-      </div>
+      {!isPWA && (
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div className="hidden sm:block" /> {/* Spacer for alignment */}
+          <Button 
+            onClick={onCreateProduct}
+            className="bg-[#4d0782] hover:bg-[#4d0782]/90 text-white w-full sm:w-auto"
+          >
+            Criar Novo Produto
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:gap-6">
         {products.map((product) => (
@@ -207,8 +215,8 @@ const ProductList = ({ products, onCreateProduct }: ProductListProps) => {
                       </Link>
                     )}
                     
-                    {/* Botão Ingressos - apenas para eventos */}
-                    {product.product_type === 'event' && (
+                    {/* Botão Ingressos - apenas para eventos (hidden in PWA) */}
+                    {!isPWA && product.product_type === 'event' && (
                       <Link to={`/products/edit/${product.id}?tab=ingressos`}>
                         <Button 
                           variant="outline" 
@@ -222,8 +230,8 @@ const ProductList = ({ products, onCreateProduct }: ProductListProps) => {
                       </Link>
                     )}
 
-                    {/* Botão Assinaturas - apenas para assinaturas */}
-                    {product.product_type === 'subscription' && (
+                    {/* Botão Assinaturas - apenas para assinaturas (hidden in PWA) */}
+                    {!isPWA && product.product_type === 'subscription' && (
                       <Link to={`/products/edit/${product.id}?tab=assinaturas`}>
                         <Button 
                           variant="outline" 
@@ -238,24 +246,27 @@ const ProductList = ({ products, onCreateProduct }: ProductListProps) => {
                     )}
                   </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-[#810ad1] hover:text-[#810ad1]/80 hover:bg-[#810ad1]/10">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to={`/products/edit/${product.id}`}
-                          className="flex items-center"
-                        >
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Editar
-                        </Link>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {/* Dropdown menu - hidden in PWA */}
+                  {!isPWA && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="text-[#810ad1] hover:text-[#810ad1]/80 hover:bg-[#810ad1]/10">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to={`/products/edit/${product.id}`}
+                            className="flex items-center"
+                          >
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Editar
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               </div>
             </CardContent>

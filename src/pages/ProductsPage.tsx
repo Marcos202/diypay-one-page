@@ -1,4 +1,3 @@
-
 import ProductList from "@/components/products/ProductList";
 import ProductTypeSelectionModal from "@/components/products/ProductTypeSelectionModal";
 import { useQuery } from "@tanstack/react-query";
@@ -7,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { ProducerLayout } from "@/components/ProducerLayout";
 import { Button } from "@/components/ui/button";
+import { PWAConditional } from "@/components/PWAConditional";
 
 const ProductsPage = () => {
   const { user } = useAuth();
@@ -85,10 +85,12 @@ const ProductsPage = () => {
         </div>
       )}
 
-      <ProductTypeSelectionModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-      />
+      <PWAConditional hideInPWA>
+        <ProductTypeSelectionModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+        />
+      </PWAConditional>
     </ProducerLayout>
   );
 };

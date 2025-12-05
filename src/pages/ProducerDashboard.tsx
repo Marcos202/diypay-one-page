@@ -27,6 +27,7 @@ import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/hooks/useAuth';
 import { formatUserName } from '@/lib/utils';
+import { PWAConditional } from '@/components/PWAConditional';
 
 const ProducerDashboard = () => {
   const { profile } = useAuth();
@@ -255,55 +256,57 @@ const ProducerDashboard = () => {
                       </CardContent>
                     </Card>
 
-                    {/* Recent Transactions */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Transações Recentes</CardTitle>
-                        <div className="flex justify-end">
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link to="/sales">Acessar todas as transações</Link>
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="border-b text-left">
-                                <th className="pb-3 text-sm font-semibold text-slate-600">Data</th>
-                                <th className="pb-3 text-sm font-semibold text-slate-600">Produto</th>
-                                <th className="pb-3 text-sm font-semibold text-slate-600">Cliente</th>
-                                <th className="pb-3 text-sm font-semibold text-slate-600">Status</th>
-                                <th className="pb-3 text-sm font-semibold text-slate-600 text-right">Valor Líquido</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {data?.recentTransactions?.length > 0 ? (
-                                data.recentTransactions.map((transaction: any) => (
-                                  <tr key={transaction.id} className="border-b hover:bg-slate-50">
-                                    <td className="py-3 text-sm text-slate-600">
-                                      {formatDate(transaction.created_at).split(' ')[0]}
-                                    </td>
-                                    <td className="py-3 text-sm font-medium">{transaction.product_name}</td>
-                                    <td className="py-3 text-sm text-slate-600">{transaction.buyer_email}</td>
-                                    <td className="py-3">{getStatusBadge(transaction.status)}</td>
-                                    <td className="py-3 text-sm font-semibold text-right">
-                                      {formatCurrency(transaction.amount)}
+                    {/* Recent Transactions - Hidden in PWA */}
+                    <PWAConditional hideInPWA>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Transações Recentes</CardTitle>
+                          <div className="flex justify-end">
+                            <Button variant="ghost" size="sm" asChild>
+                              <Link to="/sales">Acessar todas as transações</Link>
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="border-b text-left">
+                                  <th className="pb-3 text-sm font-semibold text-slate-600">Data</th>
+                                  <th className="pb-3 text-sm font-semibold text-slate-600">Produto</th>
+                                  <th className="pb-3 text-sm font-semibold text-slate-600">Cliente</th>
+                                  <th className="pb-3 text-sm font-semibold text-slate-600">Status</th>
+                                  <th className="pb-3 text-sm font-semibold text-slate-600 text-right">Valor Líquido</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {data?.recentTransactions?.length > 0 ? (
+                                  data.recentTransactions.map((transaction: any) => (
+                                    <tr key={transaction.id} className="border-b hover:bg-slate-50">
+                                      <td className="py-3 text-sm text-slate-600">
+                                        {formatDate(transaction.created_at).split(' ')[0]}
+                                      </td>
+                                      <td className="py-3 text-sm font-medium">{transaction.product_name}</td>
+                                      <td className="py-3 text-sm text-slate-600">{transaction.buyer_email}</td>
+                                      <td className="py-3">{getStatusBadge(transaction.status)}</td>
+                                      <td className="py-3 text-sm font-semibold text-right">
+                                        {formatCurrency(transaction.amount)}
+                                      </td>
+                                    </tr>
+                                  ))
+                                ) : (
+                                  <tr>
+                                    <td colSpan={5} className="py-8 text-center text-slate-500">
+                                      Nenhuma transação encontrada
                                     </td>
                                   </tr>
-                                ))
-                              ) : (
-                                <tr>
-                                  <td colSpan={5} className="py-8 text-center text-slate-500">
-                                    Nenhuma transação encontrada
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </CardContent>
-                    </Card>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </PWAConditional>
                   </div>
 
                   {/* Right Sidebar */}
@@ -360,32 +363,34 @@ const ProducerDashboard = () => {
                       </CardContent>
                     </Card>
 
-                    {/* Ações Rápidas */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-slate-800">Ações Rápidas</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <Button className="w-full bg-purple-600 hover:bg-purple-700 font-semibold" asChild>
-                          <Link to="/products/new">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Criar Novo Produto
-                          </Link>
-                        </Button>
-                        <Button variant="outline" className="w-full justify-start" asChild>
-                          <Link to="/products">
-                            <Package className="mr-2 h-4 w-4" />
-                            Gerenciar Produtos
-                          </Link>
-                        </Button>
-                        <Button variant="outline" className="w-full justify-start" asChild>
-                          <Link to="/complete-producer-profile">
-                            <Settings className="mr-2 h-4 w-4" />
-                            Configurações
-                          </Link>
-                        </Button>
-                      </CardContent>
-                    </Card>
+                    {/* Ações Rápidas - Hidden in PWA */}
+                    <PWAConditional hideInPWA>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-slate-800">Ações Rápidas</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <Button className="w-full bg-purple-600 hover:bg-purple-700 font-semibold" asChild>
+                            <Link to="/products/new">
+                              <Plus className="mr-2 h-4 w-4" />
+                              Criar Novo Produto
+                            </Link>
+                          </Button>
+                          <Button variant="outline" className="w-full justify-start" asChild>
+                            <Link to="/products">
+                              <Package className="mr-2 h-4 w-4" />
+                              Gerenciar Produtos
+                            </Link>
+                          </Button>
+                          <Button variant="outline" className="w-full justify-start" asChild>
+                            <Link to="/complete-producer-profile">
+                              <Settings className="mr-2 h-4 w-4" />
+                              Configurações
+                            </Link>
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </PWAConditional>
                   </div>
                 </div>
               )}
