@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useProducerFinancialsStore } from '@/stores/producer-financials-store';
+import { usePWAContext } from '@/contexts/PWAContext';
 import {
   Sidebar,
   SidebarContent,
@@ -76,6 +77,7 @@ export function ProducerSidebar() {
   const { signOut } = useAuth();
   const location = useLocation();
   const { financialData: dashboardData, isLoading } = useProducerFinancialsStore();
+  const { isPWA } = usePWAContext();
 
   const isActive = (url: string) => {
     if (url === "/dashboard") {
@@ -149,7 +151,9 @@ export function ProducerSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {menuItems
+                .filter((item) => !(isPWA && item.url === '/members-area'))
+                .map((item) => (
                 <SidebarMenuItem key={item.title}>
                    <SidebarMenuButton 
                      asChild 

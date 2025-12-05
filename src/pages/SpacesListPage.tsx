@@ -1,4 +1,5 @@
 // src/pages/SpacesListPage.tsx (Nova Versão)
+import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +9,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlusCircle, BookOpen, Copy, Package, Edit, Brush, Webhook } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { usePWAContext } from '@/contexts/PWAContext';
 
 const fetchProducerSpaces = async () => {
   const { data, error } = await supabase.functions.invoke('get-producer-spaces');
@@ -33,7 +35,15 @@ const OnboardingView = ({ onToggleView }: { onToggleView: () => void }) => (
 export default function SpacesListPage() {
   const { toggleView } = useAuth();
   const navigate = useNavigate();
+  const { isPWA } = usePWAContext();
   const { data: spaces, isLoading, isError, error } = useQuery({ queryKey: ['producer-spaces'], queryFn: fetchProducerSpaces });
+
+  // Redirecionar usuários PWA para o Dashboard
+  useEffect(() => {
+    if (isPWA) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isPWA, navigate]);
 
   const handleToggleView = () => {
     toggleView();
