@@ -15,8 +15,7 @@ import {
   Plus,
   Settings,
   Eye,
-  Calendar,
-  AlertTriangle
+  Calendar
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ProducerLayout } from "@/components/ProducerLayout";
@@ -123,20 +122,9 @@ const ProducerDashboard = () => {
     <ProducerLayout>
               {/* Welcome Message */}
               <div className="mb-8">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-2xl font-semibold text-slate-900">
-                    Bem vindo, {data?.userName ? formatUserName(data.userName) : (profile?.full_name ? formatUserName(profile.full_name) : 'Produtor')}!
-                  </h2>
-                  {(profile?.verification_status === 'pending_submission' || profile?.verification_status === 'rejected') && (
-                    <Link 
-                      to="/settings/account" 
-                      className="flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm font-medium hover:bg-amber-200 transition-colors"
-                    >
-                      <AlertTriangle className="h-4 w-4" />
-                      Complete seu cadastro
-                    </Link>
-                  )}
-                </div>
+                <h2 className="text-2xl font-semibold text-slate-900">
+                  Bem vindo, {data?.userName ? formatUserName(data.userName) : (profile?.full_name ? formatUserName(profile.full_name) : 'Produtor')}!
+                </h2>
               </div>
 
               {!showContent ? (
