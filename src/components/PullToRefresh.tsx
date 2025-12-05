@@ -39,8 +39,7 @@ export const PullToRefresh = ({
   return (
     <div 
       ref={containerRef} 
-      className="relative h-full overflow-auto"
-      style={{ touchAction: pullDistance > 0 ? 'none' : 'auto' }}
+      className="relative min-h-full"
     >
       {/* Pull indicator */}
       <div 

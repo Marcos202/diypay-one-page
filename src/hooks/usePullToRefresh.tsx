@@ -22,24 +22,26 @@ export const usePullToRefresh = ({
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (disabled || isRefreshing) return;
     
-    const container = containerRef.current;
-    if (!container) return;
+    // Use window.scrollY for page scroll detection
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
     
-    // Only start pull if at top of scroll
-    if (container.scrollTop <= 0) {
+    // ONLY start pull if EXACTLY at top
+    if (scrollTop === 0) {
       startY.current = e.touches[0].clientY;
       isPulling.current = true;
+    } else {
+      isPulling.current = false;
     }
   }, [disabled, isRefreshing]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isPulling.current || disabled || isRefreshing) return;
     
-    const container = containerRef.current;
-    if (!container) return;
+    // Use window.scrollY for page scroll detection
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
     
-    // Only allow pull when at top
-    if (container.scrollTop > 0) {
+    // If left the top, cancel pull immediately
+    if (scrollTop > 0) {
       isPulling.current = false;
       setPullDistance(0);
       return;
@@ -48,15 +50,23 @@ export const usePullToRefresh = ({
     const currentY = e.touches[0].clientY;
     const diff = currentY - startY.current;
     
-    if (diff > 0) {
-      // Prevent default scroll while pulling
+    // ONLY preventDefault if pulling DOWN (diff > 0) AND at top
+    if (diff > 0 && scrollTop === 0) {
       e.preventDefault();
-      // Apply resistance to pull distance
       const resistance = 0.5;
       const distance = Math.min(diff * resistance, maxPull);
       setPullDistance(distance);
+    } else if (diff <= 0) {
+      // If trying to scroll UP, cancel pull and allow native scroll
+      isPulling.current = false;
+      setPullDistance(0);
     }
   }, [disabled, isRefreshing, maxPull]);
+
+  const handleTouchCancel = useCallback(() => {
+    isPulling.current = false;
+    setPullDistance(0);
+  }, []);
 
   const handleTouchEnd = useCallback(async () => {
     if (!isPulling.current || disabled) return;
@@ -87,13 +97,15 @@ export const usePullToRefresh = ({
     container.addEventListener('touchstart', handleTouchStart, { passive: true });
     container.addEventListener('touchmove', handleTouchMove, { passive: false });
     container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    container.addEventListener('touchcancel', handleTouchCancel, { passive: true });
 
     return () => {
       container.removeEventListener('touchstart', handleTouchStart);
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
+      container.removeEventListener('touchcancel', handleTouchCancel);
     };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd, disabled]);
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel, disabled]);
 
   return {
     containerRef,
