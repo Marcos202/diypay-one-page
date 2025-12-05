@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -44,6 +44,10 @@ const ProducerSubscriptionsPage = () => {
     staleTime: 60 * 1000, // 1 minuto - dados de assinatura não mudam tão frequentemente
     refetchOnMount: true,
   });
+
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['producer-subscriptions'] });
+  }, [queryClient]);
 
   const cancelSubscriptionMutation = useMutation({
     mutationFn: async ({ subscriptionId, saleId }: { subscriptionId: string, saleId: string }) => {
@@ -113,7 +117,7 @@ const ProducerSubscriptionsPage = () => {
 
   if (isLoading) {
     return (
-      <ProducerLayout>
+      <ProducerLayout onRefresh={handleRefresh}>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -126,7 +130,7 @@ const ProducerSubscriptionsPage = () => {
 
   if (error) {
     return (
-      <ProducerLayout>
+      <ProducerLayout onRefresh={handleRefresh}>
         <div className="text-center py-12">
           <p className="text-red-500">Erro ao carregar assinaturas</p>
         </div>
@@ -137,7 +141,7 @@ const ProducerSubscriptionsPage = () => {
   const stats = subscriptionsData?.stats || { totalActive: 0, monthlyRecurring: 0, totalSubscriptions: 0 };
 
   return (
-    <ProducerLayout>
+    <ProducerLayout onRefresh={handleRefresh}>
       <div className="mb-8">
         <div className="flex justify-between items-center">
           <div>

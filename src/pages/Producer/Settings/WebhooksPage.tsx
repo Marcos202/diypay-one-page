@@ -1,6 +1,6 @@
 // src/pages/Producer/Settings/WebhooksPage.tsx
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
@@ -133,6 +133,11 @@ export default function WebhooksPage() {
     if (!products) return new Map();
     return new Map(products.map((p: any) => [p.id, p.name]));
   }, [products]);
+
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['producer-webhooks'] });
+    await queryClient.invalidateQueries({ queryKey: ['producer-products-list'] });
+  }, [queryClient]);
   
   const { control, handleSubmit, reset, watch } = useForm<WebhookFormValues>({
     resolver: zodResolver(webhookSchema),
@@ -226,7 +231,7 @@ export default function WebhooksPage() {
   const onSubmit = (data: WebhookFormValues) => createOrUpdateMutation.mutate(data);
 
   return (
-    <ProducerLayout>
+    <ProducerLayout onRefresh={handleRefresh}>
       <div className="flex items-center gap-3 sm:gap-4 mb-4 md:mb-6 lg:mb-8">
         <Link to="/settings"><Button variant="outline" size="icon" className="shrink-0"><ArrowLeft className="h-4 w-4" /></Button></Link>
         <div className="min-w-0">
