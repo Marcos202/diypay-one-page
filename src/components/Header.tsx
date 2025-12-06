@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, User, Settings, Bell, Monitor, BookOpen } from "lucide-react";
+import { Menu, User, Settings, Bell, Monitor } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { formatUserName } from "@/lib/utils";
 import { UserProfileMenu } from "@/components/ui/user-profile-menu";
-
+import { NotificationBell } from "@/components/NotificationBell";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "#", label: "Taxa" },
@@ -49,11 +49,6 @@ const Header = () => {
         icon: <User className="h-full w-full" />,
         label: 'Minha Conta',
         onClick: () => navigate('/settings/account'),
-      },
-      {
-        icon: <Bell className="h-full w-full" />,
-        label: 'Notificações',
-        onClick: () => navigate('/notificacoes'),
       },
       {
         icon: <Monitor className="h-full w-full" />,
@@ -101,7 +96,7 @@ const Header = () => {
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2">
             {!isLoggedIn ? (
               <>
                 <Button asChild variant="ghost" className="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold">
@@ -112,16 +107,19 @@ const Header = () => {
                 </Button>
               </>
             ) : (
-              <UserProfileMenu
-                user={{
-                  name: displayName,
-                  email: userEmail,
-                  initial: userInitial,
-                  avatarUrl: profile?.avatar_url,
-                }}
-                navItems={getNavItems()}
-                onLogout={signOut}
-              />
+              <>
+                <NotificationBell />
+                <UserProfileMenu
+                  user={{
+                    name: displayName,
+                    email: userEmail,
+                    initial: userInitial,
+                    avatarUrl: profile?.avatar_url,
+                  }}
+                  navItems={getNavItems()}
+                  onLogout={signOut}
+                />
+              </>
             )}
           </div>
 

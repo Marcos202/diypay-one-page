@@ -77,10 +77,10 @@ export function UserProfileMenu({
       <PopoverTrigger asChild>
         <button
           className={cn(
-            'flex items-center gap-2 p-2 h-12 rounded-lg transition-colors',
+            'flex items-center p-1 rounded-full transition-colors',
             triggerVariant === 'glass'
-              ? 'bg-black/20 backdrop-blur-sm border border-white/10 hover:bg-black/40 text-white'
-              : 'bg-secondary/50 hover:bg-secondary border border-border/50',
+              ? 'hover:bg-white/10'
+              : 'hover:bg-accent/50',
             className
           )}
         >
@@ -92,9 +92,6 @@ export function UserProfileMenu({
               {user.initial}
             </AvatarFallback>
           </Avatar>
-          <span className="font-semibold text-sm max-w-[120px] truncate">
-            {user.name}
-          </span>
         </button>
       </PopoverTrigger>
       <PopoverContent
