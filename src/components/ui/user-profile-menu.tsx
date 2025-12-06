@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { ChevronRight, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -99,17 +99,15 @@ export function UserProfileMenu({
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        className="w-80 p-0 overflow-hidden shadow-lg rounded-xl border-border/50"
+        className="w-80 p-0 overflow-hidden shadow-lg rounded-xl border-border/50 bg-popover"
         sideOffset={8}
       >
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={menuVariants}
-              className="flex flex-col"
-            >
+        <motion.div
+          initial="hidden"
+          animate={open ? "visible" : "hidden"}
+          variants={menuVariants}
+          className="flex flex-col"
+        >
               {/* User Info Header */}
               <motion.div
                 variants={itemVariants}
@@ -188,9 +186,7 @@ export function UserProfileMenu({
                   <span>Sair</span>
                 </button>
               </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        </motion.div>
       </PopoverContent>
     </Popover>
   );
