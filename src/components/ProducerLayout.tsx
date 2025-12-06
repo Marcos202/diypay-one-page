@@ -1,13 +1,13 @@
 import { ReactNode, useEffect } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { ProducerSidebar } from "@/components/ProducerSidebar";
-import { Bell, Repeat, User } from "lucide-react";
+import { Repeat, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '@/hooks/useAuth';
 import { useProducerFinancialsStore } from '@/stores/producer-financials-store';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { UserProfileMenu } from '@/components/ui/user-profile-menu';
-
+import { NotificationBell } from '@/components/NotificationBell';
 interface ProducerLayoutProps {
   children: ReactNode;
   onRefresh?: () => Promise<void>;
@@ -39,7 +39,8 @@ export function ProducerLayout({ children, onRefresh }: ProducerLayoutProps) {
             {/* Header */}
             <div className="flex items-center justify-between px-3 sm:px-4 md:px-6 py-3 md:py-4 border-b bg-white/80 backdrop-blur-sm">
               <SidebarTrigger />
-              <div className="flex items-center gap-4 ml-auto">
+              <div className="flex items-center gap-2 ml-auto">
+                <NotificationBell />
                 <UserProfileMenu
                   user={{
                     name: financialData?.userName || profile?.full_name || 'Produtor',
@@ -52,11 +53,6 @@ export function ProducerLayout({ children, onRefresh }: ProducerLayoutProps) {
                       icon: <User className="h-full w-full" />,
                       label: 'Minha Conta',
                       onClick: () => navigate('/settings/account'),
-                    },
-                    {
-                      icon: <Bell className="h-full w-full" />,
-                      label: 'Notificações',
-                      onClick: () => navigate('/notificacoes'),
                     },
                     {
                       icon: <Repeat className="h-full w-full" />,
