@@ -6,13 +6,15 @@ import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { validateCPFOrCNPJ } from '@/lib/utils';
-import { Upload, User, ShieldCheck, AlertTriangle, Clock, X } from 'lucide-react';
+import { Upload, User, ShieldCheck, AlertTriangle, Clock, X, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ProducerLayout } from '@/components/ProducerLayout';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { AvatarUploadModal } from '@/components/AvatarUploadModal';
 
 // Schemas de validação
 const basicFormSchema = z.object({
@@ -49,7 +51,7 @@ type BasicFormData = z.infer<typeof basicFormSchema>;
 type VerificationFormData = z.infer<typeof verificationFormSchema>;
 
 const AccountPage = () => {
-  const { profile, isGoogleUser } = useAuth();
+  const { profile, isGoogleUser, refreshProfile } = useAuth();
   
   const [isLoading, setIsLoading] = useState(false);
   const [documentFrontFile, setDocumentFrontFile] = useState<File | null>(null);
@@ -59,6 +61,20 @@ const AccountPage = () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  // Sync avatar URL from profile
+  useEffect(() => {
+    if (profile?.avatar_url) {
+      setAvatarUrl(profile.avatar_url);
+    }
+  }, [profile?.avatar_url]);
+
+  const handleAvatarSave = (newAvatarUrl: string) => {
+    setAvatarUrl(newAvatarUrl);
+    refreshProfile?.();
+  };
 
   // Formulário básico
   const basicForm = useForm<BasicFormData>({
@@ -319,7 +335,30 @@ const AccountPage = () => {
               Informações da Conta
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* Seção de Avatar */}
+            <div className="flex flex-col items-center gap-4 pb-6 border-b">
+              <div className="relative">
+                <Avatar className="w-24 h-24 ring-4 ring-background shadow-lg">
+                  {avatarUrl && (
+                    <AvatarImage src={avatarUrl} alt="Avatar" className="object-cover" />
+                  )}
+                  <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
+                    {(profile?.full_name || 'U').charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="absolute bottom-0 right-0 rounded-full h-8 w-8 shadow-md border-2 border-background"
+                  onClick={() => setAvatarModalOpen(true)}
+                >
+                  <Camera className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">Clique na câmera para alterar sua foto</p>
+            </div>
+
             <div>
               <Label htmlFor="full_name">Nome Completo</Label>
               <Input
@@ -685,6 +724,15 @@ const AccountPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de Upload de Avatar */}
+      <AvatarUploadModal
+        open={avatarModalOpen}
+        onClose={() => setAvatarModalOpen(false)}
+        onSave={handleAvatarSave}
+        userId={profile?.id || ''}
+        currentAvatarUrl={avatarUrl}
+      />
     </ProducerLayout>
   );
 };

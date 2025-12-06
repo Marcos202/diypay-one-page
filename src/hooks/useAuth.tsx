@@ -50,6 +50,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error?: string }>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -383,6 +384,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const refreshProfile = useCallback(async () => {
+    if (user?.id) {
+      const updatedProfile = await fetchUserProfile(user.id);
+      if (updatedProfile) {
+        setProfile(updatedProfile);
+      }
+    }
+  }, [user?.id, fetchUserProfile]);
+
   const contextValue = useMemo(() => ({
     user,
     session,
@@ -395,8 +405,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signIn,
     signInWithGoogle,
     signOut,
-    updateProfile
-  }), [user, session, profile, loading, isGoogleUser, activeView, toggleView, signUp, signIn, signInWithGoogle, signOut, updateProfile]);
+    updateProfile,
+    refreshProfile
+  }), [user, session, profile, loading, isGoogleUser, activeView, toggleView, signUp, signIn, signInWithGoogle, signOut, updateProfile, refreshProfile]);
 
   return (
     <AuthContext.Provider value={contextValue}>
