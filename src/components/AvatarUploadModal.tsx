@@ -67,10 +67,26 @@ export function AvatarUploadModal({
         return;
       }
 
-      // 3. Generate unique filename
+      // 3. Fetch current avatar to get old file path
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', userId)
+        .maybeSingle();
+
+      // 4. Delete old avatar if exists
+      if (profileData?.avatar_url) {
+        const urlParts = profileData.avatar_url.split('/avatars/');
+        if (urlParts.length > 1) {
+          const oldFilePath = urlParts[1];
+          await supabase.storage.from('avatars').remove([oldFilePath]);
+        }
+      }
+
+      // 5. Generate unique filename for new avatar
       const fileName = `${userId}/avatar_${Date.now()}.jpg`;
 
-      // 4. Upload to Supabase Storage
+      // 6. Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, croppedBlob, { 
@@ -80,12 +96,12 @@ export function AvatarUploadModal({
 
       if (uploadError) throw uploadError;
 
-      // 5. Get public URL
+      // 7. Get public URL
       const { data: urlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
 
-      // 6. Update profile
+      // 8. Update profile
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: urlData.publicUrl })
