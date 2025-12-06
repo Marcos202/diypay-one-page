@@ -99,7 +99,7 @@ export function UserProfileMenu({
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        className="w-72 p-0 overflow-hidden"
+        className="w-80 p-0 overflow-hidden shadow-lg rounded-xl border-border/50"
         sideOffset={8}
       >
         <AnimatePresence>
@@ -113,9 +113,9 @@ export function UserProfileMenu({
               {/* User Info Header */}
               <motion.div
                 variants={itemVariants}
-                className="flex items-center gap-3 p-4 border-b border-border"
+                className="flex items-center gap-4 p-5 border-b border-border"
               >
-                <Avatar className="w-11 h-11">
+                <Avatar className="w-12 h-12">
                   {user.avatarUrl && (
                     <AvatarImage src={user.avatarUrl} alt={user.name} className="object-cover" />
                   )}
@@ -124,7 +124,7 @@ export function UserProfileMenu({
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col min-w-0">
-                  <span className="font-semibold text-foreground truncate">
+                  <span className="font-semibold text-base text-foreground truncate">
                     {user.name}
                   </span>
                   <span className="text-sm text-muted-foreground truncate">
@@ -134,13 +134,13 @@ export function UserProfileMenu({
               </motion.div>
 
               {/* Navigation Links */}
-              <nav className="flex flex-col py-2">
+              <nav className="flex flex-col py-3">
                 {navItems.map((item, index) => (
                   <React.Fragment key={index}>
                     {item.isSeparator && (
                       <motion.div
                         variants={itemVariants}
-                        className="h-px bg-border my-2 mx-3"
+                        className="h-px bg-border my-2 mx-4"
                       />
                     )}
                     {item.href ? (
@@ -149,11 +149,11 @@ export function UserProfileMenu({
                         variants={itemVariants}
                         onClick={() => setOpen(false)}
                         className={cn(
-                          'group flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+                          'group flex items-center gap-4 px-5 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
                           item.className
                         )}
                       >
-                        <span className="h-4 w-4 flex-shrink-0">{item.icon}</span>
+                        <span className="h-5 w-5 flex-shrink-0">{item.icon}</span>
                         <span className="flex-1">{item.label}</span>
                         <ChevronRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                       </motion.a>
@@ -162,11 +162,11 @@ export function UserProfileMenu({
                         variants={itemVariants}
                         onClick={() => handleItemClick(item)}
                         className={cn(
-                          'group flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground w-full text-left',
+                          'group flex items-center gap-4 px-5 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground w-full text-left',
                           item.className
                         )}
                       >
-                        <span className="h-4 w-4 flex-shrink-0">{item.icon}</span>
+                        <span className="h-5 w-5 flex-shrink-0">{item.icon}</span>
                         <span className="flex-1">{item.label}</span>
                         <ChevronRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                       </motion.button>
@@ -176,15 +176,15 @@ export function UserProfileMenu({
               </nav>
 
               {/* Logout Button */}
-              <motion.div variants={itemVariants} className="border-t border-border py-2">
+              <motion.div variants={itemVariants} className="border-t border-border py-3">
                 <button
                   onClick={() => {
                     onLogout();
                     setOpen(false);
                   }}
-                  className="group flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                  className="group flex w-full items-center gap-4 px-5 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-5 w-5" />
                   <span>Sair</span>
                 </button>
               </motion.div>
