@@ -1,12 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { 
   Bell, 
-  Settings2, 
-  Inbox, 
+  SlidersHorizontal, 
   BellOff,
   CheckCircle2,
   ShoppingCart,
@@ -87,11 +85,9 @@ const extractProduct = (message: string): string | null => {
 };
 
 const NotificationItem = ({ 
-  notification, 
-  onViewDetails 
+  notification 
 }: { 
   notification: Notification;
-  onViewDetails: () => void;
 }) => {
   const Icon = iconMap[notification.type] || Bell;
   
@@ -100,23 +96,15 @@ const NotificationItem = ({
   const product = extractProduct(notification.message);
 
   return (
-    <div className={`flex gap-3 p-4 border rounded-lg transition-colors ${!notification.is_read ? 'bg-muted/30' : ''}`}>
-      <Icon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
+    <div className={`flex gap-3 p-4 border rounded-lg transition-colors ${!notification.is_read ? 'bg-primary/5' : ''}`}>
+      <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm">{title}</p>
         {value && <p className="text-sm text-foreground">{value}</p>}
         {product && <p className="text-sm text-muted-foreground">Produto: {product}</p>}
-        <div className="flex items-center justify-between mt-2">
-          <p className="text-xs text-muted-foreground">
-            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ptBR })}
-          </p>
-          <button
-            onClick={onViewDetails}
-            className="text-xs text-primary hover:underline font-medium"
-          >
-            Saber mais
-          </button>
-        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ptBR })}
+        </p>
       </div>
     </div>
   );
@@ -126,7 +114,6 @@ const ITEMS_PER_PAGE = 25;
 
 const NotificacoesPage = () => {
   const { profile } = useAuth();
-  const navigate = useNavigate();
   const [preferences, setPreferences] = useState<NotificationPreferences>({});
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
@@ -266,10 +253,6 @@ const NotificacoesPage = () => {
   
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  const handleViewDetails = () => {
-    navigate('/sales');
-  };
-
   return (
     <ProducerLayout onRefresh={handleRefresh}>
       <div className="mb-4 md:mb-6 lg:mb-8">
@@ -284,24 +267,24 @@ const NotificacoesPage = () => {
         
         {/* COLUNA ESQUERDA: Últimas Notificações (agora primeiro) */}
         <Card>
-          <CardHeader className="flex flex-row items-start justify-between space-y-0">
-            <div className="space-y-1">
+          <CardHeader className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <CardTitle className="flex items-center gap-2">
-                <Inbox className="h-5 w-5" />
+                <Bell className="h-5 w-5" />
                 Últimas Notificações
               </CardTitle>
-              <CardDescription>
-                Notificações são mantidas por 30 dias.
-              </CardDescription>
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllAsRead}
+                  className="text-xs text-primary hover:underline font-medium self-start sm:self-auto"
+                >
+                  Marcar todas como lidas
+                </button>
+              )}
             </div>
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllAsRead}
-                className="text-xs text-primary hover:underline font-medium whitespace-nowrap"
-              >
-                Marcar todas como lidas
-              </button>
-            )}
+            <CardDescription>
+              Notificações são mantidas por 30 dias.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoadingNotifications ? (
@@ -327,13 +310,12 @@ const NotificacoesPage = () => {
                 </p>
               </div>
             ) : (
-              <ScrollArea className="h-[400px] lg:h-[500px] pr-4">
+              <ScrollArea className="h-[480px] lg:h-[580px] pr-4">
                 <div className="space-y-3">
                   {notifications.map((notification) => (
                     <NotificationItem 
                       key={notification.id} 
-                      notification={notification} 
-                      onViewDetails={handleViewDetails}
+                      notification={notification}
                     />
                   ))}
                   
@@ -357,7 +339,7 @@ const NotificacoesPage = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings2 className="h-5 w-5" />
+              <SlidersHorizontal className="h-5 w-5" />
               Preferências
             </CardTitle>
             <CardDescription>
