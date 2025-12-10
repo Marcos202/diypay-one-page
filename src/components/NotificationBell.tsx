@@ -23,6 +23,17 @@ interface Notification {
   created_at: string;
 }
 
+// Função para limpar emojis do título
+const cleanTitle = (title: string): string => {
+  return title.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+};
+
+// Função para extrair valor da mensagem (formato: "Valor: R$ XX,XX • Produto: Nome")
+const extractValue = (message: string): string => {
+  const match = message.match(/Valor:\s*R\$\s*([\d.,]+)/);
+  return match ? match[1] : '';
+};
+
 export function NotificationBell() {
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -86,11 +97,11 @@ export function NotificationBell() {
                     tag: newNotif.id,
                     vibrate: [200, 100, 200]
                   };
-                  registration.showNotification(newNotif.title, options as NotificationOptions);
+                  registration.showNotification(cleanTitle(newNotif.title), options as NotificationOptions);
                 });
               } else {
                 // Fallback para Notification API padrão
-                new Notification(newNotif.title, {
+                new Notification(cleanTitle(newNotif.title), {
                   body: newNotif.message,
                   icon: '/logo-192x192.png',
                   tag: newNotif.id
@@ -132,35 +143,44 @@ export function NotificationBell() {
           )}
         </div>
 
-        {/* Lista de notificações */}
+        {/* Lista de notificações - Layout limpo sem emoji */}
         <div className="max-h-64 overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               Nenhuma notificação
             </div>
           ) : (
-            notifications.map((n) => (
-              <div
-                key={n.id}
-                className={cn(
-                  'flex items-start gap-3 p-3 border-b border-border last:border-0 hover:bg-accent/50 transition-colors',
-                  !n.is_read && 'bg-primary/5'
-                )}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{n.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(n.created_at), {
-                      addSuffix: true,
-                      locale: ptBR,
-                    })}
-                  </p>
+            notifications.map((n) => {
+              const value = extractValue(n.message);
+              
+              return (
+                <div
+                  key={n.id}
+                  className={cn(
+                    'flex items-start gap-3 p-3 border-b border-border last:border-0 hover:bg-accent/50 transition-colors',
+                    !n.is_read && 'bg-primary/5'
+                  )}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{cleanTitle(n.title)}</p>
+                    {value && (
+                      <p className="text-sm text-muted-foreground">
+                        Valor R$: {value}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatDistanceToNow(new Date(n.created_at), {
+                        addSuffix: true,
+                        locale: ptBR,
+                      })}
+                    </p>
+                  </div>
+                  {!n.is_read && (
+                    <span className="h-2 w-2 bg-primary rounded-full flex-shrink-0 mt-1.5" />
+                  )}
                 </div>
-                {!n.is_read && (
-                  <span className="h-2 w-2 bg-primary rounded-full flex-shrink-0 mt-1.5" />
-                )}
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 

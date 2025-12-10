@@ -681,10 +681,10 @@ Deno.serve(async (req) => {
               const isAllowed = prefKey ? (prefs[prefKey] === true) : false;
               
               if (isAllowed) {
-                // 5. Títulos com emoji
+                // 5. Títulos SEM emoji (frontend cuida da exibição visual)
                 const titles: Record<string, string> = {
-                  'pix.gerado': 'Pix Gerado! 💠',
-                  'boleto.gerado': 'Boleto Gerado! 📄',
+                  'pix.gerado': 'Pix Gerado!',
+                  'boleto.gerado': 'Boleto Gerado!',
                 };
                 
                 // 6. Formatar valor
