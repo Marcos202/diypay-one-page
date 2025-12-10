@@ -57,7 +57,7 @@ export function NotificationBell() {
       .select('*')
       .eq('user_id', profile.id)
       .order('created_at', { ascending: false })
-      .limit(5);
+      .limit(10);
 
     if (data) {
       setNotifications(data);
@@ -83,20 +83,6 @@ export function NotificationBell() {
     navigate('/sales');
   };
 
-  // Marcar todas como lidas
-  const handleMarkAllAsRead = async () => {
-    if (!profile?.id || unreadCount === 0) return;
-    
-    await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('user_id', profile.id)
-      .eq('is_read', false);
-    
-    setNotifications(prev => prev.map(n => ({...n, is_read: true})));
-    setUnreadCount(0);
-  };
-
   useEffect(() => {
     if (!profile?.id) return;
 
@@ -117,8 +103,8 @@ export function NotificationBell() {
           console.log('[REALTIME] Nova notificação recebida:', payload.new);
           const newNotif = payload.new as Notification;
           
-          // Atualizar lista local instantaneamente (adicionar no topo, manter max 5)
-          setNotifications(prev => [newNotif, ...prev.slice(0, 4)]);
+          // Atualizar lista local instantaneamente (adicionar no topo, manter max 10)
+          setNotifications(prev => [newNotif, ...prev.slice(0, 9)]);
           setUnreadCount(prev => prev + 1);
           
           // 🔊 Tocar som de alerta
@@ -175,24 +161,12 @@ export function NotificationBell() {
       <PopoverContent align="end" className="w-80 p-0" sideOffset={8}>
         {/* Header */}
         <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-sm">Notificações</h3>
-              {unreadCount > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {unreadCount} nova(s)
-                </p>
-              )}
-            </div>
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllAsRead}
-                className="text-xs text-primary hover:underline font-medium"
-              >
-                Marcar todas como lidas
-              </button>
-            )}
-          </div>
+          <h3 className="font-semibold text-sm">Notificações</h3>
+          {unreadCount > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {unreadCount} nova(s)
+            </p>
+          )}
         </div>
 
         {/* Lista de notificações */}
