@@ -29,17 +29,13 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    if (profile?.id) {
-      fetchNotifications();
-    }
-  }, [profile?.id]);
-
   const fetchNotifications = async () => {
+    if (!profile?.id) return;
+    
     const { data } = await supabase
       .from('notifications')
       .select('*')
-      .eq('user_id', profile?.id)
+      .eq('user_id', profile.id)
       .order('created_at', { ascending: false })
       .limit(5);
 
@@ -48,6 +44,66 @@ export function NotificationBell() {
       setUnreadCount(data.filter((n) => !n.is_read).length);
     }
   };
+
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    fetchNotifications();
+
+    // 🔴 REALTIME: Escutar novas notificações em tempo real
+    const channel = supabase
+      .channel(`notifications-${profile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${profile.id}`
+        },
+        (payload) => {
+          console.log('[REALTIME] Nova notificação recebida:', payload.new);
+          const newNotif = payload.new as Notification;
+          
+          // Atualizar lista local instantaneamente (adicionar no topo, manter max 5)
+          setNotifications(prev => [newNotif, ...prev.slice(0, 4)]);
+          setUnreadCount(prev => prev + 1);
+          
+          // Disparar Web Notification nativa se permitido
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+              // Tentar usar Service Worker para notificação nativa (funciona em background)
+              if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.ready.then(registration => {
+                  const options = {
+                    body: newNotif.message,
+                    icon: '/logo-192x192.png',
+                    badge: '/logo-192x192.png',
+                    tag: newNotif.id,
+                    vibrate: [200, 100, 200]
+                  };
+                  registration.showNotification(newNotif.title, options as NotificationOptions);
+                });
+              } else {
+                // Fallback para Notification API padrão
+                new Notification(newNotif.title, {
+                  body: newNotif.message,
+                  icon: '/logo-192x192.png',
+                  tag: newNotif.id
+                });
+              }
+            } catch (err) {
+              console.error('[NOTIFICATION] Erro ao disparar push:', err);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
