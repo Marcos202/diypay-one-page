@@ -122,6 +122,8 @@ const NotificationItem = ({
   );
 };
 
+const ITEMS_PER_PAGE = 25;
+
 const NotificacoesPage = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -129,7 +131,10 @@ const NotificacoesPage = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const loadPreferences = useCallback(async () => {
     if (!profile?.id) return;
@@ -162,30 +167,69 @@ const NotificacoesPage = () => {
     }
   }, [profile?.id]);
 
-  const loadNotifications = useCallback(async () => {
+  const loadNotifications = useCallback(async (pageNum = 1, append = false) => {
     if (!profile?.id) return;
     
+    if (append) {
+      setIsLoadingMore(true);
+    }
+    
     try {
+      const from = (pageNum - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+      
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', profile.id)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .range(from, to);
 
       if (error) throw error;
-      setNotifications(data || []);
+      
+      if (data) {
+        setNotifications(prev => append ? [...prev, ...data] : data);
+        setHasMore(data.length === ITEMS_PER_PAGE);
+      }
     } catch (error) {
       console.error('Error loading notifications:', error);
     } finally {
       setIsLoadingNotifications(false);
+      setIsLoadingMore(false);
     }
   }, [profile?.id]);
+  
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    loadNotifications(nextPage, true);
+  };
+  
+  const handleMarkAllAsRead = async () => {
+    if (!profile?.id) return;
+    
+    const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+    if (unreadIds.length === 0) return;
+    
+    try {
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', profile.id)
+        .eq('is_read', false);
+      
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      toast.success('Todas as notificações foram marcadas como lidas');
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+      toast.error('Erro ao marcar notificações como lidas');
+    }
+  };
 
   useEffect(() => {
     if (profile?.id) {
       loadPreferences();
-      loadNotifications();
+      loadNotifications(1, false);
     }
   }, [profile?.id, loadPreferences, loadNotifications]);
 
@@ -215,8 +259,12 @@ const NotificacoesPage = () => {
   const handleRefresh = useCallback(async () => {
     setIsLoadingPreferences(true);
     setIsLoadingNotifications(true);
-    await Promise.all([loadPreferences(), loadNotifications()]);
+    setPage(1);
+    setHasMore(true);
+    await Promise.all([loadPreferences(), loadNotifications(1, false)]);
   }, [loadPreferences, loadNotifications]);
+  
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const handleViewDetails = () => {
     navigate('/sales');
@@ -236,14 +284,24 @@ const NotificacoesPage = () => {
         
         {/* COLUNA ESQUERDA: Últimas Notificações (agora primeiro) */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Inbox className="h-5 w-5" />
-              Últimas Notificações
-            </CardTitle>
-            <CardDescription>
-              Histórico das suas notificações recentes
-            </CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between space-y-0">
+            <div className="space-y-1">
+              <CardTitle className="flex items-center gap-2">
+                <Inbox className="h-5 w-5" />
+                Últimas Notificações
+              </CardTitle>
+              <CardDescription>
+                Notificações são mantidas por 30 dias.
+              </CardDescription>
+            </div>
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllAsRead}
+                className="text-xs text-primary hover:underline font-medium whitespace-nowrap"
+              >
+                Marcar todas como lidas
+              </button>
+            )}
           </CardHeader>
           <CardContent>
             {isLoadingNotifications ? (
@@ -278,6 +336,17 @@ const NotificacoesPage = () => {
                       onViewDetails={handleViewDetails}
                     />
                   ))}
+                  
+                  {/* Botão Carregar Mais */}
+                  {hasMore && notifications.length >= ITEMS_PER_PAGE && (
+                    <button
+                      onClick={handleLoadMore}
+                      disabled={isLoadingMore}
+                      className="w-full py-3 text-sm text-primary hover:underline font-medium disabled:opacity-50"
+                    >
+                      {isLoadingMore ? 'Carregando...' : 'Carregar mais notificações'}
+                    </button>
+                  )}
                 </div>
               </ScrollArea>
             )}
