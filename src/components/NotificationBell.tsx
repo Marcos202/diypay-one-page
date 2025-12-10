@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { playNotificationSound } from '@/lib/notificationSound';
 
 interface Notification {
   id: string;
@@ -68,6 +69,9 @@ export function NotificationBell() {
           // Atualizar lista local instantaneamente (adicionar no topo, manter max 5)
           setNotifications(prev => [newNotif, ...prev.slice(0, 4)]);
           setUnreadCount(prev => prev + 1);
+          
+          // 🔊 Tocar som de alerta
+          playNotificationSound();
           
           // Disparar Web Notification nativa se permitido
           if ('Notification' in window && Notification.permission === 'granted') {
