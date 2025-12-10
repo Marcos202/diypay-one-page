@@ -7,16 +7,16 @@ import {
   Settings2, 
   Inbox, 
   BellOff,
-  CheckCircle,
-  FileText,
-  QrCode,
+  CheckCircle2,
   ShoppingCart,
   XCircle,
   RefreshCw,
   AlertTriangle,
   UserMinus,
   Clock,
+  Barcode,
 } from 'lucide-react';
+import { SiPix } from 'react-icons/si';
 import { ProducerLayout } from '@/components/ProducerLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -54,30 +54,55 @@ interface Notification {
   created_at: string;
 }
 
-const iconMap: Record<string, { icon: typeof Bell; color: string }> = {
-  purchase_approved: { icon: CheckCircle, color: 'text-green-500' },
-  boleto_generated: { icon: FileText, color: 'text-blue-500' },
-  pix_generated: { icon: QrCode, color: 'text-purple-500' },
-  abandoned_cart: { icon: ShoppingCart, color: 'text-orange-500' },
-  purchase_declined: { icon: XCircle, color: 'text-red-500' },
-  refund: { icon: RefreshCw, color: 'text-amber-500' },
-  chargeback: { icon: AlertTriangle, color: 'text-red-600' },
-  subscription_cancelled: { icon: UserMinus, color: 'text-gray-500' },
-  subscription_overdue: { icon: Clock, color: 'text-yellow-500' },
-  subscription_renewed: { icon: RefreshCw, color: 'text-green-600' },
+// Ícones profissionais consistentes com o checkout
+const iconMap: Record<string, { icon: any; color: string; bgColor: string }> = {
+  purchase_approved: { icon: CheckCircle2, color: 'text-green-600', bgColor: 'bg-green-50' },
+  pix_generated: { icon: SiPix, color: 'text-teal-600', bgColor: 'bg-teal-50' },
+  boleto_generated: { icon: Barcode, color: 'text-slate-600', bgColor: 'bg-slate-100' },
+  abandoned_cart: { icon: ShoppingCart, color: 'text-orange-500', bgColor: 'bg-orange-50' },
+  purchase_declined: { icon: XCircle, color: 'text-red-500', bgColor: 'bg-red-50' },
+  refund: { icon: RefreshCw, color: 'text-amber-500', bgColor: 'bg-amber-50' },
+  chargeback: { icon: AlertTriangle, color: 'text-red-600', bgColor: 'bg-red-50' },
+  subscription_cancelled: { icon: UserMinus, color: 'text-gray-500', bgColor: 'bg-gray-100' },
+  subscription_overdue: { icon: Clock, color: 'text-yellow-500', bgColor: 'bg-yellow-50' },
+  subscription_renewed: { icon: RefreshCw, color: 'text-green-600', bgColor: 'bg-green-50' },
+};
+
+const defaultIcon = { icon: Bell, color: 'text-muted-foreground', bgColor: 'bg-muted' };
+
+// Função para limpar emojis do título
+const cleanTitle = (title: string): string => {
+  return title.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+};
+
+// Função para extrair valor da mensagem
+const extractValue = (message: string): string | null => {
+  const match = message.match(/Valor:\s*(R\$\s*[\d.,]+)/);
+  return match ? match[1] : null;
+};
+
+// Função para extrair produto da mensagem
+const extractProduct = (message: string): string | null => {
+  const match = message.match(/Produto:\s*(.+?)$/);
+  return match ? match[1].trim() : null;
 };
 
 const NotificationItem = ({ notification }: { notification: Notification }) => {
-  const { icon: Icon, color } = iconMap[notification.type] || { icon: Bell, color: 'text-muted-foreground' };
+  const { icon: Icon, color, bgColor } = iconMap[notification.type] || defaultIcon;
+  
+  const title = cleanTitle(notification.title);
+  const value = extractValue(notification.message);
+  const product = extractProduct(notification.message);
 
   return (
-    <div className={`flex gap-3 p-3 border rounded-lg transition-colors ${!notification.is_read ? 'bg-muted/50' : ''}`}>
-      <div className={`h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0 ${color}`}>
-        <Icon className="h-5 w-5" />
+    <div className={`flex gap-3 p-4 border rounded-lg transition-colors ${!notification.is_read ? 'bg-muted/30' : ''}`}>
+      <div className={`h-10 w-10 rounded-full ${bgColor} flex items-center justify-center shrink-0`}>
+        <Icon className={`h-5 w-5 ${color}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-sm">{notification.title}</p>
-        <p className="text-sm text-muted-foreground line-clamp-2">{notification.message}</p>
+        <p className="font-semibold text-sm">{title}</p>
+        {value && <p className="text-sm text-foreground">{value}</p>}
+        {product && <p className="text-sm text-muted-foreground">Produto: {product}</p>}
         <p className="text-xs text-muted-foreground mt-1">
           {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ptBR })}
         </p>
@@ -260,11 +285,12 @@ const NotificacoesPage = () => {
             {isLoadingNotifications ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex gap-3 p-3 border rounded-lg">
+                  <div key={i} className="flex gap-3 p-4 border rounded-lg">
                     <Skeleton className="h-10 w-10 rounded-full shrink-0" />
                     <div className="flex-1 space-y-2">
                       <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-3 w-40" />
                       <Skeleton className="h-3 w-20" />
                     </div>
                   </div>

@@ -592,14 +592,14 @@ Deno.serve(async (req) => {
         const isAllowed = prefKey ? (prefs[prefKey] !== false) : true;
         
         if (isAllowed) {
-          // 5. Títulos com emoji por tipo
+          // 5. Títulos SEM emoji (frontend cuida da exibição visual)
           const titles: Record<string, string> = {
-            'compra.aprovada': 'Venda Aprovada! 🤑',
-            'pix.gerado': 'Pix Gerado! 💠',
-            'boleto.gerado': 'Boleto Gerado! 📄',
-            'compra.recusada': 'Compra Recusada ❌',
-            'reembolso': 'Reembolso Solicitado 💸',
-            'chargeback': '⚠️ Chargeback Recebido',
+            'compra.aprovada': 'Venda Aprovada!',
+            'pix.gerado': 'Pix Gerado!',
+            'boleto.gerado': 'Boleto Gerado!',
+            'compra.recusada': 'Compra Recusada',
+            'reembolso': 'Reembolso Solicitado',
+            'chargeback': 'Chargeback Recebido',
           };
           
           // 6. Formatar valor em R$
