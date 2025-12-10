@@ -556,6 +556,87 @@ Deno.serve(async (req) => {
     });
     
     console.log(`[WEBHOOK_HANDLER] ✅ Event ${event} registered successfully for sale ${sale.id}`);
+
+    // ===== INÍCIO: CRIAÇÃO DE NOTIFICAÇÃO IN-APP =====
+    try {
+      // 1. Buscar informações do produto (producer_id e nome)
+      const { data: productInfo } = await supabaseAdmin
+        .from('products')
+        .select('producer_id, name')
+        .eq('id', sale.product_id)
+        .single();
+
+      if (productInfo) {
+        // 2. Buscar preferências de notificação do produtor
+        const { data: profileData } = await supabaseAdmin
+          .from('profiles')
+          .select('notification_preferences')
+          .eq('id', productInfo.producer_id)
+          .single();
+
+        const prefs = (profileData?.notification_preferences as Record<string, boolean>) || {};
+        
+        // 3. Mapear evento interno -> chave de preferência
+        const eventToPreference: Record<string, string> = {
+          'compra.aprovada': 'purchase_approved',
+          'pix.gerado': 'pix_generated',
+          'boleto.gerado': 'boleto_generated',
+          'compra.recusada': 'purchase_declined',
+          'reembolso': 'refund',
+          'chargeback': 'chargeback',
+        };
+        
+        const prefKey = eventToPreference[event];
+        
+        // 4. Verificar se preferência permite (default: true para purchase_approved)
+        const isAllowed = prefKey ? (prefs[prefKey] !== false) : true;
+        
+        if (isAllowed) {
+          // 5. Títulos com emoji por tipo
+          const titles: Record<string, string> = {
+            'compra.aprovada': 'Venda Aprovada! 🤑',
+            'pix.gerado': 'Pix Gerado! 💠',
+            'boleto.gerado': 'Boleto Gerado! 📄',
+            'compra.recusada': 'Compra Recusada ❌',
+            'reembolso': 'Reembolso Solicitado 💸',
+            'chargeback': '⚠️ Chargeback Recebido',
+          };
+          
+          // 6. Formatar valor em R$
+          const valueBRL = (sale.amount_total_cents / 100).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+          });
+
+          // 7. Inserir na tabela notifications
+          const { error: notifError } = await supabaseAdmin.from('notifications').insert({
+            user_id: productInfo.producer_id,
+            type: prefKey || 'system',
+            title: titles[event] || 'Nova Notificação',
+            message: `Valor: ${valueBRL} • Produto: ${productInfo.name}`,
+            is_read: false,
+            metadata: {
+              sale_id: sale.id,
+              product_id: sale.product_id,
+              amount_cents: sale.amount_total_cents,
+              buyer_email: sale.buyer_email
+            }
+          });
+          
+          if (notifError) {
+            console.error(`[NOTIFICATION] Erro ao criar notificação: ${notifError.message}`);
+          } else {
+            console.log(`[NOTIFICATION] ✅ Notificação criada para produtor ${productInfo.producer_id}`);
+          }
+        } else {
+          console.log(`[NOTIFICATION] ⏭️ Preferência '${prefKey}' desativada pelo usuário`);
+        }
+      }
+    } catch (notifError: any) {
+      console.error('[NOTIFICATION] Erro ao criar notificação:', notifError.message);
+      // Não bloquear o webhook
+    }
+    // ===== FIM: CRIAÇÃO DE NOTIFICAÇÃO IN-APP =====
     
     return createJsonResponse({ success: true, message: 'Webhook processado com sucesso.' }, 200);
     
