@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -54,21 +55,19 @@ interface Notification {
   created_at: string;
 }
 
-// Ícones profissionais consistentes com o checkout
-const iconMap: Record<string, { icon: any; color: string; bgColor: string }> = {
-  purchase_approved: { icon: CheckCircle2, color: 'text-green-600', bgColor: 'bg-green-50' },
-  pix_generated: { icon: SiPix, color: 'text-teal-600', bgColor: 'bg-teal-50' },
-  boleto_generated: { icon: Barcode, color: 'text-slate-600', bgColor: 'bg-slate-100' },
-  abandoned_cart: { icon: ShoppingCart, color: 'text-orange-500', bgColor: 'bg-orange-50' },
-  purchase_declined: { icon: XCircle, color: 'text-red-500', bgColor: 'bg-red-50' },
-  refund: { icon: RefreshCw, color: 'text-amber-500', bgColor: 'bg-amber-50' },
-  chargeback: { icon: AlertTriangle, color: 'text-red-600', bgColor: 'bg-red-50' },
-  subscription_cancelled: { icon: UserMinus, color: 'text-gray-500', bgColor: 'bg-gray-100' },
-  subscription_overdue: { icon: Clock, color: 'text-yellow-500', bgColor: 'bg-yellow-50' },
-  subscription_renewed: { icon: RefreshCw, color: 'text-green-600', bgColor: 'bg-green-50' },
+// Ícones profissionais - TODOS em cinza uniforme, sem background
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  purchase_approved: CheckCircle2,
+  pix_generated: SiPix,
+  boleto_generated: Barcode,
+  abandoned_cart: ShoppingCart,
+  purchase_declined: XCircle,
+  refund: RefreshCw,
+  chargeback: AlertTriangle,
+  subscription_cancelled: UserMinus,
+  subscription_overdue: Clock,
+  subscription_renewed: RefreshCw,
 };
-
-const defaultIcon = { icon: Bell, color: 'text-muted-foreground', bgColor: 'bg-muted' };
 
 // Função para limpar emojis do título
 const cleanTitle = (title: string): string => {
@@ -87,8 +86,14 @@ const extractProduct = (message: string): string | null => {
   return match ? match[1].trim() : null;
 };
 
-const NotificationItem = ({ notification }: { notification: Notification }) => {
-  const { icon: Icon, color, bgColor } = iconMap[notification.type] || defaultIcon;
+const NotificationItem = ({ 
+  notification, 
+  onViewDetails 
+}: { 
+  notification: Notification;
+  onViewDetails: () => void;
+}) => {
+  const Icon = iconMap[notification.type] || Bell;
   
   const title = cleanTitle(notification.title);
   const value = extractValue(notification.message);
@@ -96,16 +101,22 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
 
   return (
     <div className={`flex gap-3 p-4 border rounded-lg transition-colors ${!notification.is_read ? 'bg-muted/30' : ''}`}>
-      <div className={`h-10 w-10 rounded-full ${bgColor} flex items-center justify-center shrink-0`}>
-        <Icon className={`h-5 w-5 ${color}`} />
-      </div>
+      <Icon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm">{title}</p>
         {value && <p className="text-sm text-foreground">{value}</p>}
         {product && <p className="text-sm text-muted-foreground">Produto: {product}</p>}
-        <p className="text-xs text-muted-foreground mt-1">
-          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ptBR })}
-        </p>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-xs text-muted-foreground">
+            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ptBR })}
+          </p>
+          <button
+            onClick={onViewDetails}
+            className="text-xs text-primary hover:underline font-medium"
+          >
+            Saber mais
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -113,6 +124,7 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
 
 const NotificacoesPage = () => {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [preferences, setPreferences] = useState<NotificationPreferences>({});
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
@@ -206,6 +218,10 @@ const NotificacoesPage = () => {
     await Promise.all([loadPreferences(), loadNotifications()]);
   }, [loadPreferences, loadNotifications]);
 
+  const handleViewDetails = () => {
+    navigate('/sales');
+  };
+
   return (
     <ProducerLayout onRefresh={handleRefresh}>
       <div className="mb-4 md:mb-6 lg:mb-8">
@@ -215,10 +231,60 @@ const NotificacoesPage = () => {
         </p>
       </div>
 
-      {/* Grid de 2 colunas (desktop) / empilhado (mobile) */}
+      {/* Grid de 2 colunas (desktop) / empilhado (mobile) - INVERTIDO: Notificações primeiro */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         
-        {/* COLUNA ESQUERDA: Preferências */}
+        {/* COLUNA ESQUERDA: Últimas Notificações (agora primeiro) */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Inbox className="h-5 w-5" />
+              Últimas Notificações
+            </CardTitle>
+            <CardDescription>
+              Histórico das suas notificações recentes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingNotifications ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-3 p-4 border rounded-lg">
+                    <Skeleton className="h-5 w-5 shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-3 w-40" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="text-center py-12">
+                <BellOff className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground font-medium">Sem novas notificações</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Suas notificações aparecerão aqui
+                </p>
+              </div>
+            ) : (
+              <ScrollArea className="h-[400px] lg:h-[500px] pr-4">
+                <div className="space-y-3">
+                  {notifications.map((notification) => (
+                    <NotificationItem 
+                      key={notification.id} 
+                      notification={notification} 
+                      onViewDetails={handleViewDetails}
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* COLUNA DIREITA: Preferências (agora segundo) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -266,52 +332,6 @@ const NotificacoesPage = () => {
                   </div>
                 ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* COLUNA DIREITA: Últimas Notificações */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Inbox className="h-5 w-5" />
-              Últimas Notificações
-            </CardTitle>
-            <CardDescription>
-              Histórico das suas notificações recentes
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingNotifications ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex gap-3 p-4 border rounded-lg">
-                    <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-24" />
-                      <Skeleton className="h-3 w-40" />
-                      <Skeleton className="h-3 w-20" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="text-center py-12">
-                <BellOff className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground font-medium">Sem novas notificações</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Suas notificações aparecerão aqui
-                </p>
-              </div>
-            ) : (
-              <ScrollArea className="h-[400px] lg:h-[500px] pr-4">
-                <div className="space-y-3">
-                  {notifications.map((notification) => (
-                    <NotificationItem key={notification.id} notification={notification} />
-                  ))}
-                </div>
-              </ScrollArea>
             )}
           </CardContent>
         </Card>

@@ -1,4 +1,5 @@
-import { Bell } from 'lucide-react';
+import { Bell, CheckCircle2, Barcode } from 'lucide-react';
+import { SiPix } from 'react-icons/si';
 import {
   Popover,
   PopoverContent,
@@ -22,6 +23,13 @@ interface Notification {
   is_read: boolean;
   created_at: string;
 }
+
+// Mapeamento de ícones por tipo (todos em cinza)
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  purchase_approved: CheckCircle2,
+  pix_generated: SiPix,
+  boleto_generated: Barcode,
+};
 
 // Função para limpar emojis do título
 const cleanTitle = (title: string): string => {
@@ -55,6 +63,38 @@ export function NotificationBell() {
       setNotifications(data);
       setUnreadCount(data.filter((n) => !n.is_read).length);
     }
+  };
+
+  // Marcar notificação como lida e redirecionar
+  const handleNotificationClick = async (notification: Notification) => {
+    if (!notification.is_read) {
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notification.id);
+      
+      setNotifications(prev => 
+        prev.map(n => n.id === notification.id ? {...n, is_read: true} : n)
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+    
+    setOpen(false);
+    navigate('/sales');
+  };
+
+  // Marcar todas como lidas
+  const handleMarkAllAsRead = async () => {
+    if (!profile?.id || unreadCount === 0) return;
+    
+    await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('user_id', profile.id)
+      .eq('is_read', false);
+    
+    setNotifications(prev => prev.map(n => ({...n, is_read: true})));
+    setUnreadCount(0);
   };
 
   useEffect(() => {
@@ -135,15 +175,27 @@ export function NotificationBell() {
       <PopoverContent align="end" className="w-80 p-0" sideOffset={8}>
         {/* Header */}
         <div className="p-4 border-b border-border">
-          <h3 className="font-semibold text-sm">Notificações</h3>
-          {unreadCount > 0 && (
-            <p className="text-xs text-muted-foreground">
-              {unreadCount} nova(s)
-            </p>
-          )}
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-sm">Notificações</h3>
+              {unreadCount > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {unreadCount} nova(s)
+                </p>
+              )}
+            </div>
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllAsRead}
+                className="text-xs text-primary hover:underline font-medium"
+              >
+                Marcar todas como lidas
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Lista de notificações - Layout limpo sem emoji */}
+        {/* Lista de notificações */}
         <div className="max-h-64 overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
@@ -152,15 +204,18 @@ export function NotificationBell() {
           ) : (
             notifications.map((n) => {
               const value = extractValue(n.message);
+              const Icon = iconMap[n.type] || Bell;
               
               return (
                 <div
                   key={n.id}
+                  onClick={() => handleNotificationClick(n)}
                   className={cn(
-                    'flex items-start gap-3 p-3 border-b border-border last:border-0 hover:bg-accent/50 transition-colors',
+                    'flex items-start gap-3 p-3 border-b border-border last:border-0 hover:bg-accent/50 transition-colors cursor-pointer',
                     !n.is_read && 'bg-primary/5'
                   )}
                 >
+                  <Icon className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{cleanTitle(n.title)}</p>
                     {value && (
