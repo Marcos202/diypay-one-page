@@ -649,6 +649,78 @@ Deno.serve(async (req) => {
           
           // Evento criado com sucesso - o trigger automático cuidará do enfileiramento
           console.log(`[ARCHITECTURAL_SUCCESS] Evento registrado. O trigger automático processará o enfileiramento de webhooks.`);
+          
+          // ===== INÍCIO: CRIAÇÃO DE NOTIFICAÇÃO IN-APP PARA PIX/BOLETO =====
+          try {
+            // 1. Buscar produtor do produto
+            const { data: productInfo } = await supabase
+              .from('products')
+              .select('producer_id, name')
+              .eq('id', product_id)
+              .single();
+
+            if (productInfo) {
+              // 2. Buscar preferências do produtor
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('notification_preferences')
+                .eq('id', productInfo.producer_id)
+                .single();
+
+              const prefs = (profileData?.notification_preferences as Record<string, boolean>) || {};
+              
+              // 3. Mapear evento -> preferência
+              const eventToPreference: Record<string, string> = {
+                'pix.gerado': 'pix_generated',
+                'boleto.gerado': 'boleto_generated',
+              };
+              
+              const prefKey = eventToPreference[eventTypeToLog];
+              
+              // 4. Verificar se usuário ativou essa preferência (default: false para pix/boleto)
+              const isAllowed = prefKey ? (prefs[prefKey] === true) : false;
+              
+              if (isAllowed) {
+                // 5. Títulos com emoji
+                const titles: Record<string, string> = {
+                  'pix.gerado': 'Pix Gerado! 💠',
+                  'boleto.gerado': 'Boleto Gerado! 📄',
+                };
+                
+                // 6. Formatar valor
+                const valueBRL = (finalAmountCents / 100).toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL'
+                });
+
+                // 7. Inserir notificação
+                const { error: notifError } = await supabase.from('notifications').insert({
+                  user_id: productInfo.producer_id,
+                  type: prefKey,
+                  title: titles[eventTypeToLog] || 'Nova Notificação',
+                  message: `Valor: ${valueBRL} • Produto: ${productInfo.name}`,
+                  is_read: false,
+                  metadata: {
+                    sale_id: newSale.id,
+                    product_id: product_id,
+                    amount_cents: finalAmountCents,
+                    buyer_email: buyer_email
+                  }
+                });
+                
+                if (notifError) {
+                  console.error(`[NOTIFICATION] Erro ao criar: ${notifError.message}`);
+                } else {
+                  console.log(`[NOTIFICATION] ✅ Notificação '${eventTypeToLog}' criada para produtor`);
+                }
+              } else {
+                console.log(`[NOTIFICATION] ⏭️ Preferência '${prefKey}' não ativada pelo usuário`);
+              }
+            }
+          } catch (notifError: any) {
+            console.error('[NOTIFICATION] Erro ao criar notificação:', notifError.message);
+          }
+          // ===== FIM: CRIAÇÃO DE NOTIFICAÇÃO IN-APP =====
         }
       } catch (eventException: any) {
         console.error(`[EVENT_LOG_EXCEPTION] Exceção ao registrar evento:`, eventException);
