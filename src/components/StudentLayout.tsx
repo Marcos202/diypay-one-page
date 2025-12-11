@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { formatUserName } from "@/lib/utils";
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { UserProfileMenu } from '@/components/ui/user-profile-menu';
-import { NotificationBell } from '@/components/NotificationBell';
 
 interface StudentLayoutProps {
   children: ReactNode;
@@ -75,7 +74,6 @@ export function StudentLayout({ children, onRefresh }: StudentLayoutProps) {
 
             {/* User Menu */}
             <div className="flex items-center gap-2">
-              {isProducer && <NotificationBell />}
               <UserProfileMenu
                 user={{
                   name: displayName,
