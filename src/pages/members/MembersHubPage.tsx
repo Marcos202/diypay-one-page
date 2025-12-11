@@ -1,9 +1,10 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { 
   Carousel, 
   CarouselContent, 
@@ -126,6 +127,7 @@ const SpaceContainerCarousel = ({ container }: { container: any }) => {
 // Componente Principal da Página
 const MembersHubPage = () => {
   const { spaceId } = useParams<{ spaceId: string }>();
+  const navigate = useNavigate();
 
   const { data: hubData, isLoading, isError, error } = useQuery({
     queryKey: ['membersHub', spaceId],
@@ -165,6 +167,16 @@ const MembersHubPage = () => {
   return (
     <div className="min-h-screen w-full text-white flex flex-col" style={{ backgroundColor: pageBackgroundColor }}>
       <UserProfileHeader />
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/members')}
+          className="flex items-center gap-2 text-gray-300 hover:text-white border-0 bg-transparent hover:bg-gray-800"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </Button>
+      </div>
       <main className="flex-grow">
         <div 
           className="relative w-full h-[40vh] sm:h-[50vh] md:h-[60vh] bg-cover bg-center flex flex-col justify-end" 
