@@ -1,18 +1,11 @@
 import { ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
-import { User, LogOut, Monitor, Settings } from 'lucide-react';
+import { Settings, Monitor } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatUserName } from "@/lib/utils";
 import { PullToRefresh } from '@/components/PullToRefresh';
+import { UserProfileMenu } from '@/components/ui/user-profile-menu';
+import { NotificationBell } from '@/components/NotificationBell';
 
 interface StudentLayoutProps {
   children: ReactNode;
@@ -20,7 +13,7 @@ interface StudentLayoutProps {
 }
 
 export function StudentLayout({ children, onRefresh }: StudentLayoutProps) {
-  const { signOut, user, profile, toggleView } = useAuth();
+  const { signOut, profile, toggleView } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -34,11 +27,37 @@ export function StudentLayout({ children, onRefresh }: StudentLayoutProps) {
   };
 
   const isProducer = profile?.role === 'producer';
-  // Garante que está usando full_name e não email
   const displayName = profile?.full_name && profile.full_name.trim() 
     ? formatUserName(profile.full_name) 
     : (profile?.email ? profile.email.split('@')[0] : 'Usuário');
   const userInitial = displayName.charAt(0).toUpperCase();
+  const userEmail = profile?.email || '';
+
+  const getNavItems = () => {
+    const items: Array<{
+      icon: React.ReactNode;
+      label: string;
+      onClick: () => void;
+      isSeparator?: boolean;
+    }> = [
+      {
+        icon: <Settings className="h-full w-full" />,
+        label: 'Meu Perfil',
+        onClick: () => navigate('/members/profile'),
+      },
+    ];
+
+    if (isProducer) {
+      items.push({
+        icon: <Monitor className="h-full w-full" />,
+        label: 'Painel do Produtor',
+        onClick: handleToggleView,
+        isSeparator: true,
+      });
+    }
+
+    return items;
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -55,39 +74,19 @@ export function StudentLayout({ children, onRefresh }: StudentLayoutProps) {
             </div>
 
             {/* User Menu */}
-            <div className="flex items-center gap-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2 p-2 h-12 rounded-lg hover:bg-violet-600 text-white">
-                    <Avatar className="w-9 h-9">
-                      <AvatarFallback className="bg-violet-100 text-violet-800 font-bold">
-                        {userInitial}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="font-bold text-sm">{displayName}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => navigate('/members/profile')}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Meu Perfil
-                  </DropdownMenuItem>
-                  {isProducer && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleToggleView}>
-                        <Monitor className="mr-2 h-4 w-4" />
-                        Painel do Produtor
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sair
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="flex items-center gap-2">
+              {isProducer && <NotificationBell />}
+              <UserProfileMenu
+                user={{
+                  name: displayName,
+                  email: userEmail,
+                  initial: userInitial,
+                  avatarUrl: profile?.avatar_url,
+                }}
+                navItems={getNavItems()}
+                onLogout={handleSignOut}
+                triggerVariant="glass"
+              />
             </div>
           </div>
         </div>

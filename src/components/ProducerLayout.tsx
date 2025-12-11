@@ -1,7 +1,7 @@
 import { ReactNode, useEffect } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { ProducerSidebar } from "@/components/ProducerSidebar";
-import { Repeat, User } from "lucide-react";
+import { Repeat, User, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '@/hooks/useAuth';
 import { useProducerFinancialsStore } from '@/stores/producer-financials-store';
@@ -53,6 +53,11 @@ export function ProducerLayout({ children, onRefresh }: ProducerLayoutProps) {
                       icon: <User className="h-full w-full" />,
                       label: 'Minha Conta',
                       onClick: () => navigate('/settings/account'),
+                    },
+                    {
+                      icon: <Bell className="h-full w-full" />,
+                      label: 'Notificações',
+                      onClick: () => navigate('/notificacoes'),
                     },
                     {
                       icon: <Repeat className="h-full w-full" />,

@@ -1,14 +1,13 @@
 import * as React from 'react';
-import { Settings, Monitor, BookOpen, Bell } from 'lucide-react';
+import { Settings, Monitor, BookOpen } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { formatUserName } from "@/lib/utils";
 import { UserProfileMenu } from '@/components/ui/user-profile-menu';
 
 export function UserProfileHeader() {
   const { signOut, profile, toggleView } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleSignOut = async () => {
     await signOut();
@@ -21,7 +20,6 @@ export function UserProfileHeader() {
   };
 
   const isProducer = profile?.role === 'producer';
-  const isOnSpacesPage = location.pathname.startsWith('/members/spaces/');
   const displayName = profile?.full_name && profile.full_name.trim() 
     ? formatUserName(profile.full_name) 
     : (profile?.email ? profile.email.split('@')[0] : 'Usuário');
@@ -41,19 +39,11 @@ export function UserProfileHeader() {
         onClick: () => navigate('/members/profile'),
       },
       {
-        icon: <Bell className="h-full w-full" />,
-        label: 'Notificações',
-        onClick: () => navigate('/notificacoes'),
-      },
-    ];
-
-    if (isOnSpacesPage) {
-      items.push({
         icon: <BookOpen className="h-full w-full" />,
         label: 'Meus Cursos',
         onClick: () => navigate('/members'),
-      });
-    }
+      },
+    ];
 
     if (isProducer) {
       items.push({
