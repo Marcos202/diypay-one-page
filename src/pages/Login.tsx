@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { AuthFooter } from "@/components/core/AuthFooter";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { translateAuthError } from "@/lib/authTranslations";
 
 const TURNSTILE_SITE_KEY = "0x4AAAAAACGJUa2KlUTUShYW";
 
@@ -52,7 +53,7 @@ const Login = () => {
     const { error } = await signIn(formData.email, formData.password, captchaToken);
 
     if (error) {
-      setError(error);
+      setError(translateAuthError(error));
       setIsLoading(false);
       setCaptchaToken(undefined); // Reset token para nova tentativa
     } else {
@@ -68,7 +69,7 @@ const Login = () => {
     const { error } = await signInWithGoogle();
 
     if (error) {
-      setError(error);
+      setError(translateAuthError(error));
       setIsGoogleLoading(false);
     } else {
       toast.success("Login com Google realizado com sucesso!");
