@@ -18,6 +18,11 @@ export const translateAuthError = (error: string): string => {
     
     // Password strength errors (Supabase returns long messages)
     "Password should contain at least one character of each": "A senha deve conter letras maiúsculas, letras minúsculas, números e símbolos.",
+    
+    // Captcha/Turnstile errors
+    "captcha verification process failed": "Não foi possível validar a segurança da sessão. Por favor, tente novamente.",
+    "Captcha verification process failed": "Não foi possível validar a segurança da sessão. Por favor, tente novamente.",
+    "Captcha verification failed": "Não foi possível validar a segurança da sessão. Por favor, tente novamente.",
   };
 
   // Check for exact match
@@ -27,7 +32,7 @@ export const translateAuthError = (error: string): string => {
 
   // Check for partial match (for long error messages)
   for (const [key, translation] of Object.entries(translations)) {
-    if (error.includes(key)) {
+    if (error.toLowerCase().includes(key.toLowerCase())) {
       return translation;
     }
   }
