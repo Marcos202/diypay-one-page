@@ -7,6 +7,7 @@ import { useState, useCallback } from "react";
 import { ProducerLayout } from "@/components/ProducerLayout";
 import { Button } from "@/components/ui/button";
 import { PWAConditional } from "@/components/PWAConditional";
+import { PlusCircle } from "lucide-react";
 
 const ProductsPage = () => {
   const { user } = useAuth();
@@ -45,9 +46,18 @@ const ProductsPage = () => {
 
   return (
     <ProducerLayout onRefresh={handleRefresh}>
-<div className="mb-4 md:mb-6 lg:mb-8">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Seus Produtos</h1>
-        <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2 hidden md:block">Gerencie todos os seus produtos digitais</p>
+      <div className="flex justify-between items-center mb-4 md:mb-6 lg:mb-8">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Seus Produtos</h1>
+        <PWAConditional hideInPWA>
+          <Button 
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#4d0782] hover:bg-[#4d0782]/90 text-white"
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Criar Novo Produto</span>
+            <span className="sm:hidden">Criar</span>
+          </Button>
+        </PWAConditional>
       </div>
       
       {isLoading ? (

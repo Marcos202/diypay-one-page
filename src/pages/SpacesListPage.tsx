@@ -22,7 +22,7 @@ const OnboardingView = ({ onToggleView }: { onToggleView: () => void }) => (
     <div className="bg-muted p-6 sm:p-8 rounded-full mb-4 sm:mb-6">
       <BookOpen className="h-12 w-12 sm:h-16 sm:w-16 text-primary" />
     </div>
-    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">Crie sua primeira Área de Membros</h1>
+    <h1 className="text-xl sm:text-2xl font-bold mb-2">Crie sua primeira Área de Membros</h1>
     <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6 max-w-md">Organize seu conteúdo, personalize o visual e ofereça uma experiência de consumo incrível para seus alunos.</p>
     <Button size="default" className="w-full sm:w-auto" onClick={onToggleView}>
       <PlusCircle className="mr-2 h-4 w-4" />
@@ -68,7 +68,7 @@ export default function SpacesListPage() {
   return (
     <ProducerLayout>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 md:mb-6 lg:mb-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Seus Conteúdos</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Seus Conteúdos</h1>
           <Button onClick={handleToggleView} className="w-full sm:w-auto">
             <PlusCircle className="mr-2 h-4 w-4" />
             <span className="hidden sm:inline">Mudar para painel do Aluno</span>

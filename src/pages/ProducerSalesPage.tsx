@@ -210,10 +210,7 @@ const ProducerSalesPage = () => {
       <div className="space-y-4 md:space-y-6 lg:space-y-8 w-full min-w-0 overflow-hidden">
         {/* Header */}
         <div className="mb-4 md:mb-6 lg:mb-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Suas Vendas</h1>
-          <p className="text-sm sm:text-base text-muted-foreground break-words">
-            Acompanhe o desempenho das suas vendas e analise seus resultados
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Suas Vendas</h1>
         </div>
 
         {/* KPI Cards */}

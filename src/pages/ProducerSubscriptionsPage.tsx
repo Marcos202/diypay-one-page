@@ -142,17 +142,12 @@ const ProducerSubscriptionsPage = () => {
 
   return (
     <ProducerLayout onRefresh={handleRefresh}>
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Todas as Assinaturas</h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-2">Gerencie todas as assinaturas dos seus produtos</p>
-          </div>
-          <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
-            <Download className="h-4 w-4" />
-            Exportar
-          </Button>
-        </div>
+      <div className="flex justify-between items-center mb-4 md:mb-6 lg:mb-8">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Assinaturas</h1>
+        <Button variant="outline" className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          <span className="hidden sm:inline">Exportar</span>
+        </Button>
       </div>
 
       {/* Statistics Cards */}

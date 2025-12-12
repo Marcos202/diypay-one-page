@@ -124,18 +124,6 @@ const ProductList = ({ products, onCreateProduct }: ProductListProps) => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {!isPWA && (
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <div className="hidden sm:block" /> {/* Spacer for alignment */}
-          <Button 
-            onClick={onCreateProduct}
-            className="bg-[#4d0782] hover:bg-[#4d0782]/90 text-white w-full sm:w-auto"
-          >
-            Criar Novo Produto
-          </Button>
-        </div>
-      )}
-
       <div className="grid gap-4 sm:gap-6">
         {products.map((product) => (
           <Card key={product.id} className="bg-white shadow-sm hover:shadow-md transition-shadow">
