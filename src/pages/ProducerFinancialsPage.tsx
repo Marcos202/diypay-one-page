@@ -286,8 +286,7 @@ const ProducerFinancialsPage = () => {
   return (
     <ProducerLayout onRefresh={handleRefresh}>
       <div className="mb-4 md:mb-6 lg:mb-8">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Central Financeira</h1>
-        <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Gerencie seus dados financeiros e bancários</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Financeiro</h1>
       </div>
 
       <Tabs defaultValue="saques" className="w-full">
