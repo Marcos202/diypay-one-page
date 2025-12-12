@@ -10,6 +10,9 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { AuthFooter } from "@/components/core/AuthFooter";
+import { Turnstile } from "@marsidev/react-turnstile";
+
+const TURNSTILE_SITE_KEY = "0x4AAAAAACGJUa2KlUTUShYW";
 
 const Login = () => {
   const { signIn, signInWithGoogle, user, profile } = useAuth();
@@ -22,6 +25,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
 
   // Redirect if already logged in
   if (user && profile) {
@@ -36,14 +40,21 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!captchaToken) {
+      setError("Verificação de segurança pendente. Aguarde um momento...");
+      return;
+    }
+    
     setIsLoading(true);
     setError("");
 
-    const { error } = await signIn(formData.email, formData.password);
+    const { error } = await signIn(formData.email, formData.password, captchaToken);
 
     if (error) {
       setError(error);
       setIsLoading(false);
+      setCaptchaToken(undefined); // Reset token para nova tentativa
     } else {
       toast.success("Login realizado com sucesso!");
       // Navigation will be handled by the auth state change
@@ -173,6 +184,17 @@ const Login = () => {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
+
+              {/* Cloudflare Turnstile - Invisible Mode */}
+              <Turnstile
+                siteKey={TURNSTILE_SITE_KEY}
+                onSuccess={(token) => setCaptchaToken(token)}
+                onError={() => setCaptchaToken(undefined)}
+                onExpire={() => setCaptchaToken(undefined)}
+                options={{
+                  size: "invisible"
+                }}
+              />
 
               <Button
                 type="submit"
