@@ -14,12 +14,16 @@ import {
   UserMinus,
   Clock,
   Barcode,
+  BellRing,
 } from 'lucide-react';
+import { PushNotificationPrompt } from '@/components/PushNotificationPrompt';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { SiPix } from 'react-icons/si';
 import { ProducerLayout } from '@/components/ProducerLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
@@ -114,6 +118,7 @@ const ITEMS_PER_PAGE = 25;
 
 const NotificacoesPage = () => {
   const { profile } = useAuth();
+  const { isSupported, permission, requestPermission } = usePushNotifications();
   const [preferences, setPreferences] = useState<NotificationPreferences>({});
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
@@ -122,6 +127,23 @@ const NotificacoesPage = () => {
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [showPushPrompt, setShowPushPrompt] = useState(false);
+
+  // Exibir modal apenas uma vez, quando acessar /notificacoes
+  useEffect(() => {
+    const promptShown = localStorage.getItem('push-prompt-shown');
+    if (!promptShown && isSupported && permission === 'default') {
+      const timer = setTimeout(() => setShowPushPrompt(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isSupported, permission]);
+
+  const handleActivatePush = async () => {
+    const granted = await requestPermission();
+    if (granted) {
+      toast.success('Notificações ativadas com sucesso!');
+    }
+  };
 
   const loadPreferences = useCallback(async () => {
     if (!profile?.id) return;
@@ -387,6 +409,45 @@ const NotificacoesPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Bloco de Ativação Manual de Notificações Push */}
+      {isSupported && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BellRing className="h-5 w-5" />
+              Notificações do Navegador
+            </CardTitle>
+            <CardDescription>
+              Receba alertas instantâneos quando uma venda for aprovada.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {permission === 'granted' ? (
+              <div className="flex items-center gap-2 text-green-600">
+                <CheckCircle2 className="h-5 w-5" />
+                <span className="font-medium">Notificações ativadas</span>
+              </div>
+            ) : permission === 'denied' ? (
+              <div className="text-muted-foreground text-sm">
+                <p className="mb-2 font-medium text-foreground">Notificações bloqueadas pelo navegador.</p>
+                <p>Para ativar, acesse as configurações do seu navegador e permita notificações para este site.</p>
+              </div>
+            ) : (
+              <Button onClick={handleActivatePush}>
+                <Bell className="h-4 w-4 mr-2" />
+                Ativar notificações do navegador
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Modal de Push Notification */}
+      <PushNotificationPrompt 
+        open={showPushPrompt} 
+        onClose={() => setShowPushPrompt(false)} 
+      />
     </ProducerLayout>
   );
 };

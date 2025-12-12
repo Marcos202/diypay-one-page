@@ -28,7 +28,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatUserName } from '@/lib/utils';
 import { PWAConditional } from '@/components/PWAConditional';
 import { usePWAContext } from '@/contexts/PWAContext';
-import { PushNotificationPrompt } from '@/components/PushNotificationPrompt';
 
 const ProducerDashboard = () => {
   const { profile } = useAuth();
@@ -39,7 +38,6 @@ const ProducerDashboard = () => {
   const [productFilter, setProductFilter] = useState("all");
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const [dismissedWelcome, setDismissedWelcome] = useState(false);
-  const [showPushPrompt, setShowPushPrompt] = useState(false);
 
   // Check if we need to show welcome dialog
   const needsVerification = profile?.verification_status === 'pending_submission';
@@ -61,14 +59,6 @@ const ProducerDashboard = () => {
     sessionStorage.setItem('welcomePopupShown', 'true');
   };
 
-  // Mostrar prompt de push notification após 3 segundos
-  useEffect(() => {
-    const promptShown = localStorage.getItem('push-prompt-shown');
-    if (!promptShown && 'Notification' in window && Notification.permission === 'default') {
-      const timer = setTimeout(() => setShowPushPrompt(true), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['producerDashboard', dateFilter, productFilter],
@@ -446,11 +436,6 @@ const ProducerDashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Push Notification Permission Prompt */}
-      <PushNotificationPrompt 
-        open={showPushPrompt} 
-        onClose={() => setShowPushPrompt(false)} 
-      />
     </ProducerLayout>
   );
 };

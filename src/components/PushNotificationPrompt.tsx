@@ -33,7 +33,7 @@ export function PushNotificationPrompt({ open, onClose }: Props) {
           </div>
           <DialogTitle className="text-center">Ativar Notificações de Venda?</DialogTitle>
           <DialogDescription className="text-center">
-            Receba alertas instantâneos quando uma venda for aprovada, mesmo com o celular bloqueado.
+            Receba alertas instantâneos quando uma venda for aprovada.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-center">
