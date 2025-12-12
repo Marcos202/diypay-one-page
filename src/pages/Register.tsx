@@ -11,6 +11,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { AuthFooter } from "@/components/core/AuthFooter";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { translateAuthError } from "@/lib/authTranslations";
+import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 
 const TURNSTILE_SITE_KEY = "0x4AAAAAACGJUa2KlUTUShYW";
 
@@ -68,7 +70,7 @@ const Register = () => {
     const { error } = await signUp(formData.email, formData.password, formData.fullName, captchaToken);
 
     if (error) {
-      setError(error);
+      setError(translateAuthError(error));
       setIsLoading(false);
       setCaptchaToken(undefined); // Reset token para nova tentativa
     } else {
@@ -83,7 +85,7 @@ const Register = () => {
     const { error } = await signInWithGoogle();
 
     if (error) {
-      setError(error);
+      setError(translateAuthError(error));
       setIsGoogleLoading(false);
     } else {
       toast.success("Cadastro com Google realizado com sucesso!");
@@ -192,7 +194,7 @@ const Register = () => {
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="Crie uma senha segura"
                     value={formData.password}
                     onChange={handleChange}
                     required
@@ -206,6 +208,7 @@ const Register = () => {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                <PasswordStrengthIndicator password={formData.password} />
               </div>
 
               <div className="space-y-2">
