@@ -96,8 +96,12 @@ export function ProducerSidebar() {
   return (
     <Sidebar className="bg-[#810ad1]">
       <SidebarHeader className="border-b border-[#4d0782] bg-[#810ad1]">
-        <div className="flex items-center gap-3 px-2 py-4">
-          <div className="text-lg font-bold text-white">DiyPay</div>
+        <div className="flex items-center justify-center px-2 py-4">
+          <img 
+            src="https://diymidia.com.br/wp-content/uploads/2025/08/Icon-DiyPay-2.0-branco.png" 
+            alt="Logo DiyPay" 
+            className="h-10" 
+          />
         </div>
         
         <div className="px-2 pb-4">
