@@ -10,7 +10,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { AuthFooter } from "@/components/core/AuthFooter";
-import { Turnstile } from "@marsidev/react-turnstile";
+import { TurnstileWidget } from "@/components/ui/turnstile-widget";
 import { translateAuthError } from "@/lib/authTranslations";
 
 const TURNSTILE_SITE_KEY = "0x4AAAAAACGJUa2KlUTUShYW";
@@ -186,15 +186,18 @@ const Login = () => {
                 </Alert>
               )}
 
-              {/* Cloudflare Turnstile - Invisible Mode */}
-              <Turnstile
+              {/* Cloudflare Turnstile com suporte a PWA */}
+              <TurnstileWidget
                 siteKey={TURNSTILE_SITE_KEY}
-                onSuccess={(token) => setCaptchaToken(token)}
-                onError={() => setCaptchaToken(undefined)}
-                onExpire={() => setCaptchaToken(undefined)}
-                options={{
-                  size: "invisible"
+                onSuccess={(token) => {
+                  setCaptchaToken(token);
+                  setError("");
                 }}
+                onError={(errorMsg) => {
+                  setCaptchaToken(undefined);
+                  setError(errorMsg);
+                }}
+                onExpire={() => setCaptchaToken(undefined)}
               />
 
               <Button
