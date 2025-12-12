@@ -160,9 +160,7 @@ export default function UserProfilePage() {
 
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <User className="h-6 w-6 md:h-8 md:w-8 text-primary" />
-          </div>
+          <User className="h-6 w-6 md:h-8 md:w-8 text-foreground" />
           <div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Meu Perfil</h1>
             <p className="text-sm sm:text-base text-muted-foreground">
@@ -175,18 +173,7 @@ export default function UserProfilePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
           {/* Card de Informações do Perfil */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <div className="p-1.5 bg-primary/10 rounded-md">
-                  <UserCircle className="h-4 w-4 text-primary" />
-                </div>
-                Informações Pessoais
-              </CardTitle>
-              <CardDescription>
-                Atualize seus dados pessoais e informações de contato
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 pt-6">
               {/* Avatar Section */}
               <div className="flex flex-col items-center gap-4 pb-6 border-b">
                 <div className="relative">
