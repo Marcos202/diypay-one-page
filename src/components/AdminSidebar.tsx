@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { BarChart3, CreditCard, Users, DollarSign, Percent, Menu, X, UserCheck, FileText } from 'lucide-react';
+import { BarChart3, CreditCard, Users, DollarSign, Percent, Menu, UserCheck, FileText, LogOut } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const AdminSidebar = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { signOut } = useAuth();
 
   // === A CORREÇÃO ESTÁ AQUI ===
   // Atualizamos todos os `href` para a nova estrutura de rotas /admin/...
@@ -68,8 +70,6 @@ const AdminSidebar = () => {
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 isActive(item.href)
                   ? 'bg-primary text-primary-foreground'
-                  // Corrigindo um pequeno bug visual: o item "Páginas" não ficava ativo.
-                  // Agora, com 'startsWith', ele ficará ativo em /admin/pages, /admin/pages/new, etc.
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
               onClick={() => setIsOpen(false)}
@@ -80,6 +80,16 @@ const AdminSidebar = () => {
           );
         })}
       </nav>
+      <div className="mt-auto border-t px-4 py-4">
+        <Button 
+          onClick={signOut} 
+          variant="ghost" 
+          className="w-full justify-start gap-3 text-red-500 hover:text-red-600 hover:bg-red-50"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+        </Button>
+      </div>
     </div>
   );
 
