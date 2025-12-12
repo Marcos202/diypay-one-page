@@ -259,9 +259,7 @@ export default function UserProfilePage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <div className="p-1.5 bg-primary/10 rounded-md">
-                  <KeyRound className="h-4 w-4 text-primary" />
-                </div>
+                <KeyRound className="h-4 w-4 text-foreground" />
                 Alterar Senha
               </CardTitle>
               <CardDescription>
