@@ -45,8 +45,8 @@ interface AuthContextType {
   isGoogleUser: boolean;
   activeView: ActiveView | null;
   toggleView: () => void;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error?: string }>;
-  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signUp: (email: string, password: string, fullName: string, captchaToken?: string) => Promise<{ error?: string }>;
+  signIn: (email: string, password: string, captchaToken?: string) => Promise<{ error?: string }>;
   signInWithGoogle: () => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error?: string }>;
@@ -274,7 +274,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [profile, location.pathname, navigate, authInitialized, loading]);
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, captchaToken?: string) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       const { data, error } = await supabase.auth.signUp({
@@ -282,6 +282,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password,
         options: {
           emailRedirectTo: redirectUrl,
+          captchaToken,
           data: { full_name: fullName, email: email }
         }
       });
@@ -323,9 +324,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, captchaToken?: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password,
+        options: captchaToken ? { captchaToken } : undefined
+      });
       if (error) return { error: error.message };
       return {};
     } catch (error: any) {

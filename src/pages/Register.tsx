@@ -10,6 +10,9 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { AuthFooter } from "@/components/core/AuthFooter";
+import { Turnstile } from "@marsidev/react-turnstile";
+
+const TURNSTILE_SITE_KEY = "0x4AAAAAACGJUa2KlUTUShYW";
 
 const Register = () => {
   const { signUp, signInWithGoogle, user, profile } = useAuth();
@@ -25,6 +28,7 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
 
   // Redirect if already logged in
   if (user && profile) {
@@ -39,6 +43,12 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!captchaToken) {
+      setError("Verificação de segurança pendente. Aguarde um momento...");
+      return;
+    }
+    
     setIsLoading(true);
     setError("");
 
@@ -55,11 +65,12 @@ const Register = () => {
       return;
     }
 
-    const { error } = await signUp(formData.email, formData.password, formData.fullName);
+    const { error } = await signUp(formData.email, formData.password, formData.fullName, captchaToken);
 
     if (error) {
       setError(error);
       setIsLoading(false);
+      setCaptchaToken(undefined); // Reset token para nova tentativa
     } else {
       toast.success("Conta criada com sucesso! Verifique seu email para confirmar.");
     }
@@ -225,6 +236,17 @@ const Register = () => {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
+
+              {/* Cloudflare Turnstile - Invisible Mode */}
+              <Turnstile
+                siteKey={TURNSTILE_SITE_KEY}
+                onSuccess={(token) => setCaptchaToken(token)}
+                onError={() => setCaptchaToken(undefined)}
+                onExpire={() => setCaptchaToken(undefined)}
+                options={{
+                  size: "invisible"
+                }}
+              />
 
               <Button
                 type="submit"
